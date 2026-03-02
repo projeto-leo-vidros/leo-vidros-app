@@ -171,8 +171,7 @@ export default function ServicosList({
   };
 
   const abrirEditar = (item) => {
-    setCurrent(item);
-    openModal("editar");
+    navigate(`/Servicos/${item.id}`);
   };
 
   const abrirConfirmarExclusao = (id) => {
