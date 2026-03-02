@@ -8,6 +8,7 @@ import Clientes from "../pages/clientes/clientes.jsx";
 import Estoque from "../pages/estoque/estoque.jsx";
 import ProdutoDetalhe from "../pages/estoque/ProdutoDetalhe.jsx";
 import Pedidos from "../pages/pedidos/pedidos.jsx";
+import ServicoDetalhe from "../pages/servicos/ServicoDetalhe.jsx";
 import Solicitacoes from "../pages/solicitacoes/Solicitacoes.jsx";
 import Agendamentos from "../pages/agendamentos/agendamentos.jsx";
 import CalendarDashboard from "../pages/calendar-dashboard/index.jsx";
@@ -74,6 +75,14 @@ export const appRouter = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <OrcamentoERP />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/Servicos/:id",
+    element: (
+      <ProtectedRoute>
+        <ServicoDetalhe />
       </ProtectedRoute>
     ),
   },
