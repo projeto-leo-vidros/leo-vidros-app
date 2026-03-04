@@ -280,11 +280,9 @@ export default function ServicoDetalhe() {
             <div className="flex items-center mb-6">
               <button
                 onClick={() => navigate("/Pedidos")}
-                className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium group"
+                className="flex items-center gap-2 text-gray-500 hover:text-gray-800 hover:text-[#007EA7] transition-colors text-sm font-medium"
               >
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm group-hover:border-[#007EA7] group-hover:text-[#007EA7] transition-all">
-                  <ArrowLeft className="w-4 h-4" />
-                </span>
+                <ArrowLeft className="w-4 h-4" />
                 Voltar para Serviços
               </button>
             </div>
@@ -323,11 +321,8 @@ export default function ServicoDetalhe() {
               {/* Progress stepper */}
               <div className="mt-6 pt-5 border-t border-gray-100">
                 {/* Label da etapa atual */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center mb-4">
                   <span className="text-xs text-gray-400 font-medium">Progresso do Serviço</span>
-                  <span className="text-xs font-semibold text-[#007EA7] bg-[#007EA7]/8 px-2.5 py-1 rounded-full">
-                    {etapaLabel} · {formData.progressoValor}/7
-                  </span>
                 </div>
 
                 {/* Steps */}
@@ -385,18 +380,10 @@ export default function ServicoDetalhe() {
                 {/* 1. Cliente Card */}
                 {(servico.clienteInfo || servico.clienteNome) && (
                   <SectionCard
-                    title="Cliente"
+                    title={servico.clienteNome || "Cliente"}
                     icon={<User className="w-4 h-4 text-emerald-600" />}
                     iconBg="bg-emerald-100"
                   >
-                    {/* Name */}
-                    <div className="flex flex-col items-center justify-center text-center mb-6">
-                      <p className="font-semibold text-gray-900 text-sm">{servico.clienteNome || "—"}</p>
-                      {servico.clienteInfo?.cpf && (
-                        <p className="text-xs text-gray-400">CPF: {servico.clienteInfo.cpf}</p>
-                      )}
-                    </div>
-
                     {/* Contact info */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {servico.clienteInfo?.email && (
@@ -413,26 +400,75 @@ export default function ServicoDetalhe() {
                           value={servico.clienteInfo.telefone}
                         />
                       )}
-                      {servico.clienteInfo?.endereco && (
-                        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col items-center justify-center text-center gap-2">
-                          <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center">
-                            <MapPin className="w-4 h-4 text-[#007EA7]" />
-                          </div>
-                          <div className="w-full">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Endereço</p>
-                            <p className="text-sm text-gray-800 font-medium">
-                              {servico.clienteInfo.endereco.rua}, {servico.clienteInfo.endereco.numero || "S/N"}
-                            </p>
-                            {servico.clienteInfo.endereco.complemento && (
-                              <p className="text-xs text-gray-500">{servico.clienteInfo.endereco.complemento}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {servico.clienteInfo.endereco.bairro} — {servico.clienteInfo.endereco.cidade}/{servico.clienteInfo.endereco.uf}
-                            </p>
-                            {servico.clienteInfo.endereco.cep && (
-                              <p className="text-xs text-gray-400">CEP: {servico.clienteInfo.endereco.cep}</p>
-                            )}
-                          </div>
+                      {servico.clienteInfo?.cpf && (
+                        <ClientInfoRow
+                          icon={<Hash className="w-4 h-4 text-[#007EA7]" />}
+                          label="CPF"
+                          value={servico.clienteInfo.cpf}
+                        />
+                      )}
+                    </div>
+                  </SectionCard>
+                )}
+
+                {/* 1b. Endereço Card */}
+                {servico.clienteInfo?.endereco && (
+                  <SectionCard
+                    title="Endereço"
+                    icon={<MapPin className="w-4 h-4 text-violet-600" />}
+                    iconBg="bg-violet-100"
+                    action={
+                      <button
+                        onClick={() => {
+                          const end = servico.clienteInfo.endereco;
+                          const parts = [
+                            end.rua,
+                            end.numero,
+                            end.bairro,
+                            end.cidade && end.uf ? `${end.cidade} - ${end.uf}` : end.cidade || end.uf,
+                            end.cep,
+                          ].filter(Boolean);
+                          sessionStorage.removeItem("routeAddresses");
+                          navigate("/geo-localizacao", {
+                            state: { address: parts.join(", ") },
+                          });
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors font-medium text-xs shadow-sm whitespace-nowrap cursor-pointer"
+                      >
+                        <MapPin className="w-3.5 h-3.5" />
+                        Ver no Mapa
+                      </button>
+                    }
+                  >
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 mb-4">
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Rua</p>
+                        <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.rua || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Número</p>
+                        <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.numero || "S/N"}</p>
+                      </div>
+                      {servico.clienteInfo.endereco.complemento && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Complemento</p>
+                          <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.complemento}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Bairro</p>
+                        <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.bairro || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Cidade / UF</p>
+                        <p className="text-sm text-gray-800 font-medium">
+                          {servico.clienteInfo.endereco.cidade || "—"} / {servico.clienteInfo.endereco.uf || "—"}
+                        </p>
+                      </div>
+                      {servico.clienteInfo.endereco.cep && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">CEP</p>
+                          <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.cep}</p>
                         </div>
                       )}
                     </div>
@@ -449,7 +485,7 @@ export default function ServicoDetalhe() {
                         value={formData.servicoNome}
                         onChange={handleChange}
                         placeholder="Nome do serviço"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
+                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
                       />
                     </FormField>
 
@@ -469,7 +505,7 @@ export default function ServicoDetalhe() {
                         name="precoBase"
                         value={formData.precoBase}
                         onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
+                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
                       />
                     </FormField>
 
@@ -480,7 +516,7 @@ export default function ServicoDetalhe() {
                         name="valorTotal"
                         value={formData.valorTotal}
                         onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
+                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
                       />
                     </FormField>
 
@@ -489,7 +525,7 @@ export default function ServicoDetalhe() {
                         name="formaPagamento"
                         value={formData.formaPagamento}
                         onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none bg-white cursor-pointer"
+                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none bg-white cursor-pointer"
                       >
                         <option value="">A negociar</option>
                         <option value="Dinheiro">Dinheiro</option>
@@ -507,7 +543,7 @@ export default function ServicoDetalhe() {
                         name="etapa"
                         value={formData.etapa}
                         onChange={handleChange}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none bg-white cursor-pointer"
+                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none bg-white cursor-pointer"
                       >
                         {ETAPAS_SERVICO.map((etapa) => (
                           <option key={etapa.valor} value={etapa.valor}>{etapa.label}</option>
@@ -523,7 +559,7 @@ export default function ServicoDetalhe() {
                           value={formData.descricao}
                           onChange={handleChange}
                           placeholder="Descreva detalhes do serviço..."
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none resize-none"
+                          className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none resize-none"
                         />
                       </FormField>
                     </div>
@@ -537,7 +573,6 @@ export default function ServicoDetalhe() {
                           onClick={handleAgendarOrcamento}
                           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
                         >
-                          <ClipboardList className="w-4 h-4" />
                           Agendar Orçamento
                         </button>
                       )}
@@ -546,7 +581,6 @@ export default function ServicoDetalhe() {
                           onClick={handleAgendarServico}
                           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm shadow-sm"
                         >
-                          <Calendar className="w-4 h-4" />
                           Agendar Serviço
                         </button>
                       )}
@@ -640,7 +674,7 @@ export default function ServicoDetalhe() {
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full shrink-0" />
                         <span className="font-mono font-medium">#AG{ag.id.toString().padStart(3, "0")}</span>
                         <span className="text-amber-600">·</span>
-                        <span>{ag.tipoAgendamento === "ORCAMENTO" ? "📊 Orçamento" : "🔧 Execução"}</span>
+                        <span>{ag.tipoAgendamento === "ORCAMENTO" ? "Orçamento" : "Execução"}</span>
                         <span className="text-amber-600">·</span>
                         <span>{ag.dataAgendamento}</span>
                       </li>
@@ -694,12 +728,13 @@ export default function ServicoDetalhe() {
 
 /* ── Sub-components ── */
 
-function SectionCard({ title, icon, iconBg, badge, children }) {
+function SectionCard({ title, icon, iconBg, badge, action, children }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
       <div className="flex items-center justify-center gap-3 px-5 py-4 border-b border-gray-100 relative">
         <div className={`p-2 rounded-lg ${iconBg}`}>{icon}</div>
         <h2 className="font-semibold text-gray-800 text-base text-center">{title}</h2>
+        {action && action}
         {badge !== undefined && (
           <span className="absolute right-5 px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-semibold rounded-full">{badge}</span>
         )}
@@ -744,7 +779,7 @@ function AppointmentCard({ agendamento, onEdit }) {
       <div className="flex items-center justify-center gap-2 flex-wrap mb-4 relative">
         <div className="flex items-center gap-2 flex-wrap justify-center">
           <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${isOrcamento ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-            {isOrcamento ? "📊 Orçamento" : "🔧 Execução"}
+            {isOrcamento ? "Orçamento" : "Execução"}
           </span>
           <span className={`px-2.5 py-1 text-xs font-medium rounded-lg border ${statusStyle}`}>
             {statusNome || "N/A"}
