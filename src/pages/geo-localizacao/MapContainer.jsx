@@ -20,6 +20,7 @@ import {
   GripVertical,
   Store,
 } from "lucide-react";
+import Button from "../../components/ui/Button/Button.component";
 
 const MAPS_KEY = import.meta.env.VITE_MAPS_KEY;
 
@@ -312,15 +313,14 @@ export default function RotasResponsivoCompacto() {
             {/* Cabeçalho da página de rotas */}
             <div className="w-full max-w-[1500px] shrink-0 mb-8 relative flex items-center justify-center">
               <div className="absolute left-0">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => window.history.back()}
-                  className="p-2 flex flex-row gap-2 cursor-pointer bg-white/50 rounded hover:bg-white transition"
+                  startIcon={<ArrowLeft size={18} />}
                 >
-                  <ArrowLeft size={18} />
-                  <span className="text-sm sm:text-lg font-semibold text-gray-600">
-                    Voltar
-                  </span>
-                </button>
+                  Voltar
+                </Button>
               </div>
 
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -351,19 +351,18 @@ export default function RotasResponsivoCompacto() {
                       className="w-10 sm:w-24 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#002B4E]"
                       placeholder="Nº"
                     />
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() =>
                         addCep(
                           cepInputRef.current.value,
                           numeroInputRef.current.value,
                         )
                       }
-                      className="bg-[#002B4E] hover:bg-[#004074] text-white py-1.5 px-3 rounded-lg transition shadow-md hover:shadow-lg cursor-pointer"
                     >
-                      <span className="text-sm sm:text-md font-semibold text-white">
-                        Adicionar
-                      </span>
-                    </button>
+                      Adicionar
+                    </Button>
                   </div>
                 </div>
 

@@ -9,6 +9,7 @@ import {
   Save,
 } from "lucide-react";
 import { IMaskInput } from "react-imask";
+import Button from "../../../../components/ui/Button/Button.component";
 
 const getFuncionarioInicial = () => ({
   nome: "",
@@ -222,20 +223,16 @@ export default function FuncionarioForm({
 
           {/* Footer */}
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-            >
+            <Button variant="ghost" onClick={handleClose}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
+              variant="primary"
+              startIcon={<Save className="w-4 h-4" />}
             >
-              <Save className="w-4 h-4" />
               {modoEdicao ? "Salvar Alterações" : "Criar Funcionário"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import Api from "../../../api/client/Api";
 import PedidosService from "../../../api/services/pedidosService";
 import EditarAgendamentoModal from "./EditarAgendamentoModal";
+import Button from "../../../components/ui/Button/Button.component";
 
 // Mantenha os valores EXATAMENTE iguais ao que está no banco de dados (nome da etapa)
 const ETAPAS_SERVICO = [
@@ -1032,38 +1033,37 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-              >
+              <Button variant="ghost" onClick={onClose}>
                 Fechar
-              </button>
+              </Button>
 
               {mostrarBotaoAgendarOrcamento() && (
-                <button
+                <Button
+                  variant="primary"
                   onClick={handleAgendarOrcamento}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+                  startIcon={<ClipboardList className="w-4 h-4" />}
                 >
-                  <ClipboardList className="w-4 h-4" />
                   Agendar Orçamento
-                </button>
+                </Button>
               )}
 
               {mostrarBotaoAgendarServico() && (
-                <button
+                <Button
+                  variant="primary"
                   onClick={handleAgendarServico}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium"
+                  startIcon={<Calendar className="w-4 h-4" />}
+                  className="bg-green-600 hover:bg-green-700"
                 >
-                  <Calendar className="w-4 h-4" />
                   Agendar Serviço
-                </button>
+                </Button>
               )}
             </div>
 
             <div className="flex gap-3">
               {modoEdicao ? (
                 <>
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       setModoEdicao(false);
                       // Normaliza na mão para cancelar (reseta estado)
@@ -1082,36 +1082,32 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                         progressoTotal: 7,
                       });
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
                   >
                     Cancelar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     onClick={handleSave}
                     disabled={loading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 font-medium"
-                  >
-                    {loading ? (
-                      <>
+                    startIcon={
+                      loading ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
+                      ) : (
                         <Save className="w-4 h-4" />
-                        Salvar
-                      </>
-                    )}
-                  </button>
+                      )
+                    }
+                  >
+                    {loading ? "Salvando..." : "Salvar"}
+                  </Button>
                 </>
               ) : (
-                <button
+                <Button
+                  variant="primary"
                   onClick={() => setModoEdicao(true)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+                  startIcon={<Edit className="w-4 h-4" />}
                 >
-                  <Edit className="w-4 h-4" />
                   Editar
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -1183,17 +1179,19 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
               </div>
             </div>
             <div className="mt-4 flex gap-3">
-              <button
+              <Button
+                variant="ghost"
                 onClick={cancelarExclusaoAgendamentos}
                 disabled={loading}
-                className="flex-1 h-11 rounded-lg border-2 border-slate-300 bg-white text-slate-700 font-semibold cursor-pointer hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                fullWidth
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={confirmarExclusaoAgendamentos}
                 disabled={loading}
-                className="flex-1 h-11 rounded-lg bg-red-600 text-white font-semibold cursor-pointer hover:bg-red-700 shadow-md disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                fullWidth
               >
                 {loading ? (
                   <>
@@ -1203,7 +1201,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 ) : (
                   <>Sim, Excluir Todos</>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

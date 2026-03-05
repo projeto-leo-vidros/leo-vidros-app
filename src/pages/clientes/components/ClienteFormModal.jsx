@@ -6,6 +6,7 @@ import PropTypes from "prop-types";
 import { User, X, Save } from "lucide-react";
 import { clienteSchema } from "../../../lib/schemas";
 import FormField from "../../../components/ui/Form/FormField";
+import Button from "../../../components/ui/Button/Button.component";
 
 //  Valores padrão do formulário
 const DEFAULT_VALUES = {
@@ -373,25 +374,25 @@ export default function ClienteFormModal({
 
           {/* Footer */}
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={handleClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={submitting}
-              className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+              startIcon={<Save className="w-4 h-4" />}
             >
-              <Save className="w-4 h-4" />
               {submitting
                 ? "Salvando..."
                 : modoEdicao
                   ? "Salvar Alteracoes"
                   : "Criar Cliente"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

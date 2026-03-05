@@ -531,13 +531,14 @@ export default function Estoque() {
                       />
                     </div>
                     {/* Exportar */}{" "}
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={openExportModal}
-                      className="flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      startIcon={<Download className="w-4 h-4" />}
                     >
-                      <Download className="w-4 h-4" />
                       Exportar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -625,14 +626,17 @@ export default function Estoque() {
                     resultados
                   </p>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setPagina((p) => Math.max(p - 1, 1))}
                       disabled={pagina === 1}
-                      className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Anterior
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() =>
                         setPagina((p) =>
                           Math.min(p + 1, paginationData.totalPaginas),
@@ -642,10 +646,9 @@ export default function Estoque() {
                         pagina === paginationData.totalPaginas ||
                         paginationData.totalPaginas === 0
                       }
-                      className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Próximo
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

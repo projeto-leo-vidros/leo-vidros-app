@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { ArrowRightLeft, ChevronDown, Hash, AlertCircle } from "lucide-react";
 import Api from "../../../../api/client/Api";
 import { useNavigate } from "react-router-dom";
+import Button from "../../../../components/ui/Button/Button.component";
 
 const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
   const navigate = useNavigate();
@@ -167,19 +168,19 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
         </div>
 
         <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="rounded-lg border-2 border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSaveClick}
             disabled={loading || quantidade <= 0 || success}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {loading ? "Processando..." : currentItemIndex < itemsInfo.length - 1 ? "Próximo Item" : "Finalizar"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

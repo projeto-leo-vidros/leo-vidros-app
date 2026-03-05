@@ -16,6 +16,7 @@ import {
   onlyLetters,
 } from "../../../utils/masks";
 import SuccessModal from "../../../components/overlay/Modal/SuccessModal";
+import Button from "../../../components/ui/Button/Button.component";
 import {
   pedidoProdutoEtapa0Schema,
   pedidoProdutoEtapa1Schema,
@@ -671,14 +672,15 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                       Adicione os produtos e quantidades
                     </p>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="primary"
+                    size="sm"
                     onClick={handleAddProduto}
-                    className="px-4 py-2 bg-[#007EA7] texte-sm text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2"
+                    startIcon={<Plus className="w-4 h-4" />}
                   >
-                    <Plus className="w-4 h-4" />
                     Adicionar Produto
-                  </button>
+                  </Button>
                 </div>
 
                 {formData.produtos.length === 0 ? (
@@ -983,42 +985,42 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           <div className="px-8 py-4 border-t bg-gray-50 flex justify-between">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={onClose}
               disabled={loading}
-              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               Cancelar
-            </button>
+            </Button>
 
             <div className="flex gap-3">
               {currentStep > 0 && (
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setCurrentStep(currentStep - 1)}
                   disabled={loading}
-                  className="px-5 py-2.5 border border-gray-300 rounded-md cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
                 >
                   Voltar
-                </button>
+                </Button>
               )}
 
               {currentStep < steps.length - 1 ? (
-                <button
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={handleNext}
                   disabled={loading}
-                  className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 font-semibold"
                 >
                   Próxima Etapa
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={handleSave}
                   disabled={loading}
-                  className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 font-semibold flex items-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -1028,7 +1030,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                   ) : (
                     <>Salvar Pedido</>
                   )}
-                </button>
+                </Button>
               )}
             </div>
           </div>

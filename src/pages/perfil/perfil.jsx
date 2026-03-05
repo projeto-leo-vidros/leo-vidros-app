@@ -18,6 +18,7 @@ import {
 import { cepMask } from "../../utils/masks.js";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import Header from "../../components/layout/Header/Header";
+import Button from "../../components/ui/Button/Button.component";
 import DefaultAvatar from "../../assets/Avatar.jpg";
 import { useUser } from "../../context/UserContext.jsx";
 
@@ -617,12 +618,13 @@ export default function Perfil() {
                                 Segurança da Conta
                               </h3>
                               {isEditing && !isChangingPassword && (
-                                <button
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => setIsChangingPassword(true)}
-                                  className="text-sm text-[#0085cc] hover:text-[#006fa8] font-semibold cursor-pointer"
                                 >
                                   Alterar senha
-                                </button>
+                                </Button>
                               )}
                             </div>
 
@@ -670,7 +672,9 @@ export default function Perfil() {
                                   className="text-start gap-2"
                                 />
 
-                                <button
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={() => {
                                     setIsChangingPassword(false);
                                     setFormData((prev) => ({
@@ -679,10 +683,9 @@ export default function Perfil() {
                                       confirmarSenha: "",
                                     }));
                                   }}
-                                  className="text-sm font-semibold text-gray-600 hover:text-gray-800 cursor-pointer"
                                 >
                                   Cancelar alteração de senha
-                                </button>
+                                </Button>
                               </div>
                             ) : (
                               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -802,29 +805,19 @@ export default function Perfil() {
                         </div>
                       )}
                       <div className="pt-4 flex justify-end">
-                        <button
+                        <Button
+                          variant="primary"
                           onClick={toggleEdit}
                           disabled={loading}
-                          className={`flex items-center gap-2 px-4 py-3 cursor-pointer rounded-lg font-semibold text-white shadow-lg transition-all hover:scale-105 ${
-                            loading
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : isEditing
-                                ? "bg-green-700 hover:bg-green-800"
-                                : "bg-[#007EA7] hover:bg-[#006fa8]"
-                          }`}
+                          className={isEditing ? "bg-green-700 hover:bg-green-800" : ""}
+                          endIcon={!loading ? (isEditing ? <Save size={20} /> : <Edit2 size={20} />) : undefined}
                         >
                           {loading
                             ? "Salvando..."
                             : isEditing
                               ? "Salvar Alterações"
                               : "Editar Informações"}
-                          {!loading &&
-                            (isEditing ? (
-                              <Save size={20} />
-                            ) : (
-                              <Edit2 size={20} />
-                            ))}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import EmailIcon from "@mui/icons-material/Email";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Mail, ArrowLeft } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
@@ -112,7 +111,7 @@ const EsqueceuSenha = () => {
                 onClick={() => navigate("/Login")}
                 className="flex items-center gap-2 text-[#007EA7] hover:text-[#005f73] transition-colors"
               >
-                <ArrowBackIcon className="text-xl cursor-pointer" />
+                <ArrowLeft size={20} className="cursor-pointer" />
                 <span className="text-md font-semibold cursor-pointer">
                   Voltar ao login
                 </span>
@@ -148,7 +147,7 @@ const EsqueceuSenha = () => {
                       E-mail
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <EmailIcon className="text-[#6b7280] text-3xl" />
+                      <Mail size={30} className="text-[#6b7280]" />
                       <input
                         id="email"
                         type="email"

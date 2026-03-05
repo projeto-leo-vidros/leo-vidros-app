@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, Clock, X, Save, AlertCircle } from "lucide-react";
 import agendamentosService from "../../../api/services/agendamentosService";
+import Button from "../../../components/ui/Button/Button.component";
 
 const EditarAgendamentoSimples = ({
   isOpen,
@@ -202,19 +203,20 @@ const EditarAgendamentoSimples = ({
 
         {/* Footer */}
         <div className="border-t bg-gray-50 px-6 py-4 flex justify-end gap-3">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={handleCancel}
             disabled={loading}
-            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
             onClick={handleSave}
             disabled={loading}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold disabled:opacity-50"
+            startIcon={!loading ? <Save className="w-4 h-4" /> : undefined}
           >
             {loading ? (
               <>
@@ -222,12 +224,9 @@ const EditarAgendamentoSimples = ({
                 Salvando...
               </>
             ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Salvar Alterações
-              </>
+              "Salvar Alterações"
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

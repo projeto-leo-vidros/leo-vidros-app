@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import agendamentosService from "../../../api/services/agendamentosService";
+import Button from "../../../components/ui/Button/Button.component";
 
 // Status disponíveis para agendamentos
 const STATUS_AGENDAMENTO = [
@@ -490,30 +491,31 @@ const EditarAgendamentoModal = ({
 
           {/* Footer */}
           <div className="border-t bg-gray-50 px-6 py-4 flex justify-between items-center">
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading}
-              className="px-4 py-2.5 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
+              startIcon={<Trash2 className="w-4 h-4" />}
             >
-              <Trash2 className="w-4 h-4" />
               Cancelar Agendamento
-            </button>
+            </Button>
 
             <div className="flex gap-3">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handleCancel}
                 disabled={loading}
-                className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
               >
                 Fechar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleSave}
                 disabled={loading}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold disabled:opacity-50"
+                startIcon={!loading ? <Save className="w-4 h-4" /> : undefined}
               >
                 {loading ? (
                   <>
@@ -521,12 +523,9 @@ const EditarAgendamentoModal = ({
                     Salvando...
                   </>
                 ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Salvar Alterações
-                  </>
+                  "Salvar Alterações"
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -559,20 +558,22 @@ const EditarAgendamentoModal = ({
             </p>
 
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
+                fullWidth
               >
                 Voltar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50"
+                fullWidth
               >
                 {loading ? "Cancelando..." : "Sim, Cancelar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

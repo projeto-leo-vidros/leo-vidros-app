@@ -403,18 +403,14 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
 
           {/* Footer */}
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-            >
+            <Button variant="ghost" onClick={onClose}>
               Fechar
-            </button>
+            </Button>
 
             {modoEdicao ? (
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     setModoEdicao(false);
                     setFormData({
@@ -426,38 +422,32 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                       produtos: pedido.produtos || [],
                     });
                   }}
-                  className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                 >
                   Cancelar
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="primary"
                   onClick={handleSave}
                   disabled={loading}
-                  className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 flex items-center gap-2 font-semibold"
-                >
-                  {loading ? (
-                    <>
+                  startIcon={
+                    loading ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
+                    ) : (
                       <Save className="w-4 h-4" />
-                      Salvar Alterações
-                    </>
-                  )}
-                </button>
+                    )
+                  }
+                >
+                  {loading ? "Salvando..." : "Salvar Alterações"}
+                </Button>
               </div>
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 onClick={() => setModoEdicao(true)}
-                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
+                startIcon={<Edit className="w-4 h-4" />}
               >
-                <Edit className="w-4 h-4" />
                 Editar
-              </button>
+              </Button>
             )}
           </div>
         </div>

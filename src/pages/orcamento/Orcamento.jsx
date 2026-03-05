@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
+import Button from "../../components/ui/Button/Button.component";
 
 // Gera o número do orçamento no formato ORC-ANO-P{id}
 const gerarNumeroOrcamento = (pedidoId) => {
@@ -363,12 +364,13 @@ const OrcamentoItens = ({
           Itens do Orçamento
         </h2>
       </div>
-      <button
+      <Button
+        variant="secondary"
         onClick={onAdd}
-        className="flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.5px] border-[var(--primary-color)] bg-blue-50 px-4 py-2 text-sm font-semibold text-[var(--primary-color)] transition-colors hover:bg-blue-100"
+        startIcon={<Plus size={15} />}
       >
-        <Plus size={15} /> Adicionar Item
-      </button>
+        Adicionar Item
+      </Button>
     </div>
 
     <div className="flex flex-col gap-7 p-8">
@@ -708,18 +710,19 @@ export default function OrcamentoPage() {
                   : "Nenhuma alteração salva ainda"}
               </span>
               <div className="flex gap-4">
-                <button onClick={() => navigate(-1)} className={tw.btnOutline}>
+                <Button variant="ghost" onClick={() => navigate(-1)}>
                   Cancelar
-                </button>
-                <button onClick={handleSaveDraft} className={tw.btnSecondary}>
+                </Button>
+                <Button variant="secondary" onClick={handleSaveDraft}>
                   Salvar Rascunho
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
                   onClick={handleSaveAndDownload}
-                  className={`${tw.btnPrimary} flex items-center gap-2`}
+                  startIcon={<Download size={15} />}
                 >
-                  <Download size={15} /> Salvar e Baixar
-                </button>
+                  Salvar e Baixar
+                </Button>
               </div>
             </div>
           </div>

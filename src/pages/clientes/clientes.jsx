@@ -11,6 +11,7 @@ import ClienteImportModal from "./components/ClienteImportModal";
 import { Divider } from "@mui/material";
 import Api from "../../api/client/Api";
 import { formatCurrency, formatPhone } from "../../utils/formatters";
+import Button from "../../components/ui/Button/Button.component";
 
 const getPrimaryAddress = (cliente) => {
   if (
@@ -270,12 +271,13 @@ export default function Clientes() {
               {/* Barra de ações */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
                 <div className="flex gap-2 w-full md:w-auto">
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={abrirModalCriar}
-                    className="bg-[#007EA7] text-white font-semibold py-3 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
+                    startIcon={<Plus className="w-4 h-4" />}
                   >
                     Novo Cliente
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="flex items-center gap-3 w-full justify-end">
@@ -320,13 +322,14 @@ export default function Clientes() {
                     </select>
 
                     {/* Importar */}
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setOpenImportModal(true)}
-                      className="flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-md text-gray-700 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+                      startIcon={<Upload className="w-4 h-4" />}
                     >
-                      <Upload className="w-4 h-4" />
                       Importar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -470,22 +473,24 @@ export default function Clientes() {
                     resultados
                   </p>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
                       disabled={pagina === 1}
-                      className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Anterior
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() =>
                         setPagina((prev) => Math.min(prev + 1, totalPaginas))
                       }
                       disabled={pagina === totalPaginas}
-                      className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Próximo
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

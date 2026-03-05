@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import EmailIcon from "@mui/icons-material/Email";
-import BadgeIcon from "@mui/icons-material/Badge";
-import PhoneIcon from "@mui/icons-material/Phone";
+import { UserCircle, Mail, BadgeCheck, Phone } from "lucide-react";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -173,7 +170,7 @@ function Cadastro() {
                       Nome
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <AccountCircle className="text-[#6b7280] text-3xl" />
+                      <UserCircle size={30} className="text-[#6b7280]" />
                       <input
                         type="text"
                         placeholder="Digite seu nome"
@@ -199,7 +196,7 @@ function Cadastro() {
                       Email
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <EmailIcon className="text-[#6b7280] text-3xl" />
+                      <Mail size={30} className="text-[#6b7280]" />
                       <input
                         type="email"
                         placeholder="Digite seu email"
@@ -225,7 +222,7 @@ function Cadastro() {
                       CPF
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <BadgeIcon className="text-[#6b7280] text-3xl" />
+                      <BadgeCheck size={30} className="text-[#6b7280]" />
                       <input
                         type="text"
                         placeholder="Digite seu CPF"
@@ -251,7 +248,7 @@ function Cadastro() {
                       Telefone
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <PhoneIcon className="text-[#6b7280] text-3xl" />
+                      <Phone size={30} className="text-[#6b7280]" />
                       <input
                         type="text"
                         placeholder="Digite seu telefone"
@@ -289,13 +286,13 @@ function Cadastro() {
                       : "Solicitar cadastro"}
                 </Button>
                 {step > 1 && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="lg"
                     onClick={() => setStep(step - 1)}
-                    className="px-8 py-4 text-[#007EA7] hover:bg-[#f0f0f0] rounded-lg transition-colors font-medium cursor-pointer"
                   >
                     Voltar
-                  </button>
+                  </Button>
                 )}
               </div>
             </form>

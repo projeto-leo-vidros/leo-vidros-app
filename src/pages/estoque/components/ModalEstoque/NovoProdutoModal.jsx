@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Package, ChevronDown, Plus, X, AlertCircle } from "lucide-react";
 import Api from "../../../../api/client/Api";
+import Button from "../../../../components/ui/Button/Button.component";
 
 const useProductAPI = () => {
   const salvarProduto = async (produtoData) => {
@@ -354,13 +355,14 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                   </p>
                 </div>
 
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={handleAddAtributo}
-                  className="px-4 py-2 bg-[#007EA7] text-white rounded-lg shadow hover:bg-[#006891] transition-colors"
+                  startIcon={<Plus className="w-4 h-4" />}
                 >
-                  <Plus className="inline-block w-4 h-4 mr-2" />
                   Adicionar
-                </button>
+                </Button>
               </div>
 
               {formData.atributos.length === 0 ? (
@@ -514,38 +516,38 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
         {/* Footer */}
         <div className="px-8 py-5 border-t bg-gray-50 flex justify-between">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
-          </button>
+          </Button>
 
           <div className="flex gap-3">
             {currentStep > 0 && (
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setCurrentStep(currentStep - 1)}
                 disabled={loading}
-                className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Voltar
-              </button>
+              </Button>
             )}
 
             {currentStep < steps.length - 1 ? (
-              <button
+              <Button
+                variant="primary"
                 onClick={handleNext}
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Próxima Etapa
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="primary"
                 onClick={handleSave}
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? (
                   <>
@@ -555,7 +557,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                 ) : (
                   <>{isEditing ? "Salvar Alterações" : "Salvar Produto"}</>
                 )}
-              </button>
+              </Button>
             )}
           </div>
         </div>

@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import LockIcon from "@mui/icons-material/Lock";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { UserCircle, Lock, Eye, EyeOff } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
@@ -117,7 +114,7 @@ function Login() {
                       Email
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <AccountCircle className="text-[#6b7280] text-3xl" />
+                      <UserCircle size={30} className="text-[#6b7280]" />
                       <input
                         id="email"
                         type="email"
@@ -138,7 +135,7 @@ function Login() {
                       Senha
                     </label>
                     <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <LockIcon className="text-[#6b7280] text-3xl" />
+                      <Lock size={30} className="text-[#6b7280]" />
                       <input
                         id="senha"
                         type={showPassword ? "text" : "password"}
@@ -153,9 +150,9 @@ function Login() {
                         className="text-[#6b7280] hover:text-[#111827] transition-colors cursor-pointer"
                       >
                         {showPassword ? (
-                          <VisibilityOff className="text-3xl" />
+                          <EyeOff size={30} />
                         ) : (
-                          <Visibility className="text-3xl" />
+                          <Eye size={30} />
                         )}
                       </button>
                     </div>

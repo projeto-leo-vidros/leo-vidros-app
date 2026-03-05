@@ -7,6 +7,7 @@ import FuncionarioForm from "./components/ModalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "./components/ModalFuncionarios/DeleteFuncionario";
 import AgendaFuncionario from "./components/ModalFuncionarios/AgendaFuncionario";
 import Api from "../../api/client/Api";
+import Button from "../../components/ui/Button/Button.component";
 
 export default function Funcionarios() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -162,12 +163,13 @@ export default function Funcionarios() {
             <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-6">
               {/* Barra de ações */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                <button
+                <Button
+                  variant="primary"
                   onClick={abrirModalCriar}
-                  className="bg-[#007EA7] text-white font-semibold py-2.5 px-6 rounded-md cursor-pointer hover:bg-[#006891] transition-colors w-full md:w-auto"
+                  className="w-full md:w-auto"
                 >
                   Novo Funcionário
-                </button>
+                </Button>
 
                 <div className="relative w-full md:max-w-md">
                   <input
@@ -315,22 +317,24 @@ export default function Funcionarios() {
                   {funcionariosFiltrados.length} resultados
                 </span>
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
                     disabled={pagina === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Anterior
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setPagina((prev) => Math.min(prev + 1, totalPaginas))
                     }
                     disabled={pagina === totalPaginas}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Próximo
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { cpfMask, phoneMask, onlyLetters, cepMask } from "../../../utils/masks";
+import Button from "../../../components/ui/Button/Button.component";
 import {
   pedidoServicoEtapa0Schema,
   pedidoServicoEtapa1Schema,
@@ -333,7 +334,7 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
           {currentStep === 2 && (
             <div className="space-y-4">
-              <button onClick={handleAddServico} className="bg-[#007EA7] text-white p-2 rounded-lg flex items-center gap-2"><Plus size={16}/> Add Serviço</button>
+              <Button variant="primary" size="sm" onClick={handleAddServico} startIcon={<Plus size={16}/>}>Add Serviço</Button>
               {formData.servicos.map((s, i) => (
                 <div key={i} className="p-4 border rounded-lg bg-gray-50 space-y-3">
                   <input placeholder="Nome do serviço" className="w-full border p-2 rounded" value={s.nome} onChange={e => handleServicoChange(i, "nome", e.target.value)} />
@@ -352,12 +353,12 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <div className="px-8 py-4 border-t bg-gray-50 flex justify-between">
-          <button onClick={onClose} className="px-5 py-2 border rounded-lg">Cancelar</button>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <div className="flex gap-3">
-            {currentStep > 0 && <button onClick={() => setCurrentStep(c => c - 1)} className="px-5 py-2 border rounded-lg">Voltar</button>}
-            <button onClick={currentStep < 3 ? () => validateStep() && setCurrentStep(c => c + 1) : handleSave} className="bg-[#007EA7] text-white px-6 py-2 rounded-lg font-semibold">
+            {currentStep > 0 && <Button variant="secondary" onClick={() => setCurrentStep(c => c - 1)}>Voltar</Button>}
+            <Button variant="primary" onClick={currentStep < 3 ? () => validateStep() && setCurrentStep(c => c + 1) : handleSave}>
               {loading ? "Salvando..." : currentStep < 3 ? "Próximo" : "Salvar Pedido"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
 import ModalConfirmacao from "../pedidos/components/ModalAceiteOrRecusa/ModalAceiteOrRecusa";
 import Api from "../../api/client/Api";
 import { StatusSolicitacao, StatusSolicitacaoMap } from "../../types/enums";
+import Button from "../../components/ui/Button/Button.component";
 
 const ITENS_POR_PAGINA = 10;
 
@@ -244,22 +245,25 @@ export default function Acesso() {
                 </div>
                 {activeTab === "Pendentes" && (
                   <div className="flex gap-2 w-full md:w-auto justify-end relative z-50">
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={handleBulkApprove}
                       disabled={selectedItems.length === 0}
-                      className="border border-green-600 text-green-600 font-medium py-2 px-4 rounded-md hover:bg-green-50 transition-colors text-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      startIcon={<CheckCheck className="w-4 h-4" />}
+                      className="bg-green-600 hover:bg-green-700"
                     >
-                      <CheckCheck className="w-4 h-4" /> Aprovar (
-                      {selectedItems.length})
-                    </button>
-                    <button
+                      Aprovar ({selectedItems.length})
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={handleBulkReject}
                       disabled={selectedItems.length === 0}
-                      className="border border-red-600 text-red-600 font-medium py-2 px-4 rounded-md hover:bg-red-50 transition-colors text-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      startIcon={<XCircle className="w-4 h-4" />}
                     >
-                      <XCircle className="w-4 h-4" /> Recusar (
-                      {selectedItems.length})
-                    </button>
+                      Recusar ({selectedItems.length})
+                    </Button>
                   </div>
                 )}
               </div>
@@ -413,22 +417,26 @@ export default function Acesso() {
                   resultados
                 </p>
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setPagina((p) => Math.max(p - 1, 1))}
                     disabled={pagina === 1}
-                    className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    startIcon={<ChevronLeft className="w-4 h-4" />}
                   >
-                    <ChevronLeft className="w-4 h-4" /> Anterior
-                  </button>
-                  <button
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setPagina((p) => Math.min(p + 1, totalPaginas))
                     }
                     disabled={pagina === totalPaginas || totalPaginas === 0}
-                    className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    endIcon={<ChevronRight className="w-4 h-4" />}
                   >
-                    Próximo <ChevronRight className="w-4 h-4" />
-                  </button>
+                    Próximo
+                  </Button>
                 </div>
               </div>
             </div>

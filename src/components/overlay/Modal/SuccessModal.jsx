@@ -2,7 +2,7 @@ import Modal from "@mui/material/Modal";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { CheckCircle } from "lucide-react";
 
 export default function SuccessModal({
   open,
@@ -33,12 +33,9 @@ export default function SuccessModal({
           textAlign: "center",
         })}
       >
-        <CheckCircleIcon
-          sx={{
-            fontSize: 60,
-            color: "#22c55e",
-            mb: 2,
-          }}
+        <CheckCircle
+          size={60}
+          className="text-green-500 mb-2 mx-auto"
         />
 
         <Typography

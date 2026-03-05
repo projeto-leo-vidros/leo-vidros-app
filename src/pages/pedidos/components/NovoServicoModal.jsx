@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import axios from "axios";
+import Button from "../../../components/ui/Button/Button.component";
 import {
   cpfMask,
   phoneMask,
@@ -624,14 +625,14 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleChange}
                   />
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={handleBuscarCep}
                   disabled={loadingCep}
-                  className="w-40 h-12 bg-[#007EA7] text-white rounded-md hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-md cursor-pointer"
                 >
                   {loadingCep ? "Buscando..." : "Buscar"}
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-4 gap-4">
@@ -896,42 +897,42 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <div className="px-8 py-3 border-t bg-gray-50 flex justify-between">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
-          </button>
+          </Button>
 
           <div className="flex gap-3">
             {currentStep > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setCurrentStep(currentStep - 1)}
                 disabled={loading}
-                className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Voltar
-              </button>
+              </Button>
             )}
 
             {currentStep < steps.length - 1 ? (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleNext}
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#007EA7] font-semibold text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Próxima Etapa
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleSave}
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#007EA7] font-semibold text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? (
                   <>
@@ -941,7 +942,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 ) : (
                   <>Salvar Serviço</>
                 )}
-              </button>
+              </Button>
             )}
           </div>
         </div>

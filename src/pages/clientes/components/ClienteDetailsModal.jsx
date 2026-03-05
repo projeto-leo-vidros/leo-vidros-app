@@ -3,6 +3,7 @@ import { Modal } from "@mui/material";
 import PropTypes from "prop-types"; // Lembre-se que agora seu linter pode pedir isso
 import api from "../../../api/client/Api";
 import { formatCurrency } from "../../../utils/formatters";
+import Button from "../../../components/ui/Button/Button.component";
 
 export default function ClienteDetailsModal({
   open,
@@ -63,12 +64,12 @@ export default function ClienteDetailsModal({
       >
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">Detalhes do Cliente</h2>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-2 text-black transition-colors hover:bg-gray-100"
           >
             Fechar
-          </button>
+          </Button>
         </div>
 
         {loading ? (
