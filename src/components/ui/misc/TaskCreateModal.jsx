@@ -1404,10 +1404,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 Cancelar
               </Button>
               <Button
-                type="submit"
-                iconPosition="left"
-                size="md"
-                variant="btn-primary"
+                variant="primary"
+                className="w-full md:w-auto"
                 disabled={loading}
               >
                 {loading

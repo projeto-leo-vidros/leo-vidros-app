@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import { Search, Edit, Trash2, CalendarDays } from "lucide-react";
+import { Search, Edit, Trash2, CalendarDays, Plus } from "lucide-react";
 
 import FuncionarioForm from "./components/ModalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "./components/ModalFuncionarios/DeleteFuncionario";
@@ -166,7 +166,7 @@ export default function Funcionarios() {
                 <Button
                   variant="primary"
                   onClick={abrirModalCriar}
-                  className="w-full md:w-auto"
+                  startIcon={<Plus className="w-6 h-6" />}
                 >
                   Novo Funcionário
                 </Button>

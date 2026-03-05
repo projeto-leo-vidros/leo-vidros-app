@@ -47,7 +47,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--tertiary-color);
+  transition: ease-in-out 0.2s;
+  background: var(--secondary-color);
   color: var(--neutral-color-0);
   border-radius: 8px;
 }

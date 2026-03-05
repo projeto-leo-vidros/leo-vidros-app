@@ -6,7 +6,7 @@ import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import PedidosList from "./PedidosList";
 import ServicosList from "../servicos/ServicosList";
 import FilterDropdown from "./components/FilterDropdown";
-import { PackageOpen, Wrench, Filter, Search, ChevronDown } from "lucide-react";
+import { PackageOpen, Wrench, Filter, Search, ChevronDown, Plus } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
 
 export default function Pedidos() {
@@ -143,6 +143,7 @@ export default function Pedidos() {
                     variant="primary"
                     className="w-full md:w-auto"
                     onClick={handleNovoRegistroClick}
+                    startIcon={<Plus className="w-6 h-6" />}
                   >
                     Novo Registro
                   </Button>

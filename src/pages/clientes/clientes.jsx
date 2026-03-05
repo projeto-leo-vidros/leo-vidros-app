@@ -270,15 +270,14 @@ export default function Clientes() {
             <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
               {/* Barra de ações */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
-                <div className="flex gap-2 w-full md:w-auto">
                   <Button
                     variant="primary"
+                    size="sm"
                     onClick={abrirModalCriar}
-                    startIcon={<Plus className="w-4 h-4" />}
+                    startIcon={<Plus className="w-6 h-6" />}
                   >
                     Novo Cliente
                   </Button>
-                </div>
 
                 <div className="flex items-center gap-3 w-full justify-end">
                   {/* Busca */}
