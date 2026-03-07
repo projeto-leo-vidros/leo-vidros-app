@@ -21,6 +21,7 @@ import {
   Store,
 } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 const MAPS_KEY = import.meta.env.VITE_MAPS_KEY;
 
@@ -338,17 +339,17 @@ export default function RotasResponsivoCompacto() {
                     <MapPin size={14} /> Adicionar a Rota
                   </h3>
                   <div className="flex gap-2 items-center py-1">
-                    <input
+                    <UniversalInput
                       ref={cepInputRef}
                       onInput={(e) =>
                         (e.target.value = maskCep(e.target.value))
                       }
-                      className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#002B4E]"
+                      wrapperClassName="flex-1"
                       placeholder="CEP"
                     />
-                    <input
+                    <UniversalInput
                       ref={numeroInputRef}
-                      className="w-10 sm:w-24 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#002B4E]"
+                      wrapperClassName="w-10 sm:w-24"
                       placeholder="Nº"
                     />
                     <Button
@@ -513,15 +514,17 @@ export default function RotasResponsivoCompacto() {
 
                             {editingId === addr.id ? (
                               <div className="flex-1 flex gap-1">
-                                <input
+                                <UniversalInput
                                   id={`edit-cep-${addr.id}`}
                                   defaultValue={addr.cep}
-                                  className="w-full border border-blue-400 p-1 rounded text-[12px]"
+                                  wrapperClassName="flex-1"
+                                  className="border-blue-400 p-1 text-[12px]"
                                 />
-                                <input
+                                <UniversalInput
                                   id={`edit-num-${addr.id}`}
                                   defaultValue={addr.numero}
-                                  className="w-10 border border-blue-400 p-1 rounded text-[12px]"
+                                  wrapperClassName="w-10"
+                                  className="border-blue-400 p-1 text-[12px]"
                                 />
                                 <button
                                   onClick={() =>

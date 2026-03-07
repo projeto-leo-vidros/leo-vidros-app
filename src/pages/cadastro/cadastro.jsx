@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { UserCircle, Mail, BadgeCheck, Phone } from "lucide-react";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -165,21 +166,15 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      Nome
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <UserCircle size={30} className="text-[#6b7280]" />
-                      <input
-                        type="text"
-                        placeholder="Digite seu nome"
-                        value={nome}
-                        onChange={(e) => setNome(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="Nome"
+                      placeholder="Digite seu nome"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      startIcon={<UserCircle size={30} />}
+                    />
                   </motion.div>
                 )}
 
@@ -191,21 +186,16 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      Email
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <Mail size={30} className="text-[#6b7280]" />
-                      <input
-                        type="email"
-                        placeholder="Digite seu email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="Email"
+                      type="email"
+                      placeholder="Digite seu email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      startIcon={<Mail size={30} />}
+                    />
                   </motion.div>
                 )}
 
@@ -217,21 +207,15 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      CPF
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <BadgeCheck size={30} className="text-[#6b7280]" />
-                      <input
-                        type="text"
-                        placeholder="Digite seu CPF"
-                        value={cpf}
-                        onChange={handleCpfChange}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="CPF"
+                      placeholder="Digite seu CPF"
+                      value={cpf}
+                      onChange={handleCpfChange}
+                      startIcon={<BadgeCheck size={30} />}
+                    />
                   </motion.div>
                 )}
 
@@ -243,21 +227,15 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      Telefone
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <Phone size={30} className="text-[#6b7280]" />
-                      <input
-                        type="text"
-                        placeholder="Digite seu telefone"
-                        value={telefone}
-                        onChange={handleTelefoneChange}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="Telefone"
+                      placeholder="Digite seu telefone"
+                      value={telefone}
+                      onChange={handleTelefoneChange}
+                      startIcon={<Phone size={30} />}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>

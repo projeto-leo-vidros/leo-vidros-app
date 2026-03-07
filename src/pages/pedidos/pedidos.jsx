@@ -8,6 +8,7 @@ import ServicosList from "../servicos/ServicosList";
 import FilterDropdown from "./components/FilterDropdown";
 import { PackageOpen, Wrench, Filter, Search, ChevronDown, Plus } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 export default function Pedidos() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -150,13 +151,13 @@ export default function Pedidos() {
 
                   <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
                     <div className="relative w-full md:w-[350px]">
-                      <input
+                      <UniversalInput
+                        variant="search"
                         placeholder="Busque por..."
                         value={busca}
                         onChange={(e) => setBusca(e.target.value)}
-                        className="w-full h-10 pl-10 pr-4 rounded-md border border-slate-200 bg-slate-50 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:bg-white transition-all"
+                        startIcon={<Search className="w-3.5 h-3.5" />}
                       />
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     </div>
 
                     <div className="relative w-full md:w-auto py-1">

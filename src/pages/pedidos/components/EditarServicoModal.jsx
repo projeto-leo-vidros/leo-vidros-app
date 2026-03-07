@@ -18,6 +18,7 @@ import Api from "../../../api/client/Api";
 import PedidosService from "../../../api/services/pedidosService";
 import EditarAgendamentoModal from "./EditarAgendamentoModal";
 import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 // Mantenha os valores EXATAMENTE iguais ao que está no banco de dados (nome da etapa)
 const ETAPAS_SERVICO = [
@@ -64,18 +65,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     useState(false);
   const navigate = useNavigate();
 
-  // Helper para classes dinâmicas
-  const getInputClass = (isEditable) => {
-    return `w-full px-3 py-2 border rounded-lg transition-all duration-300 ${
-      isEditable
-        ? "bg-white border-gray-300 text-gray-900 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        : "bg-gray-100 border-transparent text-gray-500 cursor-not-allowed opacity-75"
-    }`;
-  };
 
-  const getLockedClass = () => {
-    return "w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed opacity-60";
-  };
 
   // --- FUNÇÃO AUXILIAR APENAS PARA LEITURA (Encontrar opção no dropdown) ---
   // Remove acentos apenas para comparar strings de forma segura
@@ -623,79 +613,50 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                     {/* Modo Edição */}
                     {modoEdicao && (
                       <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nome do Serviço
-                          </label>
-                          <input
-                            type="text"
-                            name="servicoNome"
-                            className={getInputClass(true)}
-                            value={formData.servicoNome || ""}
-                            onChange={handleChange}
-                            placeholder="Nome do serviço"
-                          />
-                        </div>
+                        <UniversalInput
+                          label="Nome do Serviço"
+                          name="servicoNome"
+                          value={formData.servicoNome || ""}
+                          onChange={handleChange}
+                          placeholder="Nome do serviço"
+                        />
 
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Código
-                            </label>
-                            <input
-                              type="text"
-                              className={getLockedClass()}
-                              value={formData.servicoCodigo || "Não informado"}
-                              readOnly
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Preço Base
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              name="precoBase"
-                              className={getInputClass(true)}
-                              value={formData.precoBase || 0}
-                              onChange={handleChange}
-                              placeholder="0.00"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Descrição
-                          </label>
-                          <textarea
-                            name="descricao"
-                            rows={3}
-                            className={getInputClass(true) + " resize-none"}
-                            value={formData.descricao}
+                          <UniversalInput
+                            label="Código"
+                            readOnly
+                            disabled
+                            value={formData.servicoCodigo || "Não informado"}
+                          />
+                          <UniversalInput
+                            label="Preço Base"
+                            type="number"
+                            step="0.01"
+                            name="precoBase"
+                            value={formData.precoBase || 0}
                             onChange={handleChange}
-                            placeholder="Descrição do serviço..."
+                            placeholder="0.00"
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Etapa Atual
-                          </label>
-                          <select
-                            name="etapa"
-                            className={getInputClass(true)}
-                            value={formData.etapa}
-                            onChange={handleChange}
-                          >
-                            {ETAPAS_SERVICO.map((etapa) => (
-                              <option key={etapa.valor} value={etapa.valor}>
-                                {etapa.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <UniversalInput
+                          as="textarea"
+                          label="Descrição"
+                          name="descricao"
+                          rows={3}
+                          value={formData.descricao}
+                          onChange={handleChange}
+                          placeholder="Descrição do serviço..."
+                        />
+
+                        <UniversalInput
+                          as="select"
+                          label="Etapa Atual"
+                          name="etapa"
+                          options={ETAPAS_SERVICO.map((etapa) => ({ value: etapa.valor, label: etapa.label }))}
+                          value={formData.etapa}
+                          onChange={handleChange}
+                        />
 
                         {/* Barra de Progresso */}
                         <div className="bg-gray-50 rounded-lg p-4">

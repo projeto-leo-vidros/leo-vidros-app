@@ -23,6 +23,7 @@ import FilterDropdown from "./components/EstoqueList/FilterDropdown";
 import EntradaSaidaEstoque from "./components/ModalEstoque/EntradaSaidaEstoque";
 import InativarProdutoModal from "./components/ModalEstoque/InativarProdutoModal";
 import { formatCurrency, parseCurrency } from "../../utils/formatters";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 const ITENS_POR_PAGINA = 6;
 
@@ -491,16 +492,13 @@ export default function Estoque() {
                 <div className="flex items-center gap-3 w-full justify-end">
                   {/* Busca */}
                   <div className="relative w-full max-w-lg">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Busque Por Nome ou Descrição..."
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
-                      />
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
+                    <UniversalInput
+                      variant="search"
+                      placeholder="Busque Por Nome ou Descrição..."
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      startIcon={<Search className="w-5 h-5" />}
+                    />
                   </div>
 
                   {/* Filtros */}
@@ -555,11 +553,10 @@ export default function Estoque() {
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-48px rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4 pr-1">
-                    <input
-                      type="checkbox"
+                    <UniversalInput
+                      as="checkbox"
                       checked={isAllSelectedOnPage}
                       onChange={handleSelectAllChange}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                   <div className="py-3 w-[15%] pl-2 pr-1">Nome</div>

@@ -12,6 +12,7 @@ import { Divider } from "@mui/material";
 import Api from "../../api/client/Api";
 import { formatCurrency, formatPhone } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 const getPrimaryAddress = (cliente) => {
   if (
@@ -282,43 +283,42 @@ export default function Clientes() {
                 <div className="flex items-center gap-3 w-full justify-end">
                   {/* Busca */}
                   <div className="relative w-full max-w-lg">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Busque por nome..."
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
-                      />
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
+                    <UniversalInput
+                      variant="search"
+                      placeholder="Busque por nome..."
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      startIcon={<Search className="w-5 h-5" />}
+                    />
                   </div>
 
                   {/* Filtros */}
                   <div className="flex gap-2 w-auto whitespace-nowrap">
                     {/* Ordenar */}
-                    <select
+                    <UniversalInput
+                      as="select"
                       value={ordenar}
                       onChange={(e) => setOrdenar(e.target.value)}
-                      className="border border-gray-300 py-2.5 px-4 rounded-md text-md text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors"
-                    >
-                      <option value="recentes">Recentes</option>
-                      <option value="antigos">Antigos</option>
-                      <option value="az">A-Z</option>
-                      <option value="za">Z-A</option>
-                    </select>
+                      options={[
+                        { value: "recentes", label: "Recentes" },
+                        { value: "antigos", label: "Antigos" },
+                        { value: "az", label: "A-Z" },
+                        { value: "za", label: "Z-A" },
+                      ]}
+                    />
 
                     {/* Situação */}
-                    <select
+                    <UniversalInput
+                      as="select"
                       value={situacao}
                       onChange={(e) => setSituacao(e.target.value)}
-                      className="border border-gray-300 py-2.5 px-4 rounded-md text-md text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors"
-                    >
-                      <option value="Todos">Todos</option>
-                      <option value="Ativo">Ativo</option>
-                      <option value="Inativo">Inativo</option>
-                      <option value="Finalizado">Finalizado</option>
-                    </select>
+                      options={[
+                        { value: "Todos", label: "Todos" },
+                        { value: "Ativo", label: "Ativo" },
+                        { value: "Inativo", label: "Inativo" },
+                        { value: "Finalizado", label: "Finalizado" },
+                      ]}
+                    />
 
                     {/* Importar */}
                     <Button
@@ -338,14 +338,13 @@ export default function Clientes() {
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-48px rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4 pr-1">
-                    <input
-                      type="checkbox"
+                    <UniversalInput
+                      as="checkbox"
                       checked={
                         clientesFiltrados.length > 0 &&
                         selecionados.length === clientesFiltrados.length
                       }
                       onChange={handleSelectAllClick}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                   <div className="py-3 w-[25%] pl-2 pr-1">Nome</div>
@@ -389,13 +388,12 @@ export default function Clientes() {
                             }`}
                           >
                             <div className="py-3 w-[5%] pl-4 pr-1">
-                              <input
-                                type="checkbox"
+                              <UniversalInput
+                                as="checkbox"
                                 checked={isItemSelected}
                                 onChange={(event) =>
                                   handleSelectClick(event, c.id)
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
                             </div>
                             <div className="py-3 w-[25%] pl-2 pr-1 text-sm text-gray-900 truncate">

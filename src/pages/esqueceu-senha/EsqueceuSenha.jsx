@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, ArrowLeft } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
@@ -140,27 +141,18 @@ const EsqueceuSenha = () => {
                   transition={{ duration: 0.4 }}
                   className="space-y-6"
                 >
-                  <div className="space-y-3">
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-[#6b7280] text-left"
-                    >
-                      E-mail
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <Mail size={30} className="text-[#6b7280]" />
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="Digite seu e-mail"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
+                  <UniversalInput
+                    variant="underline"
+                    label="E-mail"
+                    id="email"
+                    type="email"
+                    placeholder="Digite seu e-mail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    startIcon={<Mail size={30} />}
+                    required
+                    disabled={loading}
+                  />
                 </motion.div>
               </AnimatePresence>
 

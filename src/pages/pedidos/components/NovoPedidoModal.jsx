@@ -2,7 +2,6 @@ import { useState, useEffect, Fragment } from "react"; // Fragment importado
 import PropTypes from "prop-types"; // PropTypes importado
 import {
   ShoppingCart,
-  ChevronDown,
   Plus,
   AlertCircle,
   User,
@@ -16,6 +15,7 @@ import {
   onlyLetters,
 } from "../../../utils/masks";
 import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 const usePedidoAPI = () => {
   const cadastrarCliente = async (clienteData) => {
@@ -510,110 +510,77 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               {formData.tipoCliente === "nenhum" && (
-                <div className="flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Nome para Identificação{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="clienteNome"
-                    placeholder="Ex: Fornecedor XYZ, Cliente Particular..."
-                    className="w-full border border-gray-300 rounded-md px-4 py-3"
-                    value={formData.clienteNome}
-                    onChange={handleChange}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Este nome será usado apenas para identificação do pedido
-                  </p>
-                </div>
+                <UniversalInput
+                  label="Nome para Identificação"
+                  required
+                  type="text"
+                  name="clienteNome"
+                  placeholder="Ex: Fornecedor XYZ, Cliente Particular..."
+                  value={formData.clienteNome}
+                  onChange={handleChange}
+                  hint="Este nome será usado apenas para identificação do pedido"
+                />
               )}
 
               {formData.tipoCliente === "existente" && (
-                <div className="flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Selecionar Cliente
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="clienteId"
-                      className="w-full border border-gray-300 rounded-md px-4 py-3 text-left z-10 appearance-none shadow-sm cursor-pointer"
-                      value={formData.clienteId}
-                      onChange={handleClienteExistenteChange}
-                    >
-                      <option value="">Selecione um cliente...</option>
-                      {clientesExistentes.map((cliente) => (
-                        <option key={cliente.id} value={String(cliente.id)}>
-                          {cliente.nome}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
+                <UniversalInput
+                  as="select"
+                  label="Selecionar Cliente"
+                  name="clienteId"
+                  placeholder="Selecione um cliente..."
+                  options={clientesExistentes.map((cliente) => ({
+                    value: String(cliente.id),
+                    label: cliente.nome,
+                  }))}
+                  value={formData.clienteId}
+                  onChange={handleClienteExistenteChange}
+                />
               )}
 
               {formData.tipoCliente === "novo" && (
                 <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                      Nome Completo <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="clienteNome"
-                      placeholder="Digite o nome do cliente"
-                      className="w-full border border-gray-300 rounded-md px-4 py-3"
-                      value={formData.clienteNome}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <UniversalInput
+                    label="Nome Completo"
+                    required
+                    type="text"
+                    name="clienteNome"
+                    placeholder="Digite o nome do cliente"
+                    value={formData.clienteNome}
+                    onChange={handleChange}
+                  />
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                        CPF <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="clienteCpf"
-                        placeholder="000.000.000-00"
-                        maxLength={14}
-                        className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                        value={formData.clienteCpf}
-                        onChange={handleChange}
-                      />
-                    </div>
+                    <UniversalInput
+                      label="CPF"
+                      required
+                      type="text"
+                      name="clienteCpf"
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      value={formData.clienteCpf}
+                      onChange={handleChange}
+                    />
 
-                    <div className="flex flex-col gap-1">
-                      <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                        Telefone <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="clienteTelefone"
-                        placeholder="(00) 00000-0000"
-                        maxLength={15}
-                        className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                        value={formData.clienteTelefone}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                      E-mail
-                    </label>
-                    <input
-                      type="email"
-                      name="clienteEmail"
-                      placeholder="cliente@email.com"
-                      className="w-full border border-gray-300 rounded-md px-4 py-3"
-                      value={formData.clienteEmail}
+                    <UniversalInput
+                      label="Telefone"
+                      required
+                      type="text"
+                      name="clienteTelefone"
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                      value={formData.clienteTelefone}
                       onChange={handleChange}
                     />
                   </div>
+
+                  <UniversalInput
+                    label="E-mail"
+                    type="email"
+                    name="clienteEmail"
+                    placeholder="cliente@email.com"
+                    value={formData.clienteEmail}
+                    onChange={handleChange}
+                  />
                 </div>
               )}
             </div>
@@ -658,68 +625,53 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                       key={index}
                       className="flex gap-20 p-4 w-full bg-gray-50 rounded-md border"
                     >
-                      <div className="flex flex-col items-start justify-center">
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Produto <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-10 py-2 appearance-none cursor-pointer z-50"
-                            value={produto.produtoId}
-                            onChange={(e) =>
-                              handleProdutoChange(
-                                index,
-                                "produtoId",
-                                e.target.value,
-                              )
-                            }
-                          >
-                            <option value="">Selecione...</option>
-                            {produtosDisponiveis.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.nome} - R$ {p.preco?.toFixed(2)}
-                              </option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        </div>
-                      </div>
+                      <UniversalInput
+                        as="select"
+                        label="Produto"
+                        required
+                        placeholder="Selecione..."
+                        options={produtosDisponiveis.map((p) => ({
+                          value: p.id,
+                          label: `${p.nome} - R$ ${p.preco?.toFixed(2)}`,
+                        }))}
+                        value={produto.produtoId}
+                        onChange={(e) =>
+                          handleProdutoChange(
+                            index,
+                            "produtoId",
+                            e.target.value,
+                          )
+                        }
+                      />
 
-                      <div className="w-24 flex flex-col gap-1 items-start justify-center">
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Qtd. <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          className="w-full border border-gray-300 rounded-md px-3 py-2"
-                          value={produto.quantidade}
-                          onChange={(e) =>
-                            handleProdutoChange(
-                              index,
-                              "quantidade",
-                              e.target.value,
-                            )
-                          }
-                        />
-                      </div>
+                      <UniversalInput
+                        label="Qtd."
+                        required
+                        type="number"
+                        min="1"
+                        wrapperClassName="w-24"
+                        value={produto.quantidade}
+                        onChange={(e) =>
+                          handleProdutoChange(
+                            index,
+                            "quantidade",
+                            e.target.value,
+                          )
+                        }
+                      />
 
-                      <div className="w-32 flex flex-col gap-1 items-start justify-center">
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Preço Unitário
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          className="w-full border border-gray-300 rounded-md px-3 py-2"
-                          value={produto.preco}
-                          onChange={(e) =>
-                            handleProdutoChange(index, "preco", e.target.value)
-                          }
-                          placeholder="0.00"
-                        />
-                      </div>
+                      <UniversalInput
+                        label="Preço Unitário"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        wrapperClassName="w-32"
+                        value={produto.preco}
+                        onChange={(e) =>
+                          handleProdutoChange(index, "preco", e.target.value)
+                        }
+                        placeholder="0.00"
+                      />
 
                       <div className="flex items-end">
                         <button
@@ -758,59 +710,41 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Data do Pedido
-                </label>
-                <input
-                  type="date"
-                  name="data"
-                  className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-100"
-                  value={formData.data}
-                  readOnly
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Data atual do sistema
-                </p>
-              </div>
+              <UniversalInput
+                label="Data do Pedido"
+                type="date"
+                name="data"
+                value={formData.data}
+                readOnly
+                hint="Data atual do sistema"
+              />
 
-              <div className="flex flex-col gap-2">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Forma de Pagamento <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="formaPagamento"
-                    className="w-full border border-gray-300 rounded-md px-4 py-3 appearance-none"
-                    value={formData.formaPagamento}
-                    onChange={handleChange}
-                  >
-                    <option value="Pix">Pix</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão de crédito">Cartão de crédito</option>
-                    <option value="Cartão de débito">Cartão de débito</option>
-                    <option value="Boleto">Boleto</option>
-                    <option value="Transferência">
-                      Transferência bancária
-                    </option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
+              <UniversalInput
+                as="select"
+                label="Forma de Pagamento"
+                required
+                name="formaPagamento"
+                options={[
+                  { value: "Pix", label: "Pix" },
+                  { value: "Dinheiro", label: "Dinheiro" },
+                  { value: "Cartão de crédito", label: "Cartão de crédito" },
+                  { value: "Cartão de débito", label: "Cartão de débito" },
+                  { value: "Boleto", label: "Boleto" },
+                  { value: "Transferência", label: "Transferência bancária" },
+                ]}
+                value={formData.formaPagamento}
+                onChange={handleChange}
+              />
 
-              <div className="flex flex-col gap-2">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Observações
-                </label>
-                <textarea
-                  name="descricao"
-                  placeholder="Observações adicionais sobre o pedido..."
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-md px-4 py-3 resize-none"
-                  value={formData.descricao}
-                  onChange={handleChange}
-                />
-              </div>
+              <UniversalInput
+                as="textarea"
+                label="Observações"
+                name="descricao"
+                placeholder="Observações adicionais sobre o pedido..."
+                rows={4}
+                value={formData.descricao}
+                onChange={handleChange}
+              />
 
               <div className="bg-gray-50 rounded-lg p-4 border">
                 <div className="flex justify-between items-center">

@@ -29,6 +29,7 @@ import MovimentacaoDetalheModal from "./components/ModalEstoque/MovimentacaoDeta
 import Api from "../../api/client/Api";
 import { formatCurrency } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -302,12 +303,12 @@ export default function ProductDetailPage() {
       <div className="relative">
         {isEditing ? (
           <div className="flex items-center gap-2">
-            <input
+            <UniversalInput
               type={type}
               value={value}
               onChange={(e) => handleChange(e.target.value)}
               onBlur={() => setEditing((prev) => ({ ...prev, [field]: false }))}
-              className="flex-1 px-3 py-2 border-2 border-[#005a7a] rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
+              className="flex-1"
               autoFocus
             />
             <Check className="w-4 h-4 text-green-600" />
@@ -691,11 +692,8 @@ export default function ProductDetailPage() {
                       >
                         <div className="flex-1 grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-left text-xs font-bold text-gray-600 mb-1">
-                              Tipo
-                            </label>
-                            <input
-                              type="text"
+                            <UniversalInput
+                              label="Tipo"
                               value={attr.tipo}
                               onChange={(e) =>
                                 handleAtributoChange(
@@ -705,15 +703,11 @@ export default function ProductDetailPage() {
                                 )
                               }
                               placeholder="Ex: cor, espessura"
-                              className="w-full px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                             />
                           </div>
                           <div>
-                            <label className="block text-left text-xs font-bold text-gray-600 mb-1">
-                              Valor
-                            </label>
-                            <input
-                              type="text"
+                            <UniversalInput
+                              label="Valor"
                               value={attr.valor}
                               onChange={(e) =>
                                 handleAtributoChange(
@@ -723,7 +717,6 @@ export default function ProductDetailPage() {
                                 )
                               }
                               placeholder="Ex: Incolor, 4mm"
-                              className="w-full px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                             />
                           </div>
                         </div>

@@ -3,6 +3,7 @@ import { ShoppingCart, X, Edit, Save, Plus, Trash2 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { onlyLetters } from "../../../utils/masks";
 import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
 
 const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
@@ -215,32 +216,21 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
           <div className="px-6 py-4 space-y-4 flex flex-col gap-6">
             {/* Cliente */}
             <div className="flex flex-row gap-10 items-start">
-              <div className="flex flex-col gap-1 items-start rounded-md">
-                <label className="block text-md font-semibold text-gray-700 mb-2">
-                  Cliente
-                </label>
-                <input
-                  type="text"
-                  name="clienteNome"
-                  className={`w-lg px-4 py-2 border border-gray-300 rounded-md ${
-                    modoEdicao ? "bg-white" : "bg-gray-100"
-                  }`}
-                  value={formData.clienteNome}
-                  onChange={handleChange}
-                  readOnly={!modoEdicao}
-                />
-              </div>
-              <div className="flex flex-col gap-1 items-start rounded-md">
-                <label className="block text-md font-semibold text-gray-700 mb-2">
-                  Data do Pedido
-                </label>
-                <input
-                  type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  value={formData.data}
-                  readOnly
-                />
-              </div>
+              <UniversalInput
+                label="Cliente"
+                name="clienteNome"
+                value={formData.clienteNome}
+                onChange={handleChange}
+                readOnly={!modoEdicao}
+                wrapperClassName="flex-1"
+              />
+              <UniversalInput
+                label="Data do Pedido"
+                type="date"
+                value={formData.data}
+                readOnly
+                wrapperClassName="flex-1"
+              />
             </div>
 
             {/* Produtos */}
@@ -267,61 +257,42 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                     key={index}
                     className="grid grid-cols-12 gap-4 bg-white p-3 rounded-md border"
                   >
-                    <div className="col-span-5 flex flex-col items-start gap-1">
-                      <label className="block text-sm text-gray-600 mb-1">
-                        Nome do Produto
-                      </label>
-                      <input
-                        type="text"
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                          modoEdicao ? "bg-white" : "bg-gray-100"
-                        }`}
-                        value={produto.nome}
-                        onChange={(e) =>
-                          handleProdutoChange(index, "nome", e.target.value)
-                        }
-                        readOnly={!modoEdicao}
-                      />
-                    </div>
-                    <div className="col-span-2 flex flex-col items-start gap-1">
-                      <label className="block text-sm text-gray-600 mb-1">
-                        Quantidade
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${
-                          modoEdicao ? "bg-white" : "bg-gray-100"
-                        }`}
-                        value={produto.quantidade}
-                        onChange={(e) =>
-                          handleProdutoChange(
-                            index,
-                            "quantidade",
-                            e.target.value,
-                          )
-                        }
-                        readOnly={!modoEdicao}
-                      />
-                    </div>
-                    <div className="col-span-3 flex flex-col items-start gap-1">
-                      <label className="block text-sm text-gray-600 mb-1">
-                        Preço Unitário
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${
-                          modoEdicao ? "bg-white" : "bg-gray-100"
-                        }`}
-                        value={produto.preco}
-                        onChange={(e) =>
-                          handleProdutoChange(index, "preco", e.target.value)
-                        }
-                        readOnly={!modoEdicao}
-                      />
-                    </div>
+                    <UniversalInput
+                      label="Nome do Produto"
+                      value={produto.nome}
+                      onChange={(e) =>
+                        handleProdutoChange(index, "nome", e.target.value)
+                      }
+                      readOnly={!modoEdicao}
+                      wrapperClassName="col-span-5"
+                    />
+                    <UniversalInput
+                      label="Quantidade"
+                      type="number"
+                      min="1"
+                      value={produto.quantidade}
+                      onChange={(e) =>
+                        handleProdutoChange(
+                          index,
+                          "quantidade",
+                          e.target.value,
+                        )
+                      }
+                      readOnly={!modoEdicao}
+                      wrapperClassName="col-span-2"
+                    />
+                    <UniversalInput
+                      label="Preço Unitário"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={produto.preco}
+                      onChange={(e) =>
+                        handleProdutoChange(index, "preco", e.target.value)
+                      }
+                      readOnly={!modoEdicao}
+                      wrapperClassName="col-span-3"
+                    />
                     {modoEdicao && (
                       <div className="col-span-2 flex flex-col justify-end">
                         <Button
@@ -357,48 +328,37 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
             </div>
 
             {/* Forma de Pagamento */}
-            <div className="flex flex-col gap-1 items-start">
-              <label className="block text-md font-semibold text-gray-700 mb-2">
-                Forma de Pagamento
-              </label>
-              <select
-                name="formaPagamento"
-                className={`w-full px-4 py-2 border border-gray-300 rounded-md cursor-pointer ${
-                  modoEdicao ? "bg-white" : "bg-gray-100"
-                }`}
-                value={formData.formaPagamento}
-                onChange={handleChange}
-                disabled={!modoEdicao}
-              >
-                <option value="">Selecione...</option>
-                <option value="Dinheiro">Dinheiro</option>
-                <option value="Pix">Pix</option>
-                <option value="Cartão de crédito">Cartão de crédito</option>
-                <option value="Cartão de débito">Cartão de débito</option>
-                <option value="Cartão de Crédito">Cartão de Crédito</option>
-                <option value="Cartão de Débito">Cartão de Débito</option>
-                <option value="PIX">PIX</option>
-                <option value="Boleto">Boleto</option>
-                <option value="Transferência">Transferência bancária</option>
-              </select>
-            </div>
+            <UniversalInput
+              as="select"
+              label="Forma de Pagamento"
+              name="formaPagamento"
+              value={formData.formaPagamento}
+              onChange={handleChange}
+              disabled={!modoEdicao}
+              placeholder="Selecione..."
+              options={[
+                { value: "Dinheiro", label: "Dinheiro" },
+                { value: "Pix", label: "Pix" },
+                { value: "Cartão de crédito", label: "Cartão de crédito" },
+                { value: "Cartão de débito", label: "Cartão de débito" },
+                { value: "Cartão de Crédito", label: "Cartão de Crédito" },
+                { value: "Cartão de Débito", label: "Cartão de Débito" },
+                { value: "PIX", label: "PIX" },
+                { value: "Boleto", label: "Boleto" },
+                { value: "Transferência", label: "Transferência bancária" },
+              ]}
+            />
 
             {/* Observações */}
-            <div className="flex flex-col gap-1 items-start w-full">
-              <label className="block text-md font-semibold text-gray-700 mb-2">
-                Observações
-              </label>
-              <textarea
-                name="observacoes"
-                rows={3}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-md resize-none ${
-                  modoEdicao ? "bg-white" : "bg-gray-100"
-                }`}
-                value={formData.observacoes}
-                onChange={handleChange}
-                readOnly={!modoEdicao}
-              />
-            </div>
+            <UniversalInput
+              as="textarea"
+              label="Observações"
+              name="observacoes"
+              rows={3}
+              value={formData.observacoes}
+              onChange={handleChange}
+              readOnly={!modoEdicao}
+            />
           </div>
 
           {/* Footer */}

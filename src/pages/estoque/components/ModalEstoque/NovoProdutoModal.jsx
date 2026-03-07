@@ -1,8 +1,9 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { Package, ChevronDown, Plus, X, AlertCircle } from "lucide-react";
+import { Package, Plus, X, AlertCircle } from "lucide-react";
 import Api from "../../../../api/client/Api";
 import Button from "../../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../../components/ui/Input/UniversalInput";
 
 const useProductAPI = () => {
   const salvarProduto = async (produtoData) => {
@@ -263,82 +264,60 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
           {/* Etapa 0 - Informações Básicas */}
           {currentStep === 0 && (
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Nome do produto *
-                </label>
-                <input
-                  type="text"
-                  name="nome"
-                  placeholder="Digite o nome do produto"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
-                  value={formData.nome}
-                  onChange={handleChange}
-                />
-              </div>
+              <UniversalInput
+                label="Nome do produto"
+                required
+                name="nome"
+                placeholder="Digite o nome do produto"
+                value={formData.nome}
+                onChange={handleChange}
+              />
               <br />
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Unidade de medida
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="unidadeMedida"
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left appearance-none"
-                      value={formData.unidadeMedida}
-                      onChange={handleChange}
-                    >
-                      <option>Unidade</option>
-                      <option>m²</option>
-                      <option>Kg</option>
-                      <option>Litro</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
+                <UniversalInput
+                  as="select"
+                  label="Unidade de medida"
+                  name="unidadeMedida"
+                  value={formData.unidadeMedida}
+                  onChange={handleChange}
+                  options={[
+                    { value: "Unidade", label: "Unidade" },
+                    { value: "m²", label: "m²" },
+                    { value: "Kg", label: "Kg" },
+                    { value: "Litro", label: "Litro" },
+                  ]}
+                />
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Preço do produto *
-                  </label>
-                  <input
-                    type="number"
-                    name="preco"
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
-                    value={formData.preco}
-                    onChange={handleChange}
-                  />
-                </div>
+                <UniversalInput
+                  label="Preço do produto"
+                  required
+                  type="number"
+                  name="preco"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  value={formData.preco}
+                  onChange={handleChange}
+                />
               </div>
               <br />
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Descrição do produto
-                </label>
-                <textarea
-                  name="descricao"
-                  placeholder="Adicione uma descrição detalhada do produto"
-                  rows={5}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 resize-none text-left"
-                  value={formData.descricao}
-                  onChange={handleChange}
-                />
-              </div>
+              <UniversalInput
+                as="textarea"
+                label="Descrição do produto"
+                name="descricao"
+                placeholder="Adicione uma descrição detalhada do produto"
+                rows={5}
+                value={formData.descricao}
+                onChange={handleChange}
+              />
 
-              <div className="flex items-center gap-4 pt-2">
-                <input
-                  type="checkbox"
-                  name="ativo"
-                  className="w-5 h-5 text-[#007EA7]"
-                  checked={formData.ativo}
-                  onChange={handleChange}
-                />
-                <label className="text-sm text-gray-900">Produto Ativo</label>
-              </div>
+              <UniversalInput
+                as="checkbox"
+                label="Produto Ativo"
+                name="ativo"
+                checked={formData.ativo}
+                onChange={handleChange}
+              />
             </div>
           )}
 
@@ -380,13 +359,9 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                       className="flex gap-4 p-4 bg-gray-50 rounded-lg border"
                     >
                       <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-700 mb-2 text-left">
-                          Tipo
-                        </label>
-                        <input
-                          type="text"
+                        <UniversalInput
+                          label="Tipo"
                           placeholder="Cor, Tamanho..."
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-left"
                           value={attr.tipo}
                           onChange={(e) =>
                             handleAtributoChange(index, "tipo", e.target.value)
@@ -395,13 +370,9 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                       </div>
 
                       <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-700 mb-2 text-left">
-                          Valor
-                        </label>
-                        <input
-                          type="text"
+                        <UniversalInput
+                          label="Valor"
                           placeholder="Ex: Azul, Grande"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-left"
                           value={attr.valor}
                           onChange={(e) =>
                             handleAtributoChange(index, "valor", e.target.value)
@@ -436,30 +407,24 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-blue-50 p-4 rounded-lg border">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Nível Mínimo
-                  </label>
-                  <input
+                  <UniversalInput
+                    label="Nível Mínimo"
                     type="number"
                     name="nivelMinimo"
                     placeholder="0"
                     min="0"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
                     value={formData.nivelMinimo}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-lg border">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Nível Máximo
-                  </label>
-                  <input
+                  <UniversalInput
+                    label="Nível Máximo"
                     type="number"
                     name="nivelMaximo"
                     placeholder="0"
                     min="0"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
                     value={formData.nivelMaximo}
                     onChange={handleChange}
                   />
@@ -481,34 +446,23 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
               </div>
 
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Quantidade Total
-                  </label>
-                  <input
-                    type="number"
-                    name="qtdTotal"
-                    placeholder="0"
-                    min="0"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
-                    value={formData.qtdTotal}
-                    onChange={handleChange}
-                  />
-                </div>
+                <UniversalInput
+                  label="Quantidade Total"
+                  type="number"
+                  name="qtdTotal"
+                  placeholder="0"
+                  min="0"
+                  value={formData.qtdTotal}
+                  onChange={handleChange}
+                />
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Localização
-                  </label>
-                  <input
-                    type="text"
-                    name="localizacao"
-                    placeholder="Ex: Prateleira A3"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
-                    value={formData.localizacao}
-                    onChange={handleChange}
-                  />
-                </div>
+                <UniversalInput
+                  label="Localização"
+                  name="localizacao"
+                  placeholder="Ex: Prateleira A3"
+                  value={formData.localizacao}
+                  onChange={handleChange}
+                />
               </div>
             </div>
           )}

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserCircle, Lock, Eye, EyeOff } from "lucide-react";
+import { UserCircle, Lock } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
@@ -13,7 +14,6 @@ function Login() {
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useUser();
 
@@ -107,57 +107,28 @@ function Login() {
                   transition={{ duration: 0.4 }}
                   className="flex flex-col gap-6"
                 >
-                  <div className="space-y-3">
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-[#6b7280] text-left"
-                    >
-                      Email
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <UserCircle size={30} className="text-[#6b7280]" />
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="Digite seu email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
-                  </div>
+                  <UniversalInput
+                    variant="underline"
+                    label="Email"
+                    id="email"
+                    type="email"
+                    placeholder="Digite seu email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    startIcon={<UserCircle size={30} />}
+                  />
 
                   {/* Senha */}
-                  <div className="space-y-3">
-                    <label
-                      htmlFor="senha"
-                      className="block text-sm font-medium text-[#6b7280] text-left"
-                    >
-                      Senha
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <Lock size={30} className="text-[#6b7280]" />
-                      <input
-                        id="senha"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Digite sua senha"
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-[#6b7280] hover:text-[#111827] transition-colors cursor-pointer"
-                      >
-                        {showPassword ? (
-                          <EyeOff size={30} />
-                        ) : (
-                          <Eye size={30} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  <UniversalInput
+                    variant="underline"
+                    label="Senha"
+                    id="senha"
+                    type="password"
+                    placeholder="Digite sua senha"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    startIcon={<Lock size={30} />}
+                  />
                 </motion.div>
               </AnimatePresence>
 

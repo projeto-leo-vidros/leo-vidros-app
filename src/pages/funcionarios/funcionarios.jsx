@@ -8,6 +8,7 @@ import DeleteFuncionario from "./components/ModalFuncionarios/DeleteFuncionario"
 import AgendaFuncionario from "./components/ModalFuncionarios/AgendaFuncionario";
 import Api from "../../api/client/Api";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 export default function Funcionarios() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -172,14 +173,13 @@ export default function Funcionarios() {
                 </Button>
 
                 <div className="relative w-full md:max-w-md">
-                  <input
-                    type="text"
+                  <UniversalInput
+                    variant="search"
                     placeholder="Busque por nome..."
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
+                    startIcon={<Search className="w-5 h-5" />}
                   />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
               </div>
 
@@ -188,14 +188,13 @@ export default function Funcionarios() {
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-12 rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4">
-                    <input
-                      type="checkbox"
+                    <UniversalInput
+                      as="checkbox"
                       checked={
                         funcionariosFiltrados.length > 0 &&
                         selecionados.length === funcionariosFiltrados.length
                       }
                       onChange={handleSelectAllClick}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                   <div className="py-3 w-[20%] pl-2">Nome</div>
@@ -233,13 +232,12 @@ export default function Funcionarios() {
                           }`}
                         >
                           <div className="py-3 w-[5%] pl-4">
-                            <input
-                              type="checkbox"
+                            <UniversalInput
+                              as="checkbox"
                               checked={isItemSelected}
                               onChange={(event) =>
                                 handleSelectClick(event, f.id)
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                           </div>
                           <div className="py-3 w-[20%] pl-2 text-sm text-gray-900 truncate">

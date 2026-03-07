@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import agendamentosService from "../../../api/services/agendamentosService";
 import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 // Status disponíveis para agendamentos
 const STATUS_AGENDAMENTO = [
@@ -274,21 +275,15 @@ const EditarAgendamentoModal = ({
                 {!isOrcamento && (
                   <>
                     <div className="flex flex-col gap-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Status do Agendamento *
-                      </label>
-                      <select
+                      <UniversalInput
+                        as="select"
+                        label="Status do Agendamento"
+                        required
                         name="statusId"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        options={STATUS_AGENDAMENTO.map((s) => ({ value: s.id, label: s.label }))}
                         value={formData.statusId}
                         onChange={handleChange}
-                      >
-                        {STATUS_AGENDAMENTO.map((status) => (
-                          <option key={status.id} value={status.id}>
-                            {status.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
                       <p className="text-xs text-gray-500">
                         Status atual:{" "}
                         <span
@@ -311,69 +306,49 @@ const EditarAgendamentoModal = ({
                 )}
 
                 {/* Data do Agendamento */}
-                <div className="flex flex-col gap-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Data do Agendamento *
-                  </label>
-                  <input
-                    type="date"
-                    name="dataAgendamento"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={formData.dataAgendamento}
-                    onChange={handleChange}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
+                <UniversalInput
+                  label="Data do Agendamento"
+                  required
+                  type="date"
+                  name="dataAgendamento"
+                  value={formData.dataAgendamento}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split("T")[0]}
+                />
                 <br />
                 {/* Horário de Início */}
-                <div className="flex flex-col gap-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Horário de Início *
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="time"
-                      name="inicioAgendamento"
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={formData.inicioAgendamento}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                <UniversalInput
+                  label="Horário de Início"
+                  required
+                  type="time"
+                  name="inicioAgendamento"
+                  startIcon={<Clock className="w-5 h-5" />}
+                  value={formData.inicioAgendamento}
+                  onChange={handleChange}
+                />
                 <br />
                 {/* Horário de Fim */}
-                <div className="flex flex-col gap-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Horário de Término *
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="time"
-                      name="fimAgendamento"
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={formData.fimAgendamento}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                <UniversalInput
+                  label="Horário de Término"
+                  required
+                  type="time"
+                  name="fimAgendamento"
+                  startIcon={<Clock className="w-5 h-5" />}
+                  value={formData.fimAgendamento}
+                  onChange={handleChange}
+                />
                 <br />
                 {/* Observações - Desabilitado para Orçamentos */}
                 {!isOrcamento && (
-                  <div className="flex flex-col gap-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Observações
-                    </label>
-                    <textarea
-                      name="observacao"
-                      rows={4}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Adicione informações adicionais sobre o agendamento..."
-                      value={formData.observacao}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <UniversalInput
+                    as="textarea"
+                    label="Observações"
+                    name="observacao"
+                    rows={4}
+                    placeholder="Adicione informações adicionais sobre o agendamento..."
+                    value={formData.observacao}
+                    onChange={handleChange}
+                  />
                 )}
 
                 {/* Visualização somente leitura para Orçamentos */}
