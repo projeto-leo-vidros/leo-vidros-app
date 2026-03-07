@@ -15,7 +15,7 @@ import {
   ArrowRightLeft,
 } from "lucide-react";
 import NovoProdutoModal from "./components/ModalEstoque/NovoProdutoModal";
-import SucessoModal from "./components/ModalEstoque/SucessoModal";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import ExportarModal from "./components/ModalEstoque/ExportarModal";
 import EstoqueItemRow from "./components/ModalEstoque/EstoqueItemRow";
 import CalendarDropdown from "./components/EstoqueList/CalendarDropdown";
@@ -680,7 +680,14 @@ export default function Estoque() {
         onConfirm={confirmarInativacao}
       />
 
-      <SucessoModal isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
+      <FeedbackModal
+        isOpen={isSuccessModalOpen}
+        onClose={closeSuccessModal}
+        type="success"
+        title="Produto salvo com sucesso"
+        description="O produto foi atualizado no sistema"
+        duration={3000}
+      />
 
       <ExportarModal isOpen={isExportModalOpen} onClose={closeExportModal} />
     </div>

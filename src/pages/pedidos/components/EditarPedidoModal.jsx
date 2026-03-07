@@ -3,7 +3,7 @@ import { ShoppingCart, X, Edit, Save, Plus, Trash2 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { onlyLetters } from "../../../utils/masks";
 import Button from "../../../components/ui/Button/Button.component";
-import SuccessModal from "../../../components/overlay/Modal/SuccessModal";
+import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
 
 const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
   const [modoEdicao, setModoEdicao] = useState(false);
@@ -454,11 +454,13 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
       </div>
 
       {/* Modal de Sucesso - FORA do modal para garantir visibilidade */}
-      <SuccessModal
-        open={showSuccessModal}
+      <FeedbackModal
+        isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
+        type="success"
         title="Sucesso!"
-        message="Pedido atualizado com sucesso!"
+        description="Pedido atualizado com sucesso!"
+        duration={2500}
       />
     </>
   );

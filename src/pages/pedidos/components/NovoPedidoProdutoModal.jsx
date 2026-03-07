@@ -15,7 +15,7 @@ import {
   phoneMask,
   onlyLetters,
 } from "../../../utils/masks";
-import SuccessModal from "../../../components/overlay/Modal/SuccessModal";
+import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
 import Button from "../../../components/ui/Button/Button.component";
 import {
   pedidoProdutoEtapa0Schema,
@@ -1038,11 +1038,13 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
       </div>
 
       {showSuccessModal && (
-        <SuccessModal
-          title="Pedido Criado!"
-          message="Seu pedido foi cadastrado com sucesso!"
-          open={showSuccessModal}
+        <FeedbackModal
+          isOpen={showSuccessModal}
           onClose={() => setShowSuccessModal(false)}
+          type="success"
+          title="Pedido Criado!"
+          description="Seu pedido foi cadastrado com sucesso!"
+          duration={2500}
         />
       )}
     </>
