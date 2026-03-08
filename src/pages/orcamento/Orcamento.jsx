@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PropTypes from "prop-types"; // Adicionado para manter o padrão
+import PropTypes from "prop-types";
 import Api from "../../api/client/Api";
+import OrcamentosService from "../../api/services/orcamentosService";
 import {
   Trash2,
   Plus,
@@ -10,9 +11,11 @@ import {
   AlertCircle,
   CheckCircle,
   Download,
+  Loader2,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
+import { OrcamentoProgressToast } from "../../components/feedback/OrcamentoProgressToast";
 
 // Gera o número do orçamento no formato ORC-ANO-P{id}
 const gerarNumeroOrcamento = (pedidoId) => {
@@ -493,6 +496,11 @@ export default function OrcamentoPage() {
   const [itemErrors, setItemErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [lastSaved, setLastSaved] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Estado do progress toast (geração assíncrona de PDF)
+  const [progressToast, setProgressToast] = useState(null);
+  // { orcamentoId, numeroOrcamento }
 
   const [pedidos, setPedidos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -634,26 +642,81 @@ export default function OrcamentoPage() {
     );
   }, [dadosGerais, itens]);
 
-  const handleSaveDraft = () => {
-    setLastSaved(new Date());
-    setToast({ message: "Rascunho salvo!", type: "success" });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleSaveAndDownload = () => {
+  const handleSaveDraft = async () => {
     if (!validar()) {
-      setToast({
-        message: "Corrija os erros antes de gerar a planilha.",
-        type: "error",
-      });
+      setToast({ message: "Corrija os erros antes de salvar.", type: "error" });
+      setTimeout(() => setToast(null), 3000);
       return;
     }
-    setLastSaved(new Date());
-    setToast({ message: "Planilha gerada com sucesso!", type: "success" });
-    setTimeout(() => {
-      setToast(null);
-      navigate("/Pedidos");
-    }, 2000);
+
+    setIsSaving(true);
+    try {
+      const payload = OrcamentosService.mapearParaBackend(
+        { ...dadosGerais, status_id: "RASCUNHO" },
+        itens,
+        subtotalGeral,
+        descontoGeral,
+        totalFinal,
+      );
+      const result = await OrcamentosService.criarOrcamento(payload);
+      if (result.success) {
+        setLastSaved(new Date());
+        setToast({ message: "Rascunho salvo!", type: "success" });
+      } else {
+        setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
+      }
+    } catch (e) {
+      setToast({ message: "Erro ao salvar rascunho.", type: "error" });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
+  const handleSaveAndDownload = async () => {
+    if (!validar()) {
+      setToast({
+        message: "Corrija os erros antes de gerar o orçamento.",
+        type: "error",
+      });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = OrcamentosService.mapearParaBackend(
+        dadosGerais,
+        itens,
+        subtotalGeral,
+        descontoGeral,
+        totalFinal,
+      );
+
+      const result = await OrcamentosService.criarOrcamento(payload);
+
+      if (result.success && result.data) {
+        setLastSaved(new Date());
+        // Mostra o progress toast para acompanhar a geração do PDF
+        setProgressToast({
+          orcamentoId: result.data.id,
+          numeroOrcamento: result.data.numeroOrcamento || dadosGerais.numero_orcamento,
+        });
+        setToast({ message: "Orçamento enviado para geração!", type: "success" });
+        setTimeout(() => setToast(null), 3000);
+      } else {
+        setToast({
+          message: result.error || "Erro ao gerar orçamento.",
+          type: "error",
+        });
+        setTimeout(() => setToast(null), 4000);
+      }
+    } catch (e) {
+      setToast({ message: "Erro ao gerar orçamento.", type: "error" });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -711,14 +774,24 @@ export default function OrcamentoPage() {
                 <button onClick={() => navigate(-1)} className={tw.btnOutline}>
                   Cancelar
                 </button>
-                <button onClick={handleSaveDraft} className={tw.btnSecondary}>
-                  Salvar Rascunho
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={isSaving}
+                  className={`${tw.btnSecondary} ${isSaving ? "opacity-60 cursor-wait" : ""}`}
+                >
+                  {isSaving ? "Salvando..." : "Salvar Rascunho"}
                 </button>
                 <button
                   onClick={handleSaveAndDownload}
-                  className={`${tw.btnPrimary} flex items-center gap-2`}
+                  disabled={isSaving}
+                  className={`${tw.btnPrimary} flex items-center gap-2 ${isSaving ? "opacity-60 cursor-wait" : ""}`}
                 >
-                  <Download size={15} /> Salvar e Baixar
+                  {isSaving ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Download size={15} />
+                  )}
+                  {isSaving ? "Gerando..." : "Salvar e Gerar PDF"}
                 </button>
               </div>
             </div>
@@ -730,6 +803,16 @@ export default function OrcamentoPage() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+      {progressToast && (
+        <OrcamentoProgressToast
+          orcamentoId={progressToast.orcamentoId}
+          numeroOrcamento={progressToast.numeroOrcamento}
+          onClose={() => setProgressToast(null)}
+          onFinished={() => {
+            // Opcional: pode navegar ou atualizar estado
+          }}
         />
       )}
     </>

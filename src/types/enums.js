@@ -44,3 +44,19 @@ export const StatusEstoque = Object.freeze({
   INATIVO: "INATIVO",
   CRITICO: "CRITICO",
 });
+
+export const StatusOrcamento = Object.freeze({
+  RASCUNHO: "RASCUNHO",
+  ENVIADO: "ENVIADO",
+  EM_ANALISE: "EM_ANALISE",
+  APROVADO: "APROVADO",
+  RECUSADO: "RECUSADO",
+  EXPIRADO: "EXPIRADO",
+});
+
+export const OrcamentoProgressStatus = Object.freeze({
+  GERANDO_ORCAMENTO: "GERANDO_ORCAMENTO",
+  GERANDO_PDF: "GERANDO_PDF",
+  FINALIZADO: "FINALIZADO",
+  ERRO: "ERRO",
+});

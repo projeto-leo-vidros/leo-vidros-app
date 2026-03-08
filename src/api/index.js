@@ -3,6 +3,7 @@ export { default as BaseService } from './client/BaseService';
 export { agendamentosService } from './services/agendamentosService';
 export { default as PedidosService } from './services/pedidosService';
 export { default as ServicosService } from './services/servicosService';
+export { default as OrcamentosService } from './services/orcamentosService';
 export { dashboardService } from './services/dashboardService';
 export * from './services/dashboardService';
 export { funcionariosService } from './services/funcionariosService';
