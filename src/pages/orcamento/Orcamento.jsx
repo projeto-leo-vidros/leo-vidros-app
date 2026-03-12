@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../api/queryKeys";
 import Api from "../../api/client/Api";
 import OrcamentosService from "../../api/services/orcamentosService";
 import {
@@ -18,6 +20,7 @@ import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import { OrcamentoProgressToast } from "../../components/feedback/OrcamentoProgressToast";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
+import { OrcamentoStatusOptions } from "../../types/enums";
 
 // Gera o número do orçamento no formato ORC-ANO-P{id}
 const gerarNumeroOrcamento = (pedidoId) => {
@@ -60,47 +63,17 @@ const criarItemVazio = (ordem = 1) => ({
   ordem,
 });
 
-const STATUS_OPTIONS = [
-  { value: "RASCUNHO", label: "Rascunho", color: "#64748b" },
-  { value: "ENVIADO", label: "Enviado", color: "#3b82f6" },
-  { value: "EM_ANALISE", label: "Em Análise", color: "#f59e0b" },
-  { value: "APROVADO", label: "Aprovado", color: "#10b981" },
-  { value: "RECUSADO", label: "Recusado", color: "#ef4444" },
-  { value: "EXPIRADO", label: "Expirado", color: "#6b7280" },
-];
-
 const tw = {
   card: "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden",
   cardHeader:
     "px-8 py-5 border-b border-slate-100 flex items-center gap-3 bg-slate-50",
   cardBody: "p-8",
-  fieldGroup: "flex flex-col gap-1",
   label:
     "text-[11px] font-semibold text-gray-700 mb-1 block uppercase tracking-[0.05em]",
-  errorText: "text-[11px] text-red-500 mt-1.5",
   input:
     "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none transition-colors box-border font-[inherit]",
   inputReadOnly: "!bg-slate-50 !text-slate-500 cursor-default",
-  select:
-    "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none cursor-pointer font-[inherit]",
-  btnPrimary:
-    "px-5 py-2 rounded-md text-white font-semibold text-sm cursor-pointer transition-opacity shadow-sm bg-[var(--button-color)] hover:opacity-90",
-  btnOutline:
-    "px-5 py-2 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold text-sm cursor-pointer hover:bg-slate-50 transition-colors",
-  btnSecondary:
-    "px-5 py-2 rounded-md border border-[#007EA7] bg-white text-[#007EA7] font-semibold text-sm cursor-pointer hover:bg-violet-50 transition-colors",
 };
-
-const Field = ({ label, required, error, children }) => (
-  <div className={tw.fieldGroup}>
-    <label className={tw.label}>
-      {label}
-      {required && <span className="ml-0.5 text-red-500">*</span>}
-    </label>
-    {children}
-    {error && <span className={tw.errorText}>{error}</span>}
-  </div>
-);
 
 const OrcamentoHeader = () => (
   <div className="mb-10 text-center">
@@ -112,8 +85,8 @@ const OrcamentoHeader = () => (
 
 const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
   const statusAtual =
-    STATUS_OPTIONS.find((s) => s.value === dados.status_id) ||
-    STATUS_OPTIONS[0];
+    OrcamentoStatusOptions.find((s) => s.value === dados.status_id) ||
+    OrcamentoStatusOptions[0];
   const clienteNome = dados.cliente_nome;
 
   return (
@@ -170,7 +143,7 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
               wrapperClassName="flex-1"
               value={dados.status_id}
               onChange={(e) => onChange("status_id", e.target.value)}
-              options={STATUS_OPTIONS.map((s) => ({
+              options={OrcamentoStatusOptions.map((s) => ({
                 value: s.value,
                 label: s.label,
               }))}
@@ -260,12 +233,14 @@ const OrcamentoItemRow = ({
           </div>
           <span className="text-sm font-semibold text-slate-600">Item</span>
         </div>
-        <button
+        <Button
+          color="error"
+          size="sm"
           onClick={() => onRemove(item.id)}
-          className="flex cursor-pointer items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+          startIcon={<Trash2 size={12} />}
         >
-          <Trash2 size={12} /> Remover
-        </button>
+          Remover
+        </Button>
       </div>
 
       <div className="p-7">
@@ -313,13 +288,14 @@ const OrcamentoItemRow = ({
             value={item.desconto}
             onChange={(e) => onChange(item.id, "desconto", e.target.value)}
           />
-          <Field label="Subtotal">
+          <div className="flex flex-col gap-1">
+            <label className={tw.label}>Subtotal</label>
             <div
               className={`${tw.input} ${tw.inputReadOnly} flex items-center font-bold text-[var(--button-color)]`}
             >
               {formatCurrencyBR(subtotal)}
             </div>
-          </Field>
+          </div>
         </div>
       </div>
     </div>
@@ -451,6 +427,7 @@ const Toast = ({ message, type, onClose }) => {
 export default function OrcamentoPage() {
   const navigate = useNavigate();
   const { pedidoId } = useParams();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [dadosGerais, setDadosGerais] = useState({
@@ -477,6 +454,7 @@ export default function OrcamentoPage() {
   // Estado do progress toast (geração assíncrona de PDF)
   const [progressToast, setProgressToast] = useState(null);
   // { orcamentoId, numeroOrcamento }
+  const [savedOrcamentoId, setSavedOrcamentoId] = useState(null);
 
   const [pedidos, setPedidos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -634,9 +612,15 @@ export default function OrcamentoPage() {
         descontoGeral,
         totalFinal,
       );
-      const result = await OrcamentosService.criarOrcamento(payload);
+
+      const result = savedOrcamentoId
+        ? await OrcamentosService.atualizarOrcamento(savedOrcamentoId, payload)
+        : await OrcamentosService.criarOrcamento(payload);
+
       if (result.success) {
+        if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
         setLastSaved(new Date());
+        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
         setToast({ message: "Rascunho salvo!", type: "success" });
       } else {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
@@ -672,10 +656,14 @@ export default function OrcamentoPage() {
       const result = await OrcamentosService.criarOrcamento(payload);
 
       if (result.success && result.data) {
+        const orcId = result.data.id;
+        setSavedOrcamentoId(orcId);
         setLastSaved(new Date());
+        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
         // Mostra o progress toast para acompanhar a geração do PDF
         setProgressToast({
-          orcamentoId: result.data.id,
+          orcamentoId: orcId,
           numeroOrcamento: result.data.numeroOrcamento || dadosGerais.numero_orcamento,
         });
         setToast({ message: "Orçamento enviado para geração!", type: "success" });
@@ -789,7 +777,7 @@ export default function OrcamentoPage() {
           numeroOrcamento={progressToast.numeroOrcamento}
           onClose={() => setProgressToast(null)}
           onFinished={() => {
-            // Opcional: pode navegar ou atualizar estado
+            queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
           }}
         />
       )}

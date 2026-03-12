@@ -51,6 +51,17 @@ class OrcamentosService extends BaseService {
   }
 
   /**
+   * Atualiza os dados de um orçamento existente (rascunho).
+   * @param {number|string} id
+   * @param {object} dados - Payload no formato OrcamentoRequestDto
+   */
+  async atualizarOrcamento(id, dados) {
+    const result = await this._handle(this.api.put(`/orcamentos/${id}`, dados));
+    if (!result.success) result.validationErrors = {};
+    return result;
+  }
+
+  /**
    * Atualiza o status de um orçamento.
    * @param {number|string} id
    * @param {string} status

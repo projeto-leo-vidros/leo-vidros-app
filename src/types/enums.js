@@ -60,3 +60,12 @@ export const OrcamentoProgressStatus = Object.freeze({
   FINALIZADO: "FINALIZADO",
   ERRO: "ERRO",
 });
+
+export const OrcamentoStatusOptions = Object.freeze([
+  { value: StatusOrcamento.RASCUNHO,   label: "Rascunho",   color: "#64748b" },
+  { value: StatusOrcamento.ENVIADO,    label: "Enviado",    color: "#3b82f6" },
+  { value: StatusOrcamento.EM_ANALISE, label: "Em Análise", color: "#f59e0b" },
+  { value: StatusOrcamento.APROVADO,   label: "Aprovado",   color: "#10b981" },
+  { value: StatusOrcamento.RECUSADO,   label: "Recusado",   color: "#ef4444" },
+  { value: StatusOrcamento.EXPIRADO,   label: "Expirado",   color: "#6b7280" },
+]);
