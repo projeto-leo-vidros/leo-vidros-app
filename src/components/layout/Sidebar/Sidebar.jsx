@@ -1,15 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Dashboard,
-  Inventory,
-  Event,
-  People,
+  LayoutDashboard,
+  Package,
+  CalendarDays,
+  Users,
   Lock,
-  Work,
-  Logout,
+  Briefcase,
+  LogOut,
   ChevronLeft,
-  Assignment,
-} from "@mui/icons-material";
+  ClipboardList,
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../../assets/logo/logo-sidebar.png";
 
@@ -20,15 +20,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const menuItems = [
     {
       text: "Painel de Controle",
-      icon: <Dashboard />,
+      icon: <LayoutDashboard size={22} />,
       path: "/pagina-inicial",
     },
-    { text: "Controle de Estoque", icon: <Inventory />, path: "/Estoque" },
-    { text: "Pedidos", icon: <Assignment />, path: "/Pedidos" },
-    { text: "Agendamentos", icon: <Event />, path: "/Agendamentos" },
-    { text: "Clientes", icon: <People />, path: "/Clientes" },
-    { text: "Controle de Funcionários", icon: <Work />, path: "/Funcionarios" },
-    { text: "Controle de Acesso", icon: <Lock />, path: "/acesso" },
+    { text: "Controle de Estoque", icon: <Package size={22} />, path: "/Estoque" },
+    { text: "Pedidos", icon: <ClipboardList size={22} />, path: "/Pedidos" },
+    { text: "Agendamentos", icon: <CalendarDays size={22} />, path: "/Agendamentos" },
+    { text: "Clientes", icon: <Users size={22} />, path: "/Clientes" },
+    { text: "Controle de Funcionários", icon: <Briefcase size={22} />, path: "/Funcionarios" },
+    { text: "Controle de Acesso", icon: <Lock size={22} />, path: "/acesso" },
   ];
 
   return (
@@ -65,7 +65,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
             onClick={() => setSidebarOpen(false)}
             className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition cursor-pointer"
           >
-            <ChevronLeft style={{ fontSize: 34 }} />
+            <ChevronLeft size={34} />
           </button>
 
           <img
@@ -110,7 +110,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
             onClick={() => navigate("/")}
             className="flex items-center gap-3 w-full text-gray-700 hover:bg-[#003d6b]/10 hover:text-[#003d6b] px-3 py-3 rounded-lg font-semibold text-lg transition-all duration-150 cursor-pointer"
           >
-            <Logout style={{ fontSize: 26 }} />
+            <LogOut size={26} />
             <span>Sair</span>
           </button>
         </div>

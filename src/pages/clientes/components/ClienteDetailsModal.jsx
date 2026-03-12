@@ -3,6 +3,8 @@ import { Modal } from "@mui/material";
 import PropTypes from "prop-types"; // Lembre-se que agora seu linter pode pedir isso
 import api from "../../../api/client/Api";
 import { formatCurrency } from "../../../utils/formatters";
+import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 export default function ClienteDetailsModal({
   open,
@@ -63,12 +65,12 @@ export default function ClienteDetailsModal({
       >
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">Detalhes do Cliente</h2>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-2 text-black transition-colors hover:bg-gray-100"
           >
             Fechar
-          </button>
+          </Button>
         </div>
 
         {loading ? (
@@ -79,30 +81,24 @@ export default function ClienteDetailsModal({
           <>
             <div className="grid grid-cols-1 gap-8 pt-4 md:grid-cols-3">
               <div className="flex flex-col gap-1">
-                <label className="mb-2 block font-bold text-gray-700">Nome</label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border border-gray-300 p-3 font-normal outline-none bg-gray-50"
+                <UniversalInput
+                  label="Nome"
                   value={cliente.nome || "N/A"}
                   readOnly
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="mb-2 block font-bold text-gray-700">Telefone</label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border border-gray-300 p-3 font-normal outline-none bg-gray-50"
+                <UniversalInput
+                  label="Telefone"
                   value={cliente.telefone || "N/A"}
                   readOnly
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="mb-2 block font-bold text-gray-700">Email</label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border border-gray-300 p-3 font-normal outline-none bg-gray-50"
+                <UniversalInput
+                  label="Email"
                   value={cliente.email || "N/A"}
                   readOnly
                 />
@@ -110,10 +106,8 @@ export default function ClienteDetailsModal({
             </div>
 
             <div className="flex flex-col gap-1 pb-6 pt-4">
-              <label className="mb-2 block font-bold text-gray-700">Endereço</label>
-              <input
-                type="text"
-                className="w-full rounded-md border border-gray-300 p-3 font-normal outline-none bg-gray-50"
+              <UniversalInput
+                label="Endereço"
                 value={
                   endereco && (endereco.rua || endereco.bairro || endereco.cep || endereco.numero)
                     ? `${endereco.rua || ""}${endereco.numero ? ", " + endereco.numero : ""}${endereco.bairro ? " - " + endereco.bairro : ""}${endereco.cidade ? " / " + endereco.cidade : ""}${endereco.uf ? " - " + endereco.uf : ""}`

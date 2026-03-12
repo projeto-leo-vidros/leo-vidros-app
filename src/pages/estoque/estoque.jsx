@@ -15,7 +15,7 @@ import {
   ArrowRightLeft,
 } from "lucide-react";
 import NovoProdutoModal from "./components/ModalEstoque/NovoProdutoModal";
-import SucessoModal from "./components/ModalEstoque/SucessoModal";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import ExportarModal from "./components/ModalEstoque/ExportarModal";
 import EstoqueItemRow from "./components/ModalEstoque/EstoqueItemRow";
 import CalendarDropdown from "./components/EstoqueList/CalendarDropdown";
@@ -23,6 +23,7 @@ import FilterDropdown from "./components/EstoqueList/FilterDropdown";
 import EntradaSaidaEstoque from "./components/ModalEstoque/EntradaSaidaEstoque";
 import InativarProdutoModal from "./components/ModalEstoque/InativarProdutoModal";
 import { formatCurrency, parseCurrency } from "../../utils/formatters";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 const ITENS_POR_PAGINA = 6;
 
@@ -491,16 +492,13 @@ export default function Estoque() {
                 <div className="flex items-center gap-3 w-full justify-end">
                   {/* Busca */}
                   <div className="relative w-full max-w-lg">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Busque Por Nome ou Descrição..."
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
-                      />
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
+                    <UniversalInput
+                      variant="search"
+                      placeholder="Busque Por Nome ou Descrição..."
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      startIcon={<Search className="w-5 h-5" />}
+                    />
                   </div>
 
                   {/* Filtros */}
@@ -531,13 +529,14 @@ export default function Estoque() {
                       />
                     </div>
                     {/* Exportar */}{" "}
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={openExportModal}
-                      className="flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      startIcon={<Download className="w-4 h-4" />}
                     >
-                      <Download className="w-4 h-4" />
                       Exportar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -554,11 +553,10 @@ export default function Estoque() {
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-48px rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4 pr-1">
-                    <input
-                      type="checkbox"
+                    <UniversalInput
+                      as="checkbox"
                       checked={isAllSelectedOnPage}
                       onChange={handleSelectAllChange}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                   <div className="py-3 w-[15%] pl-2 pr-1">Nome</div>
@@ -625,14 +623,17 @@ export default function Estoque() {
                     resultados
                   </p>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setPagina((p) => Math.max(p - 1, 1))}
                       disabled={pagina === 1}
-                      className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Anterior
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() =>
                         setPagina((p) =>
                           Math.min(p + 1, paginationData.totalPaginas),
@@ -642,10 +643,9 @@ export default function Estoque() {
                         pagina === paginationData.totalPaginas ||
                         paginationData.totalPaginas === 0
                       }
-                      className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Próximo
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -677,7 +677,14 @@ export default function Estoque() {
         onConfirm={confirmarInativacao}
       />
 
-      <SucessoModal isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
+      <FeedbackModal
+        isOpen={isSuccessModalOpen}
+        onClose={closeSuccessModal}
+        type="success"
+        title="Produto salvo com sucesso"
+        description="O produto foi atualizado no sistema"
+        duration={3000}
+      />
 
       <ExportarModal isOpen={isExportModalOpen} onClose={closeExportModal} />
     </div>

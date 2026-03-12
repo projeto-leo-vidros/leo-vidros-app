@@ -21,6 +21,7 @@ import {
   getStatusColor,
   TIPO_COLORS,
 } from "../../../../utils/agendamentoStatus";
+import Button from "../../../../components/ui/Button/Button.component";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -448,22 +449,24 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
                     de {agendaOrdenada.length}
                   </span>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setPagina((p) => Math.max(1, p - 1))}
                       disabled={pagina === 1}
-                      className="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       Anterior
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() =>
                         setPagina((p) => Math.min(totalPaginas, p + 1))
                       }
                       disabled={pagina === totalPaginas}
-                      className="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       Próximo
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -473,12 +476,9 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
 
         {/* ── Footer ── */}
         <div className="px-6 py-3 border-t bg-gray-50 flex justify-end">
-          <button
-            onClick={() => setOpen(false)}
-            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-          >
+          <Button variant="ghost" onClick={() => setOpen(false)}>
             Fechar
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -533,30 +533,27 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
             </p>
 
             <div className="flex justify-end gap-3">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setConfirmRemove(null)}
                 disabled={removerMutation.isPending}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={confirmarRemocao}
                 disabled={removerMutation.isPending}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {removerMutation.isPending ? (
-                  <>
+                startIcon={
+                  removerMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Removendo...
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <Trash2 className="w-4 h-4" />
-                    Remover
-                  </>
-                )}
-              </button>
+                  )
+                }
+              >
+                {removerMutation.isPending ? "Removendo..." : "Remover"}
+              </Button>
             </div>
           </div>
         </div>
