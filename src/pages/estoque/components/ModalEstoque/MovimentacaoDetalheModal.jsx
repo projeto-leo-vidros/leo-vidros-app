@@ -18,6 +18,7 @@ import {
   Edit3,
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "../../../../utils/formatters";
+import Button from "../../../../components/ui/Button/Button.component";
 
 const MovimentacaoDetalheModal = ({ isOpen, onClose, movimento, produto }) => {
   if (!isOpen || !movimento) return null;
@@ -424,12 +425,12 @@ const MovimentacaoDetalheModal = ({ isOpen, onClose, movimento, produto }) => {
 
         {/* Footer do Modal */}
         <div className="flex justify-end p-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 sticky bottom-0 z-10">
-          <button
+          <Button
+            variant="primary"
             onClick={onClose}
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg cursor-pointer hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
           >
             Fechar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

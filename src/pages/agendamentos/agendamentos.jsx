@@ -41,6 +41,7 @@ import Swal from "sweetalert2";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import TaskCreateModal from "../../components/ui/misc/TaskCreateModal";
+import Button from "../../components/ui/Button/Button.component";
 import WeeklyCalendar from "./components/WeeklyCalendar";
 import MiniCalendarAgendamentos from "./components/MiniCalendarAgendamentos";
 import AgendamentoNotification from "../../components/ui/misc/AgendamentoNotification";
@@ -63,11 +64,11 @@ function StatusBadge({ status }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
         config.color,
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
+      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
       {config.label}
     </span>
   );
@@ -78,7 +79,7 @@ function TipoBadge({ tipo }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
         config.color,
       )}
     >
@@ -89,10 +90,10 @@ function TipoBadge({ tipo }) {
 
 function StatCard({ icon: IconComp, iconColor, value, label }) {
   return (
-    <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm transition-shadow hover:shadow-md">
       <div
         className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center",
+          "flex h-12 w-12 items-center justify-center rounded-xl",
           iconColor,
         )}
       >
@@ -129,7 +130,7 @@ function ActionsDropdown({
           e.stopPropagation();
           setOpen(!open);
         }}
-        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+        className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-gray-100"
       >
         <MoreHorizontal className="h-4 w-4 text-gray-500" />
       </button>
@@ -137,9 +138,9 @@ function ActionsDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-8 z-50 w-48 bg-white rounded-xl border border-gray-200 shadow-xl py-1.5 animate-in fade-in slide-in-from-top-2">
+          <div className="animate-in fade-in slide-in-from-top-2 absolute top-8 right-0 z-50 w-48 rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl">
             <button
-              className="w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onView?.(agendamento);
@@ -150,7 +151,7 @@ function ActionsDropdown({
             </button>
             {hasEndereco && (
               <button
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
                 onClick={(e) => {
                   e.stopPropagation();
                   onLocation?.(agendamento);
@@ -160,9 +161,9 @@ function ActionsDropdown({
                 <MapPin className="h-4 w-4 text-gray-400" /> Ver localização
               </button>
             )}
-            <div className="border-t border-gray-100 my-1" />
+            <div className="my-1 border-t border-gray-100" />
             <button
-              className="w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit?.(agendamento);
@@ -172,7 +173,7 @@ function ActionsDropdown({
               <Edit3 className="h-4 w-4 text-gray-400" /> Editar
             </button>
             <button
-              className="w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex items-center gap-2 text-green-600 transition-colors cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-green-600 transition-colors hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onStatusChange(agendamento, "CONFIRMADO");
@@ -182,7 +183,7 @@ function ActionsDropdown({
               <Check className="h-4 w-4" /> Confirmar
             </button>
             <button
-              className="w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex items-center gap-2 text-blue-600 transition-colors cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onStatusChange(agendamento, "CONCLUIDO");
@@ -191,9 +192,9 @@ function ActionsDropdown({
             >
               <Check className="h-4 w-4" /> Concluir
             </button>
-            <div className="border-t border-gray-100 my-1" />
+            <div className="my-1 border-t border-gray-100" />
             <button
-              className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 flex items-center gap-2 text-red-600 transition-colors cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete?.(agendamento);
@@ -217,44 +218,44 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 10 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 10 }}
-          className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+          className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-red-100 rounded-full">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+            <div className="mb-4 flex items-center gap-4">
+              <div className="rounded-full bg-red-100 p-3">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="text-lg font-bold text-gray-900">
                 Excluir Agendamento?
               </h3>
             </div>
-            <p className="text-gray-600 mb-6">
+            <p className="mb-6 text-gray-600">
               Esta ação é irreversível e removerá o agendamento permanentemente.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={onClose}
                 disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
+                className="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={onConfirm}
                 disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 flex items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer"
+                className="flex cursor-pointer items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-70"
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Excluindo...
+                    <Loader2 className="h-4 w-4 animate-spin" /> Excluindo...
                   </>
                 ) : (
                   "Sim, excluir"
@@ -533,12 +534,12 @@ export default function Agendamentos() {
 
   if (isLoading) {
     return (
-      <div className="flex bg-gray-100 min-h-screen">
+      <div className="flex min-h-screen bg-gray-100">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="flex-1 flex flex-col min-h-screen">
+        <div className="flex min-h-screen flex-1 flex-col">
           <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
           <div className="h-[80px]" />
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-[#007EA7]" />
           </div>
         </div>
@@ -547,37 +548,39 @@ export default function Agendamentos() {
   }
 
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex min-h-screen flex-1 flex-col">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="h-[80px]" />
 
-        <main className="flex-1 flex flex-col items-center px-4 md:px-8 pt-6 pb-10 gap-6">
+        <main className="flex flex-1 flex-col items-center gap-6 px-4 pt-6 pb-10 md:px-8">
           <div className="w-full max-w-[1680px] space-y-6">
             {/* ====== Header ====== */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="hidden sm:block flex-1" />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="hidden flex-1 sm:block" />
               <div className="text-center">
                 <h1 className="text-3xl font-bold text-gray-800">
                   Agendamentos
                 </h1>
-                <p className="text-gray-500 mt-1">
+                <p className="mt-1 text-gray-500">
                   Gerencie os agendamentos da Leo Vidros
                 </p>
               </div>
-              <div className="flex-1 flex sm:justify-end">
-                <button
+              <div className="flex flex-1 sm:justify-end">
+                <Button
                   onClick={() => handleNewAgendamento()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#007EA7] text-white font-semibold rounded-xl hover:bg-[#006b8f] transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.98]"
+                  variant="primary"
+                  size="sm"
+                  startIcon={<Plus className="h-5 w-5" />}
                 >
-                  <Plus className="h-5 w-5" /> Novo Agendamento
-                </button>
+                  Novo Agendamento
+                </Button>
               </div>
             </div>
 
             {/* ====== Stats ====== */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <StatCard
                 icon={CalendarIcon}
                 iconColor="bg-[#007EA7]/10 text-[#007EA7]"
@@ -600,7 +603,7 @@ export default function Agendamentos() {
 
             {/* ====== Abas de Visualização ====== */}
             <div
-              className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-xl border border-gray-200 w-fit shadow-sm"
+              className="flex w-fit items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1.5 shadow-sm"
               style={{ marginTop: "15px" }}
             >
               {[
@@ -612,9 +615,9 @@ export default function Agendamentos() {
                   key={key}
                   onClick={() => setViewMode(key)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer",
+                    "flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
                     viewMode === key
-                      ? "bg-[#007EA7] text-white shadow-md"
+                      ? "bg-[#134074ff] text-white shadow-md"
                       : "text-gray-600 hover:bg-gray-100",
                   )}
                 >
@@ -625,30 +628,30 @@ export default function Agendamentos() {
 
             {/* ====== Visualização Mensal ====== */}
             {viewMode === "calendar" && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Calendário mensal */}
-                <div className="lg:col-span-2 bg-gray-50 rounded-2xl border border-gray-200 shadow-md overflow-hidden">
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-md lg:col-span-2">
                   {/* Nav do mês */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                     <h2 className="text-xl font-bold text-gray-800 capitalize">
                       {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
                     </h2>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleToday}
-                        className="px-3 py-1.5 text-sm font-medium text-[#007EA7] border border-[#007EA7]/30 rounded-lg hover:bg-[#007EA7]/5 transition-colors cursor-pointer"
+                        className="cursor-pointer rounded-lg border border-[#007EA7]/30 px-3 py-1.5 text-sm font-medium text-[#007EA7] transition-colors hover:bg-[#007EA7]/5"
                       >
                         Hoje
                       </button>
                       <button
                         onClick={handlePrevMonth}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-gray-100"
                       >
                         <ChevronLeft className="h-5 w-5 text-gray-600" />
                       </button>
                       <button
                         onClick={handleNextMonth}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-gray-100"
                       >
                         <ChevronRight className="h-5 w-5 text-gray-600" />
                       </button>
@@ -661,7 +664,7 @@ export default function Agendamentos() {
                       (day) => (
                         <div
                           key={day}
-                          className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider py-3"
+                          className="py-3 text-center text-xs font-semibold tracking-wider text-gray-400 uppercase"
                         >
                           {day}
                         </div>
@@ -684,18 +687,18 @@ export default function Agendamentos() {
                           key={i}
                           onClick={() => handleDayClick(day)}
                           className={cn(
-                            "relative p-2 min-h-[90px] text-left border-b border-r border-gray-100 transition-all cursor-pointer",
+                            "relative min-h-[90px] cursor-pointer border-r border-b border-gray-100 p-2 text-left transition-all",
                             isSelected
-                              ? "bg-[#007EA7]/5 ring-2 ring-inset ring-[#007EA7]/30"
+                              ? "bg-[#007EA7]/5 ring-2 ring-[#007EA7]/30 ring-inset"
                               : "hover:bg-gray-50",
                             !isCurrentMonth && "opacity-40",
                           )}
                         >
                           <span
                             className={cn(
-                              "text-sm font-semibold inline-flex items-center justify-center",
+                              "inline-flex items-center justify-center text-sm font-semibold",
                               isToday &&
-                                "bg-[#007EA7] text-white rounded-full w-7 h-7",
+                                "h-7 w-7 rounded-full bg-[#007EA7] text-white",
                               !isToday && isSelected && "text-[#007EA7]",
                               !isToday && !isSelected && "text-gray-700",
                             )}
@@ -713,7 +716,7 @@ export default function Agendamentos() {
                                   <div
                                     key={apt.id}
                                     className={cn(
-                                      "text-[10px] px-1.5 py-0.5 rounded-md truncate font-medium",
+                                      "truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium",
                                       tipoCfg.color,
                                     )}
                                   >
@@ -723,7 +726,7 @@ export default function Agendamentos() {
                                 );
                               })}
                               {dayAgendamentos.length > 2 && (
-                                <div className="text-[10px] text-gray-400 font-medium pl-1">
+                                <div className="pl-1 text-[10px] font-medium text-gray-400">
                                   +{dayAgendamentos.length - 2} mais
                                 </div>
                               )}
@@ -736,8 +739,8 @@ export default function Agendamentos() {
                 </div>
 
                 {/* Painel lateral - Detalhe do dia */}
-                <div className="bg-gray-50 rounded-2xl border border-gray-200 shadow-md overflow-hidden flex flex-col">
-                  <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-md">
+                  <div className="border-b border-gray-100 px-6 py-4">
                     <h3 className="text-lg font-bold text-gray-800 capitalize">
                       {format(selectedDate, "EEEE", { locale: ptBR })}
                     </h3>
@@ -748,24 +751,26 @@ export default function Agendamentos() {
 
                   <div className="flex-1 overflow-y-auto px-4 py-4">
                     {selectedDayAgendamentos.length === 0 ? (
-                      <div className="text-center py-12">
-                        <CalendarIcon className="h-14 w-14 mx-auto mb-3 text-gray-200" />
-                        <p className="text-gray-400 font-medium">
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <CalendarIcon className="mx-auto mb-3 h-14 w-14 text-gray-200" />
+                        <p className="font-medium text-gray-400">
                           Nenhum agendamento
                         </p>
-                        <p className="text-xs text-gray-300 mt-1">
+                        <p className="mt-1 pb-2 text-xs text-gray-300">
                           Clique abaixo para agendar
                         </p>
-                        <button
+                        <Button
                           onClick={() =>
                             handleNewAgendamento({
                               date: format(selectedDate, "yyyy-MM-dd"),
                             })
                           }
-                          className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#007EA7] border border-[#007EA7]/30 rounded-lg hover:bg-[#007EA7]/5 transition-colors cursor-pointer"
+                          variant="primary"
+                          size="sm"
+                          startIcon={<Plus className="h-4 w-4" />}
                         >
-                          <Plus className="h-4 w-4" /> Agendar
-                        </button>
+                          Agendar
+                        </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -773,15 +778,15 @@ export default function Agendamentos() {
                           <div
                             key={apt.id}
                             onClick={() => setDetailTarget(apt)}
-                            className="p-4 rounded-xl border border-gray-200 bg-white hover:shadow-md transition-all hover:border-gray-300 group cursor-pointer"
+                            className="group cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-gray-300 hover:shadow-md"
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#007EA7]/10 rounded-xl flex items-center justify-center">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#007EA7]/10">
                                   <User className="h-5 w-5 text-[#007EA7]" />
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-sm text-gray-800">
+                                  <p className="text-sm font-semibold text-gray-800">
                                     {getServicoNome(apt)}
                                   </p>
                                   <p className="text-xs text-gray-500">
@@ -808,7 +813,7 @@ export default function Agendamentos() {
                               {getEnderecoResumo(apt) && (
                                 <span className="flex items-center gap-1">
                                   <MapPin className="h-3 w-3" />
-                                  <span className="truncate max-w-[120px]">
+                                  <span className="max-w-[120px] truncate">
                                     {getEnderecoResumo(apt)}
                                   </span>
                                 </span>
@@ -830,9 +835,9 @@ export default function Agendamentos() {
 
             {/* ====== Visualização Semanal ====== */}
             {viewMode === "week" && (
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                 {/* Mini Calendar + Resumo */}
-                <div className="lg:col-span-1 space-y-4">
+                <div className="space-y-4 lg:col-span-1">
                   <MiniCalendarAgendamentos
                     currentDate={currentWeek}
                     selectedDate={selectedDate}
@@ -844,26 +849,26 @@ export default function Agendamentos() {
                   />
 
                   {/* Resumo do dia */}
-                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 shadow-sm">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm">
                     <p className="text-sm font-medium text-gray-500">
                       {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
                     </p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
+                    <p className="mt-1 text-3xl font-bold text-gray-900">
                       {selectedDayAgendamentos.length}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">agendamentos</p>
+                    <p className="mt-0.5 text-xs text-gray-400">agendamentos</p>
                   </div>
 
                   {/* Legenda */}
-                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 shadow-sm">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
+                    <p className="mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
                       Legenda
                     </p>
                     <div className="space-y-2">
                       {Object.entries(tipoConfig).map(([key, cfg]) => (
                         <div key={key} className="flex items-center gap-2">
                           <span
-                            className="w-3 h-3 rounded-full"
+                            className="h-3 w-3 rounded-full"
                             style={{ backgroundColor: cfg.dotColor }}
                           />
                           <span className="text-xs text-gray-600">
@@ -871,14 +876,14 @@ export default function Agendamentos() {
                           </span>
                         </div>
                       ))}
-                      <div className="border-t border-gray-100 pt-2 mt-2">
+                      <div className="mt-2 border-t border-gray-100 pt-2">
                         {Object.entries(statusConfig).map(([key, cfg]) => (
                           <div
                             key={key}
-                            className="flex items-center gap-2 mt-1.5"
+                            className="mt-1.5 flex items-center gap-2"
                           >
                             <span
-                              className={cn("w-3 h-3 rounded-full", cfg.dot)}
+                              className={cn("h-3 w-3 rounded-full", cfg.dot)}
                             />
                             <span className="text-xs text-gray-600">
                               {cfg.label}
@@ -891,8 +896,8 @@ export default function Agendamentos() {
                 </div>
 
                 {/* Calendário Semanal */}
-                <div className="lg:col-span-3 bg-gray-50 rounded-2xl border border-gray-200 shadow-md overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-md lg:col-span-3">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                     <h2 className="text-lg font-bold text-gray-800">
                       Semana de{" "}
                       {format(
@@ -908,19 +913,19 @@ export default function Agendamentos() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleToday}
-                        className="px-3 py-1.5 text-sm font-medium text-[#007EA7] border border-[#007EA7]/30 rounded-lg hover:bg-[#007EA7]/5 transition-colors cursor-pointer"
+                        className="cursor-pointer rounded-lg border border-[#007EA7]/30 px-3 py-1.5 text-sm font-medium text-[#007EA7] transition-colors hover:bg-[#007EA7]/5"
                       >
                         Hoje
                       </button>
                       <button
                         onClick={handlePrevWeek}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-gray-100"
                       >
                         <ChevronLeft className="h-5 w-5 text-gray-600" />
                       </button>
                       <button
                         onClick={handleNextWeek}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-gray-100"
                       >
                         <ChevronRight className="h-5 w-5 text-gray-600" />
                       </button>
@@ -949,8 +954,8 @@ export default function Agendamentos() {
 
             {/* ====== Visualização em Lista ====== */}
             {viewMode === "list" && (
-              <div className="bg-gray-50 rounded-2xl border border-gray-200 shadow-md">
-                <div className="px-6 py-4 border-b border-gray-100">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 shadow-md">
+                <div className="border-b border-gray-100 px-6 py-4">
                   <h2 className="text-lg font-bold text-gray-800">
                     Todos os Agendamentos
                   </h2>
@@ -961,12 +966,12 @@ export default function Agendamentos() {
 
                 <div className="divide-y divide-gray-100">
                   {agendamentos.length === 0 ? (
-                    <div className="text-center py-16 text-gray-400">
-                      <CalendarIcon className="h-16 w-16 mx-auto mb-3 text-gray-200" />
-                      <p className="font-medium text-lg">
+                    <div className="xt-center flex flex-col items-center py-16 text-gray-400">
+                      <CalendarIcon className="mx-auto mb-3 h-16 w-16 text-gray-200" />
+                      <p className="text-lg font-medium">
                         Nenhum agendamento encontrado
                       </p>
-                      <p className="text-sm mt-1">
+                      <p className="mt-1 text-sm">
                         Crie o primeiro agendamento clicando no botão acima
                       </p>
                     </div>
@@ -981,12 +986,12 @@ export default function Agendamentos() {
                         <div
                           key={apt.id}
                           onClick={() => setDetailTarget(apt)}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors gap-3 cursor-pointer"
+                          className="flex cursor-pointer flex-col justify-between gap-3 px-6 py-4 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center"
                         >
                           {/* Info principal */}
                           <div className="flex items-center gap-4">
                             <div
-                              className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
+                              className="flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
                               style={{
                                 backgroundColor:
                                   tipoConfig[apt.tipoAgendamento]?.dotColor ||
@@ -1024,10 +1029,10 @@ export default function Agendamentos() {
                           </div>
 
                           {/* Endereço */}
-                          <div className="hidden md:block text-sm text-gray-500 max-w-[200px] truncate">
+                          <div className="hidden max-w-[200px] truncate text-sm text-gray-500 md:block">
                             {getEnderecoResumo(apt) ? (
                               <span className="flex items-center gap-1">
-                                <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
                                 {getEnderecoResumo(apt)}
                               </span>
                             ) : (

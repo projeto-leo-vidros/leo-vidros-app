@@ -5,7 +5,7 @@ import {
   Toolbar,
   IconButton,
   Avatar,
-  Menu,
+  Menu as MuiMenu,
   MenuItem,
   Divider,
   Fade,
@@ -16,10 +16,10 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  ExpandMore,
-  LogoutOutlined,
-  AccountCircleOutlined,
-} from "@mui/icons-material";
+  ChevronDown,
+  LogOut,
+  UserCircle,
+} from "lucide-react";
 import Logo from "../../../assets/logo/logo.png";
 import DefaultAvatar from "../../../assets/Avatar.jpg";
 import { useUser } from "../../../context/UserContext.jsx";
@@ -82,7 +82,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
               sidebarOpen ? "rotate-90" : "rotate-0"
             }`}
           >
-            <MenuIcon fontSize="medium" />
+            <MenuIcon size={24} />
           </IconButton>
           <img
             src={Logo}
@@ -107,15 +107,16 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             src={userPhoto}
             className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
-          <ExpandMore
+          <ChevronDown
             className={`text-white transition-transform duration-300 group-hover:text-gray-300 ${
               open ? "rotate-180" : "rotate-0"
             } hidden sm:block`}
+            size={20}
           />
         </div>
 
         {/* Menu suspenso */}
-        <Menu
+        <MuiMenu
           anchorEl={anchorEl}
           open={open}
           onClose={handleProfileClose}
@@ -171,7 +172,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
               sx={menuItemStyle}
             >
               <ListItemIcon sx={iconStyle}>
-                <AccountCircleOutlined fontSize="small" />
+                <UserCircle size={20} />
               </ListItemIcon>
               <ListItemText
                 primary="Meu Perfil"
@@ -195,12 +196,12 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
               sx={menuItemStyle}
             >
               <ListItemIcon sx={iconStyle}>
-                <LogoutOutlined fontSize="small" />
+                <LogOut size={20} />
               </ListItemIcon>
               <ListItemText primary="Sair" primaryTypographyProps={textStyle} />
             </MenuItem>
           </Box>
-        </Menu>
+        </MuiMenu>
       </Toolbar>
     </AppBar>
   );

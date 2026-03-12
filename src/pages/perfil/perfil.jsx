@@ -8,8 +8,6 @@ import {
   Save,
   Edit2,
   Camera,
-  Eye,
-  EyeOff,
   AlertCircle,
   CheckCircle,
   X,
@@ -18,6 +16,8 @@ import {
 import { cepMask } from "../../utils/masks.js";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import Header from "../../components/layout/Header/Header";
+import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 import DefaultAvatar from "../../assets/Avatar.jpg";
 import { useUser } from "../../context/UserContext.jsx";
 
@@ -31,46 +31,17 @@ const InputField = ({
   disabled = false,
   className = "",
   showPasswordToggle = false,
-  onTogglePassword,
-  showPassword,
 }) => (
-  <div className={`flex flex-col ${className}`}>
-    <label className="block text-sm font-semibold text-gray-700 mb-2">
-      {label}
-    </label>
-    <div className="relative">
-      <input
-        type={showPasswordToggle ? (showPassword ? "text" : "password") : type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        className={`w-full border rounded-lg px-4 py-3 text-gray-800 text-base transition-all duration-200 outline-none ${
-          disabled
-            ? "bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-white border-gray-300 focus:border-[#003d6b] focus:ring-2 focus:ring-blue-100"
-        } ${showPasswordToggle ? "pr-10" : ""}`}
-      />
-      {disabled && !showPasswordToggle && (
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-          <Lock className="h-4 w-4 text-gray-400" />
-        </div>
-      )}
-      {showPasswordToggle && !disabled && (
-        <button
-          type="button"
-          onClick={onTogglePassword}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-        >
-          {showPassword ? (
-            <EyeOff className="h-5 w-5" />
-          ) : (
-            <Eye className="h-5 w-5" />
-          )}
-        </button>
-      )}
-    </div>
-  </div>
+  <UniversalInput
+    label={label}
+    name={name}
+    value={value}
+    onChange={onChange}
+    type={showPasswordToggle ? "password" : type}
+    disabled={disabled}
+    wrapperClassName={className}
+    endIcon={disabled && !showPasswordToggle ? <Lock className="h-4 w-4 text-gray-400" /> : undefined}
+  />
 );
 
 // Validação de Props do InputField
@@ -83,8 +54,6 @@ InputField.propTypes = {
   disabled: PropTypes.bool,
   className: PropTypes.string,
   showPasswordToggle: PropTypes.bool,
-  onTogglePassword: PropTypes.func,
-  showPassword: PropTypes.bool,
 };
 
 // COMPONENTE MESSAGE ALERT (Movido para fora do componente Perfil por boas práticas)
@@ -124,9 +93,6 @@ export default function Perfil() {
   const [activeTab, setActiveTab] = useState("personal");
   const [isEditing, setIsEditing] = useState(false);
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -617,12 +583,13 @@ export default function Perfil() {
                                 Segurança da Conta
                               </h3>
                               {isEditing && !isChangingPassword && (
-                                <button
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => setIsChangingPassword(true)}
-                                  className="text-sm text-[#0085cc] hover:text-[#006fa8] font-semibold cursor-pointer"
                                 >
                                   Alterar senha
-                                </button>
+                                </Button>
                               )}
                             </div>
 
@@ -635,10 +602,6 @@ export default function Perfil() {
                                   onChange={handleInputChange}
                                   disabled={false}
                                   showPasswordToggle={true}
-                                  showPassword={showCurrentPassword}
-                                  onTogglePassword={() =>
-                                    setShowCurrentPassword(!showCurrentPassword)
-                                  }
                                   className="text-start gap-2"
                                 />
 
@@ -649,10 +612,6 @@ export default function Perfil() {
                                   onChange={handleInputChange}
                                   disabled={false}
                                   showPasswordToggle={true}
-                                  showPassword={showNewPassword}
-                                  onTogglePassword={() =>
-                                    setShowNewPassword(!showNewPassword)
-                                  }
                                   className="text-start gap-2"
                                 />
 
@@ -663,14 +622,12 @@ export default function Perfil() {
                                   onChange={handleInputChange}
                                   disabled={false}
                                   showPasswordToggle={true}
-                                  showPassword={showConfirmPassword}
-                                  onTogglePassword={() =>
-                                    setShowConfirmPassword(!showConfirmPassword)
-                                  }
                                   className="text-start gap-2"
                                 />
 
-                                <button
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={() => {
                                     setIsChangingPassword(false);
                                     setFormData((prev) => ({
@@ -679,10 +636,9 @@ export default function Perfil() {
                                       confirmarSenha: "",
                                     }));
                                   }}
-                                  className="text-sm font-semibold text-gray-600 hover:text-gray-800 cursor-pointer"
                                 >
                                   Cancelar alteração de senha
-                                </button>
+                                </Button>
                               </div>
                             ) : (
                               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -707,43 +663,25 @@ export default function Perfil() {
                           />
 
                           <div className="lg:col-span-2 text-start flex flex-col">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              CEP
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                name="cep"
-                                value={formData.cep}
-                                onChange={handleInputChange}
-                                disabled={!isEditing}
-                                maxLength={9}
-                                placeholder="00000-000"
-                                className={`w-full border rounded-lg px-4 py-3 text-gray-800 text-base transition-all duration-200 outline-none pr-10 ${
-                                  !isEditing
-                                    ? "bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed"
-                                    : cepError
-                                      ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                                      : "bg-white border-gray-300 focus:border-[#003d6b] focus:ring-2 focus:ring-blue-100"
-                                }`}
-                              />
-                              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                {!isEditing && (
+                            <UniversalInput
+                              label="CEP"
+                              name="cep"
+                              value={formData.cep}
+                              onChange={handleInputChange}
+                              disabled={!isEditing}
+                              maxLength={9}
+                              placeholder="00000-000"
+                              error={cepError || undefined}
+                              endIcon={
+                                !isEditing ? (
                                   <Lock className="h-4 w-4 text-gray-400" />
-                                )}
-                                {isEditing && cepLoading && (
+                                ) : cepLoading ? (
                                   <Loader2 className="h-4 w-4 text-[#003d6b] animate-spin" />
-                                )}
-                                {isEditing && !cepLoading && cepError && (
+                                ) : cepError ? (
                                   <AlertCircle className="h-4 w-4 text-red-500" />
-                                )}
-                              </div>
-                            </div>
-                            {cepError && (
-                              <p className="mt-1 text-xs text-red-500">
-                                {cepError}
-                              </p>
-                            )}
+                                ) : undefined
+                              }
+                            />
                           </div>
 
                           <InputField
@@ -802,29 +740,19 @@ export default function Perfil() {
                         </div>
                       )}
                       <div className="pt-4 flex justify-end">
-                        <button
+                        <Button
+                          variant="primary"
                           onClick={toggleEdit}
                           disabled={loading}
-                          className={`flex items-center gap-2 px-4 py-3 cursor-pointer rounded-lg font-semibold text-white shadow-lg transition-all hover:scale-105 ${
-                            loading
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : isEditing
-                                ? "bg-green-700 hover:bg-green-800"
-                                : "bg-[#007EA7] hover:bg-[#006fa8]"
-                          }`}
+                          className={isEditing ? "bg-green-700 hover:bg-green-800" : ""}
+                          endIcon={!loading ? (isEditing ? <Save size={20} /> : <Edit2 size={20} />) : undefined}
                         >
                           {loading
                             ? "Salvando..."
                             : isEditing
                               ? "Salvar Alterações"
                               : "Editar Informações"}
-                          {!loading &&
-                            (isEditing ? (
-                              <Save size={20} />
-                            ) : (
-                              <Edit2 size={20} />
-                            ))}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>

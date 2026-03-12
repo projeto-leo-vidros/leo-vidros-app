@@ -6,8 +6,9 @@ import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import PedidosList from "./PedidosList";
 import ServicosList from "../servicos/ServicosList";
 import FilterDropdown from "./components/FilterDropdown";
-import { FaBoxOpen, FaWrench, FaFilter, FaSearch } from "react-icons/fa";
-import { ChevronDown } from "lucide-react";
+import { PackageOpen, Wrench, Filter, Search, ChevronDown, Plus } from "lucide-react";
+import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 export default function Pedidos() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -108,12 +109,13 @@ export default function Pedidos() {
                   onClick={() => setActiveTab("pedidos")}
                   className={`${tabBaseClass} ${activeTab === "pedidos" ? activeTabClass : inactiveTabClass} text-black`}
                 >
-                  <FaBoxOpen
+                  <PackageOpen
                     className={
                       activeTab === "pedidos"
                         ? "text-[#002A4B]"
                         : "text-slate-400"
                     }
+                    size={18}
                   />
                   Produtos
                 </button>
@@ -122,12 +124,13 @@ export default function Pedidos() {
                   onClick={() => setActiveTab("servicos")}
                   className={`${tabBaseClass} ${activeTab === "servicos" ? activeTabClass : inactiveTabClass} text-black`}
                 >
-                  <FaWrench
+                  <Wrench
                     className={
                       activeTab === "servicos"
                         ? "text-[#002A4B]"
                         : "text-slate-400"
                     }
+                    size={18}
                   />
                   Serviços
                 </button>
@@ -137,23 +140,24 @@ export default function Pedidos() {
               <div className="w-full bg-white border border-slate-200 rounded-b-lg rounded-tr-lg shadow-sm relative z-0 p-6">
                 {/* Barra de Ferramentas */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                  <button
-                    className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-white text-sm font-bold shadow-sm hover:opacity-90 transition-all cursor-pointer"
-                    style={{ backgroundColor: "#007EA7" }}
+                  <Button
+                    variant="primary"
+                    className="w-full md:w-auto"
                     onClick={handleNovoRegistroClick}
+                    startIcon={<Plus className="w-6 h-6" />}
                   >
                     Novo Registro
-                  </button>
+                  </Button>
 
                   <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
                     <div className="relative w-full md:w-[350px]">
-                      <input
+                      <UniversalInput
+                        variant="search"
                         placeholder="Busque por..."
                         value={busca}
                         onChange={(e) => setBusca(e.target.value)}
-                        className="w-full h-10 pl-10 pr-4 rounded-md border border-slate-200 bg-slate-50 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:bg-white transition-all"
+                        startIcon={<Search className="w-3.5 h-3.5" />}
                       />
-                      <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     </div>
 
                     <div className="relative w-full md:w-auto py-1">
@@ -168,7 +172,7 @@ export default function Pedidos() {
                         }`}
                         title="Filtrar"
                       >
-                        <FaFilter
+                        <Filter
                           className={`w-3 h-3 ${hasActiveFilters ? "text-[#007EA7]" : "text-slate-800"}`}
                         />
                         Filtrar

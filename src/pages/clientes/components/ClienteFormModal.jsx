@@ -5,7 +5,8 @@ import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
 import { User, X, Save } from "lucide-react";
 import { clienteSchema } from "../../../lib/schemas";
-import FormField from "../../../components/ui/Form/FormField";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
+import Button from "../../../components/ui/Button/Button.component";
 
 //  Valores padrão do formulário
 const DEFAULT_VALUES = {
@@ -194,8 +195,7 @@ export default function ClienteFormModal({
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  id="nome"
+                <UniversalInput
                   label="Nome"
                   required
                   registration={register("nome")}
@@ -203,7 +203,7 @@ export default function ClienteFormModal({
                   placeholder="Ex: Tiago Mendes"
                 />
 
-                <FormField id="cpf" label="CPF" required error={errors.cpf}>
+                <UniversalInput label="CPF" required error={errors.cpf}>
                   <Controller
                     name="cpf"
                     control={control}
@@ -217,10 +217,9 @@ export default function ClienteFormModal({
                       />
                     )}
                   />
-                </FormField>
+                </UniversalInput>
 
-                <FormField
-                  id="contato"
+                <UniversalInput
                   label="Telefone"
                   required
                   error={errors.contato}
@@ -240,10 +239,9 @@ export default function ClienteFormModal({
                       />
                     )}
                   />
-                </FormField>
+                </UniversalInput>
 
-                <FormField
-                  id="email"
+                <UniversalInput
                   label="Email"
                   required
                   type="email"
@@ -259,8 +257,7 @@ export default function ClienteFormModal({
               <h3 className="text-lg font-bold text-gray-700">Endereco</h3>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  id="cep"
+                <UniversalInput
                   label="CEP"
                   required
                   error={
@@ -293,10 +290,9 @@ export default function ClienteFormModal({
                       </div>
                     )}
                   </div>
-                </FormField>
+                </UniversalInput>
 
-                <FormField
-                  id="rua"
+                <UniversalInput
                   label="Rua"
                   required
                   registration={register("rua")}
@@ -304,8 +300,7 @@ export default function ClienteFormModal({
                   placeholder="Ex: Rua das Flores"
                 />
 
-                <FormField
-                  id="bairro"
+                <UniversalInput
                   label="Bairro"
                   required
                   registration={register("bairro")}
@@ -313,16 +308,14 @@ export default function ClienteFormModal({
                   placeholder="Ex: Centro"
                 />
 
-                <FormField
-                  id="complemento"
+                <UniversalInput
                   label="Complemento"
                   registration={register("complemento")}
                   error={errors.complemento}
                   placeholder="Ex: Bloco B, apto 13"
                 />
 
-                <FormField
-                  id="cidade"
+                <UniversalInput
                   label="Cidade"
                   required
                   registration={register("cidade")}
@@ -330,15 +323,14 @@ export default function ClienteFormModal({
                   placeholder="Ex: Sao Paulo"
                 />
 
-                <FormField
-                  id="uf"
+                <UniversalInput
                   label="UF"
                   required
                   registration={register("uf")}
                   error={errors.uf}
                   placeholder="Ex: SP"
                   maxLength={2}
-                  inputClassName="uppercase"
+                  className="uppercase"
                 />
               </div>
             </section>
@@ -346,52 +338,44 @@ export default function ClienteFormModal({
             {/* Status */}
             <section className="flex flex-col gap-3">
               <h3 className="text-md font-semibold text-gray-700">Status</h3>
-              <div className="flex items-center gap-3">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={statusAtual === "Ativo"}
-                    onChange={(e) =>
-                      setValue(
-                        "status",
-                        e.target.checked ? "Ativo" : "Inativo",
-                        {
-                          shouldValidate: true,
-                        },
-                      )
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007EA7]" />
-                </label>
-                <span className="text-sm font-medium text-gray-700">
-                  Possui servico em andamento (Status: {statusAtual})
-                </span>
-              </div>
+              <UniversalInput
+                as="toggle"
+                label={`Possui servico em andamento (Status: ${statusAtual})`}
+                checked={statusAtual === "Ativo"}
+                onChange={(e) =>
+                  setValue(
+                    "status",
+                    e.target.checked ? "Ativo" : "Inativo",
+                    {
+                      shouldValidate: true,
+                    },
+                  )
+                }
+              />
             </section>
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={handleClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={submitting}
-              className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+              startIcon={<Save className="w-4 h-4" />}
             >
-              <Save className="w-4 h-4" />
               {submitting
                 ? "Salvando..."
                 : modoEdicao
                   ? "Salvar Alteracoes"
                   : "Criar Cliente"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

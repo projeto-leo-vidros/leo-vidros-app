@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import EmailIcon from "@mui/icons-material/Email";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Mail, ArrowLeft } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
 import Swal from "sweetalert2";
@@ -112,7 +113,7 @@ const EsqueceuSenha = () => {
                 onClick={() => navigate("/Login")}
                 className="flex items-center gap-2 text-[#007EA7] hover:text-[#005f73] transition-colors"
               >
-                <ArrowBackIcon className="text-xl cursor-pointer" />
+                <ArrowLeft size={20} className="cursor-pointer" />
                 <span className="text-md font-semibold cursor-pointer">
                   Voltar ao login
                 </span>
@@ -140,27 +141,18 @@ const EsqueceuSenha = () => {
                   transition={{ duration: 0.4 }}
                   className="space-y-6"
                 >
-                  <div className="space-y-3">
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-[#6b7280] text-left"
-                    >
-                      E-mail
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <EmailIcon className="text-[#6b7280] text-3xl" />
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="Digite seu e-mail"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
+                  <UniversalInput
+                    variant="underline"
+                    label="E-mail"
+                    id="email"
+                    type="email"
+                    placeholder="Digite seu e-mail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    startIcon={<Mail size={30} />}
+                    required
+                    disabled={loading}
+                  />
                 </motion.div>
               </AnimatePresence>
 
@@ -201,52 +193,14 @@ const EsqueceuSenha = () => {
       </div>
 
       {/* Modal de sucesso */}
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={() => setModalOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-bold text-[#111827] text-center">
-                  Email verificado!
-                </h2>
-                <p className="text-[#6b7280] text-center">
-                  Senha temporária sendo enviada para seu e-mail...
-                </p>
-                <p className="text-sm text-[#6b7280] text-center">
-                  Redirecionando para o login...
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <FeedbackModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        type="success"
+        title="Email verificado!"
+        description="Senha temporária sendo enviada para seu e-mail. Redirecionando para o login..."
+        duration={2000}
+      />
     </div>
   );
 };
