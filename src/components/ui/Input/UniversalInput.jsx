@@ -117,6 +117,7 @@ const UniversalInput = React.forwardRef(
       ref,
       disabled,
       readOnly,
+      placeholder,
       "aria-invalid": !!errorMessage || undefined,
       "aria-describedby":
         [errorMessage && errorId, hint && hintId].filter(Boolean).join(" ") ||
@@ -129,7 +130,7 @@ const UniversalInput = React.forwardRef(
     // ── Base classes per variant ─────────────────────────────
     const baseDefault = cn(
       "w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-900",
-      "placeholder-gray-400 transition-all duration-150",
+      "placeholder-gray-600 transition-all duration-150",
       "focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]",
       "disabled:opacity-60 disabled:cursor-not-allowed",
       readOnly && "bg-gray-100 cursor-default",
@@ -138,7 +139,7 @@ const UniversalInput = React.forwardRef(
 
     const baseSearch = cn(
       "w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900",
-      "placeholder-gray-400 transition-all duration-150",
+      "placeholder-gray-600 transition-all duration-150",
       "focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]",
     );
 
@@ -313,6 +314,7 @@ const UniversalInput = React.forwardRef(
                 "aria-required": sharedProps["aria-required"],
                 disabled,
                 readOnly,
+                placeholder,
                 className: cn(inputClasses, child.props.className),
               })
             : child,
