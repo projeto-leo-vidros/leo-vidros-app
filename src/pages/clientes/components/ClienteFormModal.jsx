@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
 import { User, X, Save } from "lucide-react";
+import { cn } from "../../../utils/cn";
 import { clienteSchema } from "../../../lib/schemas";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import Button from "../../../components/ui/Button/Button.component";
@@ -24,11 +25,19 @@ const DEFAULT_VALUES = {
   uf: "",
 };
 
-//  Classes comuns de input
-const INPUT_CLASS =
-  "w-full px-4 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] border-gray-300 bg-white";
-const INPUT_ERROR_CLASS =
-  "w-full px-4 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 border-red-400 bg-white";
+//  Helper para gerar classes de input com suporte a erro
+const getMaskedInputClasses = (hasError) =>
+  cn(
+    "w-full px-4 py-2 border rounded-md bg-white text-sm text-gray-900",
+    "placeholder-gray-600 transition-all duration-150",
+    "focus:outline-none focus:ring-2 focus:border-[#007EA7]",
+    "disabled:opacity-60 disabled:cursor-not-allowed",
+    hasError
+      ? "border-red-400 focus:ring-red-400 focus:ring-2"
+      : "border-gray-300 focus:ring-[#007EA7] focus:ring-2"
+  );
+
+
 
 export default function ClienteFormModal({
   open,
@@ -212,8 +221,8 @@ export default function ClienteFormModal({
                         {...field}
                         mask="000.000.000-00"
                         placeholder="Ex: 123.456.789-00"
+                        className={getMaskedInputClasses(!!errors.cpf)}
                         onAccept={(value) => field.onChange(value)}
-                        className={errors.cpf ? INPUT_ERROR_CLASS : INPUT_CLASS}
                       />
                     )}
                   />
@@ -232,10 +241,8 @@ export default function ClienteFormModal({
                         {...field}
                         mask="(00) 00000-0000"
                         placeholder="Ex: (11) 91234-5678"
+                        className={getMaskedInputClasses(!!errors.contato)}
                         onAccept={(value) => field.onChange(value)}
-                        className={
-                          errors.contato ? INPUT_ERROR_CLASS : INPUT_CLASS
-                        }
                       />
                     )}
                   />
@@ -264,32 +271,28 @@ export default function ClienteFormModal({
                     errors.cep ||
                     (cepApiError ? { message: cepApiError } : undefined)
                   }
+                  endIcon={
+                    loadingCep && (
+                      <div className="w-4 h-4 border-2 border-[#007EA7] border-t-transparent rounded-full animate-spin" />
+                    )
+                  }
                 >
-                  <div className="relative">
-                    <Controller
-                      name="cep"
-                      control={control}
-                      render={({ field }) => (
-                        <IMaskInput
-                          {...field}
-                          mask="00000-000"
-                          placeholder="Ex: 80035-010"
-                          onAccept={(value) => {
-                            field.onChange(value);
-                            buscarCep(value);
-                          }}
-                          className={
-                            errors.cep ? INPUT_ERROR_CLASS : INPUT_CLASS
-                          }
-                        />
-                      )}
-                    />
-                    {loadingCep && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="w-4 h-4 border-2 border-[#007EA7] border-t-transparent rounded-full animate-spin" />
-                      </div>
+                  <Controller
+                    name="cep"
+                    control={control}
+                    render={({ field }) => (
+                      <IMaskInput
+                        {...field}
+                        mask="00000-000"
+                        placeholder="Ex: 80035-010"
+                        className={getMaskedInputClasses(!!errors.cep || !!cepApiError)}
+                        onAccept={(value) => {
+                          field.onChange(value);
+                          buscarCep(value);
+                        }}
+                      />
                     )}
-                  </div>
+                  />
                 </UniversalInput>
 
                 <UniversalInput
