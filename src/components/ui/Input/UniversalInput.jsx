@@ -128,7 +128,7 @@ const UniversalInput = React.forwardRef(
 
     // ── Base classes per variant ─────────────────────────────
     const baseDefault = cn(
-      "w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-900",
+      "w-full px-4 py-2 border border-gray-400 rounded-md bg-white text-sm text-gray-900",
       "placeholder-gray-400 transition-all duration-150",
       "focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]",
       "disabled:opacity-60 disabled:cursor-not-allowed",

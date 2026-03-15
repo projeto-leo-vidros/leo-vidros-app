@@ -149,7 +149,7 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
               }))}
             />
             <div
-              className="mb-2.5 h-2.5 w-2.5 shrink-0 rounded-full"
+              className="mt-6 h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: statusAtual.color }}
             />
           </div>
@@ -234,10 +234,10 @@ const OrcamentoItemRow = ({
           <span className="text-sm font-semibold text-slate-600">Item</span>
         </div>
         <Button
-          color="error"
+          variant="ghost"
           size="sm"
           onClick={() => onRemove(item.id)}
-          startIcon={<Trash2 size={12} />}
+          className="!bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100"
         >
           Remover
         </Button>
@@ -320,7 +320,7 @@ const OrcamentoItens = ({
         </h2>
       </div>
       <Button
-        variant="secondary"
+        variant="primary"
         onClick={onAdd}
         startIcon={<Plus size={15} />}
       >
@@ -369,25 +369,22 @@ const OrcamentoResumo = ({
         Resumo Financeiro
       </h2>
     </div>
-    <div className="flex flex-col gap-10 p-10">
-      <div className="flex flex-col gap-3">
-        <span className={tw.label}>Subtotal Geral</span>
-        <div className="rounded-lg border-[1.5px] border-slate-200 bg-slate-50 px-5 py-4 text-right text-base font-bold text-slate-700">
-          {formatCurrencyBR(subtotalGeral)}
-        </div>
-      </div>
+    <div className="flex flex-col gap-8 p-8">
       <UniversalInput
         label="Desconto Geral (R$)"
         type="number"
-        className="border-yellow-300 bg-amber-50"
+        className="!border-yellow-400 !bg-amber-50"
         value={descontoGeral}
         onChange={(e) => onDescontoChange(e.target.value)}
+        placeholder="0"
       />
-      <div className="flex flex-col gap-2">
-        <span className={tw.label}>Total Final</span>
-        <div className="rounded-lg bg-[var(--button-color)] px-5 py-3 text-right text-xl font-extrabold text-white">
-          {formatCurrencyBR(totalFinal)}
-        </div>
+      <div className="flex items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-5 py-4">
+        <span className={tw.label}>Subtotal Geral</span>
+        <span className="text-base font-bold text-slate-700">{formatCurrencyBR(subtotalGeral)}</span>
+      </div>
+      <div className="flex items-center justify-between rounded-lg bg-[var(--button-color)] px-5 py-5">
+        <span className="text-sm font-bold uppercase tracking-wide text-white">Total Final</span>
+        <span className="text-2xl font-extrabold text-white">{formatCurrencyBR(totalFinal)}</span>
       </div>
     </div>
   </div>
@@ -410,7 +407,7 @@ const Toast = ({ message, type, onClose }) => {
   const c = map[type] || map.success;
   return (
     <div
-      className={`fixed top-6 right-6 z-[9999] flex items-center gap-2.5 rounded-xl border px-4 py-3.5 shadow-2xl ${c.cls}`}
+      className={`fixed bottom-6 right-6 z-[9999] flex items-center gap-2.5 rounded-xl border px-4 py-3.5 shadow-2xl ${c.cls}`}
     >
       {c.icon}
       <span className="text-sm font-semibold">{message}</span>
@@ -693,12 +690,15 @@ export default function OrcamentoPage() {
             sidebarOpen={sidebarOpen}
           />
           <div className="flex w-full max-w-[1400px] flex-col gap-3 px-6 py-20">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate(-1)}
-              className="mb-8 flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+              className="mt-6 mb-4 self-start"
+              startIcon={<ArrowLeft size={16} />}
             >
-              <ArrowLeft size={20} /> Voltar para Pedidos
-            </button>
+              Voltar para Pedidos
+            </Button>
             <OrcamentoHeader />
             <div
               className="grid items-start gap-8"
