@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import SuccessModal from "../../components/overlay/Modal/SuccessModal";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import Api from "../../api/client/Api";
 import PedidosService from "../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../utils/formatters";
@@ -702,11 +702,13 @@ export default function PedidoDetalhe() {
         </main>
       </div>
 
-      <SuccessModal
-        open={showSuccessModal}
+      <FeedbackModal
+        isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
+        type="success"
         title="Sucesso!"
-        message="Pedido atualizado com sucesso!"
+        description="Pedido atualizado com sucesso!"
+        duration={2500}
       />
     </div>
   );
