@@ -16,7 +16,6 @@ import Api from "../../api/client/Api";
 import PedidosService from "../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 
-/* ─── 7 etapas ───────────────────────────────────────────────────────────── */
 const STEPS = [
   { label: "PENDENTE" },
   { label: "AGUARDANDO ORÇAMENTO" },
@@ -101,7 +100,6 @@ function Stepper({ status }) {
   );
 }
 
-/* ─── Agendamento Tabs ───────────────────────────────────────────────────── */
 function AgendamentoTabs({ agendamentos }) {
   const [activeTab, setActiveTab] = useState("orcamento");
   const [openItems, setOpenItems] = useState({});
@@ -196,7 +194,6 @@ function AgendamentoTabs({ agendamentos }) {
   );
 }
 
-/* ─── Página principal ───────────────────────────────────────────────────── */
 export default function PedidoDetalhe() {
   const { id }    = useParams();
   const navigate  = useNavigate();
@@ -668,8 +665,6 @@ export default function PedidoDetalhe() {
     </div>
   );
 }
-
-/* ─── Sub-components ─────────────────────────────────────────────────────── */
 
 function SectionCard({ title, badge, action, children }) {
   return (
