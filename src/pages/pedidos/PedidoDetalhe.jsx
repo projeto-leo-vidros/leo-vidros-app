@@ -10,7 +10,6 @@ import {
   Plus,
   X,
   Save,
-  FileText,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
@@ -308,13 +307,6 @@ export default function PedidoDetalhe() {
                 Voltar para Pedidos
               </button>
 
-              <button
-                onClick={() => navigate(`/Pedidos/${id}/orcamento`)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm"
-              >
-                <FileText className="w-4 h-4" />
-                Gerar Orçamento
-              </button>
             </div>
 
             {/* Título */}
