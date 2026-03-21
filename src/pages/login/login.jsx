@@ -6,7 +6,7 @@ import UniversalInput from "../../components/ui/Input/UniversalInput";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
-import { useUser } from "../../context/UserContext.jsx";
+import { useUser } from "../../context/UserContext";
 
 function Login() {
   const [email, setEmail] = useState("");

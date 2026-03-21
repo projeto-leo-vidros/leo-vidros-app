@@ -10,7 +10,6 @@ import ProdutoDetalhe from "../pages/estoque/ProdutoDetalhe.jsx";
 import Pedidos from "../pages/pedidos/pedidos.jsx";
 import Solicitacoes from "../pages/solicitacoes/Solicitacoes.jsx";
 import Agendamentos from "../pages/agendamentos/agendamentos.jsx";
-import CalendarDashboard from "../pages/calendar-dashboard/index.jsx";
 import Perfil from "../pages/perfil/perfil.jsx";
 import MapContainer from "../pages/geo-localizacao/MapContainer.jsx";
 import NovaSenha from "../pages/nova-senha/NovaSenha.jsx";
@@ -19,8 +18,8 @@ import OrcamentoERP from "../pages/orcamento/Orcamento.jsx";
 
 export const appRouter = createBrowserRouter([
   { path: "/", element: <Login /> },
-  { path: "/Login", element: <Login /> },
-  { path: "/Cadastro", element: <Cadastro /> },
+  { path: "/login", element: <Login /> },
+  { path: "/cadastro", element: <Cadastro /> },
   {
     path: "/pagina-inicial",
     element: (
@@ -30,7 +29,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Funcionarios",
+    path: "/funcionarios",
     element: (
       <ProtectedRoute>
         <Funcionarios />
@@ -38,7 +37,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Clientes",
+    path: "/clientes",
     element: (
       <ProtectedRoute>
         <Clientes />
@@ -46,7 +45,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Estoque",
+    path: "/estoque",
     element: (
       <ProtectedRoute>
         <Estoque />
@@ -54,7 +53,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Estoque/:id",
+    path: "/estoque/:id",
     element: (
       <ProtectedRoute>
         <ProdutoDetalhe />
@@ -62,7 +61,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Pedidos",
+    path: "/pedidos",
     element: (
       <ProtectedRoute>
         <Pedidos />
@@ -70,7 +69,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Pedidos/:pedidoId/orcamento",
+    path: "/pedidos/:pedidoId/orcamento",
     element: (
       <ProtectedRoute>
         <OrcamentoERP />
@@ -86,18 +85,10 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Agendamentos",
+    path: "/agendamentos",
     element: (
       <ProtectedRoute>
         <Agendamentos />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/Agenda",
-    element: (
-      <ProtectedRoute>
-        <CalendarDashboard />
       </ProtectedRoute>
     ),
   },
@@ -110,7 +101,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Perfil",
+    path: "/perfil",
     element: (
       <ProtectedRoute>
         <Perfil />
