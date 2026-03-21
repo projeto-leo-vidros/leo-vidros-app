@@ -609,36 +609,17 @@ export default function Agendamentos() {
 
               {/* Right Panel */}
               <div
-                className={`${
-                  rightPanelCollapsed ? "w-16" : "w-[340px]"
-                } shrink-0 transition-all duration-300 border-l border-gray-200 bg-gray-50/50 flex flex-col`}
+                className= "w-[340px] shrink-0 transition-all duration-300 border-l border-gray-200 bg-gray-50/50 flex flex-col"
               >
-                <div className="p-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-                      className="cursor-pointer text-gray-500"
-                    >
-                      {rightPanelCollapsed ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                    </Button>
-                    {!rightPanelCollapsed && (
-                      <h2 className="font-semibold text-gray-800">Calendário</h2>
-                    )}
-                  </div>
-                </div>
-
-                {!rightPanelCollapsed && (
                   <div className="flex flex-col gap-3 flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-200">
                     {/* <MiniCalendar
                       selectedDate={selectedDate}
                       onDateSelect={(date) => setSelectedDate(date)}
                     /> */}
-                    <div className="border-t border-gray-100 my-4" />
+                    <div className="my-4" />
                     <UpcomingEvents events={tasks} />
                   </div>
-                )}
+                
               </div>
             </div>
           </div>
