@@ -30,15 +30,8 @@ function Login() {
       );
 
       const data = response.data;
-      const { id, firstLogin, nome, email: userEmail, token } = data;
+      const { id, firstLogin, nome, email: userEmail } = data;
 
-      // 🎯 NOVO: Se o servidor retorna o token na resposta, salva no sessionStorage
-      if (token) {
-        sessionStorage.setItem("token", token);
-        localStorage.setItem("token", token);
-      }
-
-      // Popula o UserContext (que persiste no sessionStorage internamente)
       login({ id, nome, email: userEmail, firstLogin });
 
       setModalOpen(true);

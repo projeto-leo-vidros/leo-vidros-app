@@ -6,7 +6,6 @@ const BACKEND_URL =
 const ETL_URL =
   import.meta.env.VITE_MICROSERVICE_ETL_URL;
 
-// Função para configurar interceptors em qualquer instância (reaproveitamento de código)
 const configureInterceptors = (instance) => {
   instance.interceptors.request.use((config) => {
     if (config.method === "post" || config.method === "put") {
@@ -14,14 +13,7 @@ const configureInterceptors = (instance) => {
         config.headers["Content-Type"] = "application/json";
       }
     }
-    
-    // 🎯 NOVO: Adicionar token JWT ao header Authorization se estiver em localStorage ou sessionStorage
-    // Isso garante que o token seja enviado mesmo que o cookie httpOnly não seja enviado
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (token && !config.headers["Authorization"]) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-    
+    // Token é enviado automaticamente via cookie com withCredentials: true
     return config;
   });
 
@@ -46,8 +38,8 @@ const configureInterceptors = (instance) => {
           showConfirmButton: false,
         });
 
+        // Limpar apenas dados do usuário, não tokens (removidos dos cookies pelo servidor)
         sessionStorage.clear();
-        localStorage.clear();
 
         setTimeout(() => (window.location.href = "/Login"), 2500);
       }
@@ -57,11 +49,9 @@ const configureInterceptors = (instance) => {
   );
 };
 
-// Criação das instâncias
 const Api = axios.create({ baseURL: BACKEND_URL, withCredentials: true });
 const EtlApi = axios.create({ baseURL: ETL_URL, withCredentials: true });
 
-// Aplica a configuração de interceptors em ambas as instâncias
 configureInterceptors(Api);
 configureInterceptors(EtlApi);
 
