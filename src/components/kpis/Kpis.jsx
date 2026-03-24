@@ -6,7 +6,8 @@ export default function Kpis({ stats = [] }) {
         return (
           <div
             key={index}
-            className="bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col gap-2 items-center justify-center px-6 py-5 hover:shadow-md transition-all duration-200 text-center"
+            onClick={stat.onClick}
+            className={`bg-white border border-gray-200 rounded-lg flex flex-col gap-2 items-center justify-center px-6 py-5 transition-all duration-200 text-center ${stat.onClick ? "cursor-pointer hover:shadow-md hover:border-blue-300 shadow-sm" : "shadow-sm hover:shadow-md"}`}
           >
             {/* Título e ícone */}
             <div className="flex items-center justify-center gap-2 mb-4 text-center w-full">

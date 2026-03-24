@@ -275,6 +275,7 @@ export default function Agendamentos() {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarViewType, setCalendarViewType] = useState("month");
+  const [calendarSelectedEvent, setCalendarSelectedEvent] = useState(null);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
@@ -290,6 +291,32 @@ export default function Agendamentos() {
   const { data: agendamentos = [], isLoading, refetch } = useAgendamentos();
 
   const handleEventDeleted = () => refetch();
+
+  const [activeKpiFilter, setActiveKpiFilter] = useState(null);
+
+  const filteredTasks = useMemo(() => {
+    if (!activeKpiFilter) return tasks;
+    if (activeKpiFilter === 'today') {
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      return tasks.filter(t => t.dataAgendamento === todayStr);
+    }
+    if (activeKpiFilter === 'confirmed') {
+      return tasks.filter(t => t.statusAgendamento?.nome === "CONFIRMADO");
+    }
+    if (activeKpiFilter === 'pending') {
+      return tasks.filter(t => t.statusAgendamento?.nome === "PENDENTE");
+    }
+    return tasks;
+  }, [tasks, activeKpiFilter]);
+
+  const handleKpiClick = useCallback((filterType) => {
+    if (activeKpiFilter === filterType) {
+      setActiveKpiFilter(null);
+    } else {
+      setActiveKpiFilter(filterType);
+      setCalendarViewType("list");
+    }
+  }, [activeKpiFilter]);
 
   useEffect(() => {
     if (!agendamentos) return;
@@ -582,20 +609,41 @@ export default function Agendamentos() {
                     title: "Agendamentos de Hoje",
                     value: stats.today,
                     icon: CalendarIcon,
+                    onClick: () => handleKpiClick("today"),
+                    isActive: activeKpiFilter === "today",
                   },
                   {
                     title: "Agendamentos Confirmados",
                     value: stats.confirmed,
                     icon: Check,
+                    onClick: () => handleKpiClick("confirmed"),
+                    isActive: activeKpiFilter === "confirmed",
                   },
                   {
                     title: "Agendamentos Pendentes",
                     value: stats.pending,
                     icon: Clock,
+                    onClick: () => handleKpiClick("pending"),
+                    isActive: activeKpiFilter === "pending",
                   },
                 ]}
               />
             </div>
+
+            {/* ====== Filter Indicator ====== */}
+            {activeKpiFilter && (
+              <div className="w-full flex shrink-0 items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-4 px-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-900">
+                    Filtro ativo: <strong>{activeKpiFilter === 'today' ? 'Agendamentos de Hoje' : activeKpiFilter === 'confirmed' ? 'Agendamentos Confirmados' : 'Agendamentos Pendentes'}</strong>
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setActiveKpiFilter(null)} className="text-blue-700 bg-white border border-blue-200 hover:bg-blue-100 h-9 font-bold px-4">
+                  Limpar Filtro
+                </Button>
+              </div>
+            )}
 
             {/* ====== Area Principal do Calendário ====== */}
             <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -611,8 +659,8 @@ export default function Agendamentos() {
                   />
                   <div className="my-4" />
                   <UpcomingEvents 
-                    events={tasks} 
-                    onViewEvent={setDetailTarget}
+                    events={filteredTasks} 
+                    onViewEvent={setCalendarSelectedEvent}
                     onEditEvent={handleEdit}
                     onViewCalendar={() => setCalendarViewType("list")}
                   />
@@ -625,8 +673,10 @@ export default function Agendamentos() {
                   onDateSelect={setSelectedDate}
                   viewType={calendarViewType}
                   onViewChange={setCalendarViewType}
+                  selectedEvent={calendarSelectedEvent}
+                  onEventSelect={setCalendarSelectedEvent}
                   onEventCreate={handleNewAgendamento}
-                  events={tasks}
+                  events={filteredTasks}
                   onEventDeleted={handleEventDeleted}
                 />
               </div>

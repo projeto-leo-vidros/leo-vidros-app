@@ -250,6 +250,8 @@ const CalendarView = ({
   onDateSelect,
   viewType: externalViewType,
   onViewChange,
+  selectedEvent: externalSelectedEvent,
+  onEventSelect,
   onEventCreate,
   events = [],
   onEventDeleted,
@@ -257,7 +259,15 @@ const CalendarView = ({
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
   const [internalViewType, setInternalViewType] = useState("month");
   const viewType = externalViewType || internalViewType;
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  
+  const [internalSelectedEvent, setInternalSelectedEvent] = useState(null);
+  const selectedEvent = externalSelectedEvent !== undefined ? externalSelectedEvent : internalSelectedEvent;
+
+  const setSelectedEvent = (evt) => {
+    if (onEventSelect) onEventSelect(evt);
+    else setInternalSelectedEvent(evt);
+  };
+
   const [editingEvent, setEditingEvent] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const navigate = useNavigate();

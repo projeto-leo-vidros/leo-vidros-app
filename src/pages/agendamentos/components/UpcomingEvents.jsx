@@ -203,14 +203,14 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
           </div>
         ))}
       </div>
-
-      <div className="pt-3 border-t border-hairline">
+        
+      <div className="border-t border-hairline">
         <button 
           onClick={onViewCalendar}
-          className="w-full flex items-center justify-center space-x-2 p-2 text-sm text-primary hover:bg-primary/10 rounded-modern transition-micro"
+          className="w-full flex items-center justify-center gap-2 py-2 text-sm text-primary hover:bg-primary/10 rounded-modern transition-micro"
         >
           <Icon name="Calendar" size={16} />
-          <span>Ver Calendário Completo</span>
+          <span>Ver Agenda Completa</span>
         </button>
       </div>
     </div>

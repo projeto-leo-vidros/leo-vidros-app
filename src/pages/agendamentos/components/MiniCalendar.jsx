@@ -116,7 +116,7 @@ const MiniCalendar = ({ selectedDate, onDateSelect }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 bg-card border border-hairline rounded-modern p-4">
+    <div className="flex flex-col gap-3 bg-card rounded-modern p-4">
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-2">
         <Button
