@@ -9,14 +9,6 @@ import {
 } from "lucide-react";
 import OrcamentosService from "../../../api/services/orcamentosService";
 
-/**
- * Estados do progresso:
- * - GERANDO_ORCAMENTO: Salvando dados no banco
- * - GERANDO_PDF: PDF em processamento pelo microserviço
- * - FINALIZADO: PDF pronto para download
- * - ERRO: Ocorreu um erro em alguma etapa
- */
-
 const STATUS_CONFIG = {
   GERANDO_ORCAMENTO: {
     label: "Gerando orçamento...",
@@ -56,18 +48,6 @@ const STATUS_CONFIG = {
   },
 };
 
-/**
- * Toast de progresso da geração de orçamento.
- * Posicionado no canto inferior direito.
- * Conecta-se via SSE para acompanhar o progresso em tempo real.
- *
- * @param {object} props
- * @param {string|number} props.orcamentoId - ID do orçamento para monitorar
- * @param {string} [props.numeroOrcamento] - Número do orçamento para exibição
- * @param {string} [props.initialStatus] - Status inicial (GERANDO_ORCAMENTO por padrão)
- * @param {function} props.onClose - Callback para fechar o toast
- * @param {function} [props.onFinished] - Callback quando o PDF está pronto
- */
 export default function OrcamentoProgressToast({
   orcamentoId,
   numeroOrcamento,
@@ -80,7 +60,6 @@ export default function OrcamentoProgressToast({
   const sseRef = useRef(null);
   const autoCloseTimerRef = useRef(null);
 
-  // 🎯 DEFINIR handleDownload ANTES de usar em useEffect
   const handleDownload = useCallback(async () => {
     if (!orcamentoId) {
       return;
@@ -88,29 +67,14 @@ export default function OrcamentoProgressToast({
     setIsDownloading(true);
 
     try {
-
-      // 🎯 NOVO: Primeiro, verifica o status do PDF no servidor
-      if (numeroOrcamento) {
-        const statusCheck = await OrcamentosService.verificarStatusPdf(numeroOrcamento, 30, 1000);
-        
-        if (statusCheck.success && statusCheck.pronto) {
-          // Pula direto para o download
-        } else {
-          // Continua com fallback de polling local
-        }
-      }
-      
       let result = null;
       let tentativas = 0;
-      const maxTentativas = 15; // 15 tentativas = 30 segundos com 2s entre cada
+      const maxTentativas = 15;
 
-      // Faz polling para aguardar o PDF estar pronto no cache
       while (tentativas < maxTentativas) {
         result = await OrcamentosService.baixarPdf(orcamentoId, numeroOrcamento);
         
         if (result.success && result.data) {
-          // PDF pronto, fazer download
-          
           const url = window.URL.createObjectURL(result.data);
           const link = document.createElement("a");
           link.href = url;
@@ -119,28 +83,23 @@ export default function OrcamentoProgressToast({
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-          
-          return; // Sucesso!
+          return;
         }
 
         tentativas++;
         if (tentativas < maxTentativas) {
-          // Aguardar 2 segundos antes de tentar novamente
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
-
-      // Se chegou aqui, timeout
     } catch (e) {
+      // Erro ao baixar PDF - usuário verá mensagem de erro no toast
     } finally {
       setIsDownloading(false);
     }
   }, [orcamentoId, numeroOrcamento]);
 
-  // Conectar ao SSE quando o componente montar
   useEffect(() => {
     if (!orcamentoId) return;
-
 
     const sse = OrcamentosService.monitorarProgresso(
       orcamentoId,
@@ -151,18 +110,9 @@ export default function OrcamentoProgressToast({
         if (newStatus === "FINALIZADO") {
           onFinished?.();
           
-          // 🎯 NOVO: Dispara automaticamente o download quando PDF está pronto
           setTimeout(() => {
             handleDownload();
-          }, 500); // Aguarda 500ms para garantir que o PDF está em cache
-          
-          // ❌ REMOVIDO: Não fecha automaticamente mais
-          // Usuário pode fechar manualmente clicando no X
-        }
-
-        if (newStatus === "ERRO") {
-          // ❌ REMOVIDO: Não fecha automaticamente após erro
-          // Usuário pode ver a mensagem de erro e fechar manualmente
+          }, 500);
         }
       },
     );
@@ -175,7 +125,7 @@ export default function OrcamentoProgressToast({
         clearTimeout(autoCloseTimerRef.current);
       }
     };
-  }, [orcamentoId, handleDownload]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [orcamentoId, handleDownload]);
 
   const handleClose = useCallback(() => {
     sseRef.current?.close();
@@ -189,7 +139,7 @@ export default function OrcamentoProgressToast({
   const IconComponent = config.icon;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[99999] animate-slideInRight">
+    <div className="fixed bottom-6 right-6 z-99999 animate-slideInRight">
       <div
         className={`
         flex flex-col gap-3 rounded-xl border p-4 shadow-2xl backdrop-blur-sm

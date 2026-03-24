@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import { OrcamentoProgressToast } from "../../components/feedback/OrcamentoProgressToast";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import { OrcamentoStatusOptions } from "../../types/enums";
@@ -333,7 +332,7 @@ const OrcamentoItens = ({
         <div className="rounded-xl border-2 border-dashed border-slate-200 py-10 text-center text-slate-400">
           <Package size={32} className="mx-auto mb-2.5 opacity-40" />
           <p className="m-0 text-sm">Nenhum item adicionado.</p>
-          {/* CORREÇÃO DO ERRO AQUI: Clique em &quot;Adicionar Item&quot; */}
+        
           <p className="mt-1 text-xs">
             Clique em &quot;Adicionar Item&quot; para começar.
           </p>
@@ -448,9 +447,8 @@ export default function OrcamentoPage() {
   const [lastSaved, setLastSaved] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Estado do progress toast (geração assíncrona de PDF)
   const { startProgress } = useOrcamentoProgress();
-  // { orcamentoId, numeroOrcamento }
+
   const [savedOrcamentoId, setSavedOrcamentoId] = useState(null);
 
   const [pedidos, setPedidos] = useState([]);
@@ -650,20 +648,15 @@ export default function OrcamentoPage() {
         totalFinal,
       );
 
-      // 🎯 NOVO: Usar um ID temporário para conectar ao SSE ANTES do POST
       const tempId = `temp_${Date.now()}`;
       
-      // 🎯 NOVO: Abrir conexão SSE PRIMEIRO (antes do POST)
       let sseConnection = null;
       const ssePromise = new Promise((resolve) => {
         sseConnection = OrcamentosService.monitorarProgresso(tempId, (eventData) => {
-          // Evento recebido com sucesso!
-          console.log("📨 Evento SSE recebido:", eventData);
           resolve(eventData);
         });
       });
 
-      // 🎯 NOVO: Fazer POST agora que SSE está aguardando
       const result = await OrcamentosService.criarOrcamento(payload);
 
       if (result.success && result.data) {
@@ -673,13 +666,10 @@ export default function OrcamentoPage() {
         queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
         
-        // 🎯 NOVO: Redirecionar eventos do ID real para o ID temporário
-        // Na verdade, vamos usar o ID real agora que o orçamento foi criado
         if (sseConnection) {
           sseConnection.close();
         }
         
-        // Mostra o progress toast global para acompanhar a geração do PDF
         startProgress(
           orcId,
           result.data.numeroOrcamento || dadosGerais.numero_orcamento
@@ -793,16 +783,6 @@ export default function OrcamentoPage() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
-        />
-      )}
-      {progressToast && (
-        <OrcamentoProgressToast
-          orcamentoId={progressToast.orcamentoId}
-          numeroOrcamento={progressToast.numeroOrcamento}
-          onClose={() => setProgressToast(null)}
-          onFinished={() => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-          }}
         />
       )}
     </>
