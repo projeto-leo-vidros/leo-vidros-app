@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Plus,
   Clock,
   Loader2,
@@ -78,7 +79,7 @@ const DeleteConfirmationModal = ({
                   Cancelar Agendamento?
                 </h3>
               </div>
-              <p className="textleading-relaxed p-6 text-sm font-bold text-gray-900">
+              <p className="text-sm leading-relaxed font-bold text-gray-900">
                 Esta ação é irreversível e removerá o agendamento
                 permanentemente.
               </p>
@@ -259,9 +260,12 @@ const CalendarView = ({
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
   const [internalViewType, setInternalViewType] = useState("month");
   const viewType = externalViewType || internalViewType;
-  
+
   const [internalSelectedEvent, setInternalSelectedEvent] = useState(null);
-  const selectedEvent = externalSelectedEvent !== undefined ? externalSelectedEvent : internalSelectedEvent;
+  const selectedEvent =
+    externalSelectedEvent !== undefined
+      ? externalSelectedEvent
+      : internalSelectedEvent;
 
   const setSelectedEvent = (evt) => {
     if (onEventSelect) onEventSelect(evt);
@@ -271,6 +275,23 @@ const CalendarView = ({
   const [editingEvent, setEditingEvent] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const navigate = useNavigate();
+
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsViewDropdownOpen(false);
+      }
+    }
+    if (isViewDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isViewDropdownOpen]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -316,8 +337,8 @@ const CalendarView = ({
     if (viewType === "month")
       return format(currentDate, "MMMM yyyy", { locale: ptBR });
     if (viewType === "week") {
-      const start = startOfWeek(currentDate, { weekStartsOn: 1 }); // Segunda-feira
-      const end = addDays(start, 4); // Sexta-feira (4 dias depois da segunda)
+      const start = startOfWeek(currentDate, { weekStartsOn: 0 });
+      const end = addDays(start, 6);
       return `${format(start, "d MMM", { locale: ptBR })} - ${format(end, "d MMM", { locale: ptBR })}`;
     }
     if (viewType === "day")
@@ -423,21 +444,73 @@ const CalendarView = ({
           </Button>
           <div className="mx-2 h-6 w-px bg-gray-300 sm:mx-4"></div>
 
-          <div className="flex items-center gap-0 rounded-lg border border-gray-300 bg-white p-1 shadow-sm">
-            {["list", "day", "week", "month"].map((type) => (
-              <button
-                key={type}
-                onClick={() => handleViewChange(type)}
-                className={`flex cursor-pointer items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-all ${
-                  viewType === type
-                    ? "bg-[#134074ff] text-white shadow-md"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-              >
-                {type === "list" ? <List size={18} /> : <CalendarIcon size={18} />}
-                {{ list: "Todos", day: "Dia", week: "Semana", month: "Mês" }[type]}
-              </button>
-            ))}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
+              className="flex w-36 cursor-pointer items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:border-[#134074ff] focus:ring-1 focus:ring-[#134074ff] focus:outline-none"
+            >
+              <div className="flex items-center gap-2">
+                {viewType === "list" ? (
+                  <List size={18} />
+                ) : (
+                  <CalendarIcon size={18} />
+                )}
+                <span>
+                  {
+                    {
+                      list: "Agenda",
+                      day: "Dia",
+                      week: "Semana",
+                      month: "Mês",
+                    }[viewType]
+                  }
+                </span>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`text-gray-500 transition-transform ${isViewDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {isViewDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
+                >
+                  {["month", "week", "day", "list"].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        handleViewChange(type);
+                        setIsViewDropdownOpen(false);
+                      }}
+                      className={`flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${viewType === type ? "bg-[#134074ff]/10 font-medium text-[#134074ff]" : "text-gray-700 hover:bg-gray-100"}`}
+                    >
+                      {type === "list" ? (
+                        <List size={16} />
+                      ) : (
+                        <CalendarIcon size={16} />
+                      )}
+                      {
+                        {
+                          list: "Agenda",
+                          day: "Dia",
+                          week: "Semana",
+                          month: "Mês",
+                        }[type]
+                      }
+                      {viewType === type && (
+                        <div className="ml-auto flex h-1.5 w-1.5 rounded-full bg-[#134074ff]" />
+                      )}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -453,10 +526,7 @@ const CalendarView = ({
               transition={{ duration: 0.3 }}
               className="absolute inset-0 flex flex-col"
             >
-              <ListView
-                events={events}
-                onEventClick={handleEventClick}
-              />
+              <ListView events={events} onEventClick={handleEventClick} />
             </motion.div>
           )}
           {viewType === "day" && (

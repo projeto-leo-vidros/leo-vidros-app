@@ -87,7 +87,7 @@ function Cadastro() {
 
       setTimeout(() => {
         setModalOpen(false);
-        navigate("/Login");
+        navigate("/login");
       }, 3000);
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -285,7 +285,7 @@ function Cadastro() {
                 Já possui uma conta?{" "}
                 <button
                   type="button"
-                  onClick={() => (window.location.href = "/Login")}
+                  onClick={() => (window.location.href = "/login")}
                   className="text-[#007EA7] hover:text-[#005f73] font-medium transition-colors cursor-pointer"
                 >
                   Login

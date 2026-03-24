@@ -283,7 +283,6 @@ export default function Agendamentos() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [detailTarget, setDetailTarget] = useState(null);
 
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [showReagendarModal, setShowReagendarModal] = useState(false);
   const [agendamentoToReagendar, setAgendamentoToReagendar] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -584,9 +583,8 @@ export default function Agendamentos() {
     >
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col" ref={headerRef}>
         <Header
-          ref={headerRef}
           toggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
         />

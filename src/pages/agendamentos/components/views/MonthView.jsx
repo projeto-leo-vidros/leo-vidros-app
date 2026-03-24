@@ -1,4 +1,15 @@
-import { format, addDays, startOfWeek, endOfMonth, isToday, startOfMonth, eachDayOfInterval, isSameMonth, isBefore, startOfDay } from "date-fns";
+import {
+  format,
+  addDays,
+  startOfWeek,
+  endOfMonth,
+  isToday,
+  startOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isBefore,
+  startOfDay,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
@@ -13,18 +24,18 @@ const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
   const { eventsByDate } = useEventsByDate(events);
   const weekDaysNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <div className="grid grid-cols-7 bg-white border-b border-gray-200 shrink-0">
+    <div className="flex h-full flex-1 flex-col overflow-hidden">
+      <div className="grid shrink-0 grid-cols-7 border-b border-gray-200 bg-white">
         {weekDaysNames.map((w) => (
           <div
             key={w}
-            className="py-2 text-center text-xs font-bold text-gray-400 uppercase tracking-widest"
+            className="py-2 text-center text-xs font-bold tracking-widest text-gray-400 uppercase"
           >
             {w}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 flex-1 auto-rows-fr gap-px bg-gray-200 overflow-hidden">
+      <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-px overflow-hidden bg-gray-200">
         {days.map((day) => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayEvents = eventsByDate[dateKey] || [];
@@ -35,23 +46,23 @@ const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
           return (
             <div
               key={dateKey}
-              className={`relative flex flex-col p-1.5 group transition-colors border-gray-200 overflow-hidden ${isPast ? "bg-gray-100/50 cursor-not-allowed opacity-90" : isCurrent ? "bg-white hover:bg-gray-50 cursor-pointer" : "bg-gray-100/80 opacity-50 cursor-pointer"}`}
+              className={`group relative flex flex-col overflow-hidden border-gray-200 p-1.5 transition-colors ${isPast ? "cursor-not-allowed bg-gray-100/50 opacity-90" : isCurrent ? "cursor-pointer bg-white hover:bg-gray-50" : "cursor-pointer bg-gray-100/80 opacity-50"}`}
               onClick={() => !isPast && onDateClick?.(day)}
             >
-              <div className="flex justify-between items-start mb-1 shrink-0">
+              <div className="mb-1 flex shrink-0 items-start justify-between">
                 <div className="relative">
                   <span
-                    className={`text-xs w-6 h-6 flex items-center justify-center rounded-lg ${isCurrentToday ? "bg-[#134074ff] text-white font-bold text-center shadow-md" : "text-gray-700 font-semibold"}`}
+                    className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs ${isCurrentToday ? "bg-[#134074ff] text-center font-bold text-white shadow-md" : "font-semibold text-gray-700"}`}
                   >
                     {format(day, "d")}
                   </span>
                   {hasEvents && !isCurrentToday && (
-                    <div className="absoluterelative flex flex-col p-1.5 group transition-colors border-gray-200 overflow-hidden bg-gray-100/80 opacity-50 cursor-pointer -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full"></div>
+                    <div className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-blue-500"></div>
                   )}
                 </div>
                 {!isPast && (
                   <button
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full p-1 transition"
+                    className="rounded-full p-1 text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-600"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDateClick?.(day);
@@ -62,14 +73,14 @@ const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
                   </button>
                 )}
               </div>
-              <div className="flex-1 flex flex-col gap-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+              <div className="custom-scrollbar flex flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto">
                 {dayEvents.slice(0, 4).map((evt, index) => (
                   <motion.div
                     key={evt.id}
                     initial={{ opacity: 0, x: -5 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
-                    className="text-[10px] px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-90 transition border-l-2 shadow-sm"
+                    className="cursor-pointer truncate rounded border-l-2 px-1.5 py-0.5 text-[10px] shadow-sm transition hover:opacity-90"
                     style={{
                       backgroundColor: `${evt.backgroundColor || "#3b82f6"}15`,
                       borderLeftColor: evt.backgroundColor || "#3b82f6",
@@ -85,7 +96,7 @@ const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
                   </motion.div>
                 ))}
                 {dayEvents.length > 4 && (
-                  <div className="text-[9px] text-gray-500 font-bold text-center pt-0.5">
+                  <div className="pt-0.5 text-center text-[9px] font-bold text-gray-500">
                     + {dayEvents.length - 4} mais
                   </div>
                 )}
