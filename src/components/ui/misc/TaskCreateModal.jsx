@@ -4,8 +4,17 @@ import Api from "../../../api/client/Api";
 import { cepMask } from "../../../utils/masks";
 import UniversalInput from "../Input/UniversalInput";
 import Button from "../Button/Button.component";
-import { getInitials } from "../../../pages/agendamentos/utils/eventHelpers";
 
+const getInitials = (label) => {
+  if (!label || typeof label !== "string") return "";
+  return label
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+};
 const MultipleSelectCheckmarks = ({
   options,
   value = [],

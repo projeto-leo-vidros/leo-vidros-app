@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Calendar as CalendarIcon, MapPin, User, Tag } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, MapPin, User} from "lucide-react";
 import { getBadgeColor } from "../../utils/eventHelpers";
 
 const ListView = ({ events = [], onEventClick }) => {

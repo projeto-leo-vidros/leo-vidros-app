@@ -260,9 +260,11 @@ export default function Agendamentos() {
 
   useEffect(() => {
     const updateHeight = () => {
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
-      }
+      if (!headerRef.current) return;
+      const headerElement =
+        headerRef.current.querySelector?.("header") || headerRef.current;
+      const height = headerElement?.offsetHeight ?? 0;
+      setHeaderHeight(height);
     };
 
     updateHeight();
@@ -583,8 +585,9 @@ export default function Agendamentos() {
     >
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex flex-1 flex-col" ref={headerRef}>
+      <div className="flex flex-1 flex-col" >
         <Header
+          ref={headerRef}
           toggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
         />

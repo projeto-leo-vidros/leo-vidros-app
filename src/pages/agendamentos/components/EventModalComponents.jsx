@@ -10,7 +10,6 @@ import {
   Trash2,
   Package,
   X,
-  CreditCard,
   Tag,
 } from "lucide-react";
 import { getInitials } from "../utils/eventHelpers";
