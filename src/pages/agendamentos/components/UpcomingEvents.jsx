@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { format, addDays, isToday, isTomorrow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "../../../components/ui/misc/AppIcon";
 
-const UpcomingEvents = ({ events = [] }) => {
+const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar }) => {
+  const [openDropdownId, setOpenDropdownId] = useState(null);
   // Filtrar e ordenar eventos futuros (próximos 7 dias)
   const getUpcomingEvents = () => {
     const today = new Date();
@@ -111,6 +113,7 @@ const UpcomingEvents = ({ events = [] }) => {
         {upcomingEvents?.map((event) => (
           <div
             key={event?.id}
+            onClick={() => onViewEvent?.(event)}
             className={`bg-card border border-hairline rounded-modern p-3 hover:shadow-soft transition-micro cursor-pointer group border-l-4 ${getPriorityColor(event?.statusAgendamento)}`}
           >
             <div className="flex items-start space-x-3">
@@ -160,7 +163,7 @@ const UpcomingEvents = ({ events = [] }) => {
                   <div className="flex items-center space-x-1 text-xs text-text-secondary">
                     <Icon name="Users" size={12} />
                     <span className="truncate">
-                      {event?.funcionarios?.slice(0, 2)?.join(", ")}
+                      {event?.funcionarios?.slice(0, 2)?.map(f => f.nome)?.join(", ")}
                       {event?.funcionarios?.length > 2 &&
                         ` +${event?.funcionarios?.length - 2}`}
                     </span>
@@ -168,16 +171,44 @@ const UpcomingEvents = ({ events = [] }) => {
                 )}
               </div>
 
-              <button className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded-modern transition-micro">
-                <Icon name="MoreVertical" size={14} />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenDropdownId(openDropdownId === event.id ? null : event.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted text-gray-400 hover:text-gray-800 rounded-modern transition-micro"
+                >
+                  <Icon name="MoreVertical" size={14} />
+                </button>
+                {openDropdownId === event.id && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpenDropdownId(null); }} />
+                    <div className="absolute right-0 top-full mt-1 z-50 w-36 bg-white border border-gray-200 shadow-lg rounded-xl py-1">
+                      <button 
+                        onClick={(e) => {
+                           e.stopPropagation();
+                           setOpenDropdownId(null);
+                           onEditEvent?.(event);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                         <Icon name="Edit3" size={14} /> Editar
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <div className="pt-3 border-t border-hairline">
-        <button className="w-full flex items-center justify-center space-x-2 p-2 text-sm text-primary hover:bg-primary/10 rounded-modern transition-micro">
+        <button 
+          onClick={onViewCalendar}
+          className="w-full flex items-center justify-center space-x-2 p-2 text-sm text-primary hover:bg-primary/10 rounded-modern transition-micro"
+        >
           <Icon name="Calendar" size={16} />
           <span>Ver Calendário Completo</span>
         </button>

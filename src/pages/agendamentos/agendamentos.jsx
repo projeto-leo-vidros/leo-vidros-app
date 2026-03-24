@@ -264,7 +264,7 @@ export default function Agendamentos() {
         setHeaderHeight(headerRef.current.offsetHeight);
       }
     };
-    
+
     updateHeight();
     window.addEventListener("resize", updateHeight);
     return () => window.removeEventListener("resize", updateHeight);
@@ -274,7 +274,8 @@ export default function Agendamentos() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+  const [calendarViewType, setCalendarViewType] = useState("month");
+
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -294,7 +295,8 @@ export default function Agendamentos() {
     if (!agendamentos) return;
     const transformedTasks = agendamentos.map((agendamento) => {
       const dataFormatada = agendamento.dataAgendamento;
-      const startTime = agendamento.inicioAgendamento?.substring(0, 5) || "00:00";
+      const startTime =
+        agendamento.inicioAgendamento?.substring(0, 5) || "00:00";
       const endTime = agendamento.fimAgendamento?.substring(0, 5) || "00:00";
 
       let fullTitle = "Agendamento";
@@ -303,15 +305,20 @@ export default function Agendamentos() {
       if (agendamento.servico) {
         const codigo = agendamento.servico.codigo || "";
         const nome = agendamento.servico.nome || "";
-        fullTitle = `${codigo} ${nome}`.trim() || agendamento.tipoAgendamento || "Agendamento";
+        fullTitle =
+          `${codigo} ${nome}`.trim() ||
+          agendamento.tipoAgendamento ||
+          "Agendamento";
         if (codigo) calendarTitle = codigo;
       } else {
         fullTitle = agendamento.tipoAgendamento || "Agendamento";
       }
 
       let backgroundColor = "#3B82F6";
-      if (agendamento.tipoAgendamento === "SERVICO") backgroundColor = "#3B82F6";
-      else if (agendamento.tipoAgendamento === "ORCAMENTO") backgroundColor = "#FBBF24";
+      if (agendamento.tipoAgendamento === "SERVICO")
+        backgroundColor = "#3B82F6";
+      else if (agendamento.tipoAgendamento === "ORCAMENTO")
+        backgroundColor = "#FBBF24";
 
       return {
         id: agendamento.id,
@@ -329,7 +336,6 @@ export default function Agendamentos() {
 
   const { currentNotification, dismissNotification } =
     useAgendamentoNotifications(tasks);
-
 
   const stats = useMemo(() => {
     const todayKey = format(new Date(), "yyyy-MM-dd");
@@ -365,12 +371,10 @@ export default function Agendamentos() {
     [navigate],
   );
 
-
-
   const handleNewAgendamento = useCallback(
     (overrides = {}) => {
       setModalInitialData({
-        eventDate: overrides.date || format(selectedDate, "yyyy-MM-dd"),
+        eventDate: overrides.eventDate || format(selectedDate, "yyyy-MM-dd"),
         startTime: overrides.startTime || "",
         endTime: overrides.endTime || "",
         tipoAgendamento: "",
@@ -548,31 +552,30 @@ export default function Agendamentos() {
 
   return (
     <div
-          className="flex min-h-screen font-[Inter]"
-          style={{ backgroundColor: "#f7f9fa" }}
-        >
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-    
-          <div className="flex-1 flex flex-col">
-            <Header
-              ref={headerRef}
-              toggleSidebar={toggleSidebar}
-              sidebarOpen={sidebarOpen}
-            />
+      className="flex min-h-screen font-[Inter]"
+      style={{ backgroundColor: "#f7f9fa" }}
+    >
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-        <main className="flex-1 flex flex-col items-center relative justify-start px-6 sm:px-8 md:px-10  gap-10 transition-all duration-300"
-        style={{ paddingTop: `${headerHeight + 40}px` }}
+      <div className="flex flex-1 flex-col">
+        <Header
+          ref={headerRef}
+          toggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+        />
+
+        <main
+          className="relative flex flex-1 flex-col items-center justify-start gap-10 px-6 transition-all duration-300 sm:px-8 md:px-10"
+          style={{ paddingTop: `${headerHeight + 40}px` }}
         >
-          <div className="flex flex-col h-full w-full max-w-[1920px] mx-auto px-4 pt-10 pb-4 md:px-6 gap-4">
+          <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-10 pb-4 md:px-6">
             {/* ====== Header ====== */}
-            <div className="flex items-center justify-center shrink-0">
-              <h1 className="text-2xl font-bold text-gray-800">
-                Agendamentos
-              </h1>
+            <div className="flex shrink-0 items-center justify-center">
+              <h1 className="text-2xl font-bold text-gray-800">Agendamentos</h1>
             </div>
 
             {/* ====== Stats ====== */}
-            <div className="shrink-0 w-full [&>div]:!grid-cols-1 sm:[&>div]:!grid-cols-3 [&>div]:!gap-12">
+            <div className="w-full shrink-0 [&>div]:!grid-cols-1 [&>div]:!gap-12 sm:[&>div]:!grid-cols-3">
               <Kpis
                 stats={[
                   {
@@ -595,31 +598,37 @@ export default function Agendamentos() {
             </div>
 
             {/* ====== Area Principal do Calendário ====== */}
-            <div className="flex-1 min-h-0 flex rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              {/* Right Panel */}
+              <div className="flex w-[340px] shrink-0 flex-col border-l border-gray-200 bg-gray-50/50 transition-all duration-300">
+                <div className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-1 flex-col gap-3 space-y-6 overflow-y-auto p-4">
+                  <MiniCalendar
+                    selectedDate={selectedDate}
+                    onDateSelect={(date) => {
+                      setSelectedDate(date);
+                      setCalendarViewType("day");
+                    }}
+                  />
+                  <div className="my-4" />
+                  <UpcomingEvents 
+                    events={tasks} 
+                    onViewEvent={setDetailTarget}
+                    onEditEvent={handleEdit}
+                    onViewCalendar={() => setCalendarViewType("list")}
+                  />
+                </div>
+              </div>
               {/* Main Calendar View */}
-              <div className="flex-1 min-w-0 flex flex-col bg-white overflow-hidden">
+              <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
                 <CalendarView
                   selectedDate={selectedDate}
                   onDateSelect={setSelectedDate}
+                  viewType={calendarViewType}
+                  onViewChange={setCalendarViewType}
                   onEventCreate={handleNewAgendamento}
                   events={tasks}
                   onEventDeleted={handleEventDeleted}
                 />
-              </div>
-
-              {/* Right Panel */}
-              <div
-                className= "w-[340px] shrink-0 transition-all duration-300 border-l border-gray-200 bg-gray-50/50 flex flex-col"
-              >
-                  <div className="flex flex-col gap-3 flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-200">
-                    {/* <MiniCalendar
-                      selectedDate={selectedDate}
-                      onDateSelect={(date) => setSelectedDate(date)}
-                    /> */}
-                    <div className="my-4" />
-                    <UpcomingEvents events={tasks} />
-                  </div>
-                
               </div>
             </div>
           </div>

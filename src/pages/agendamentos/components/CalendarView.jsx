@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Calendar as CalendarIcon,
   X,
+  List,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -39,6 +40,7 @@ import Button from "../../../components/ui/Button/Button.component";
 import MonthView from "./views/MonthView";
 import WeekView from "./views/WeekView";
 import DayView from "./views/DayView";
+import ListView from "./views/ListView";
 
 // --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ---
 const DeleteConfirmationModal = ({
@@ -243,16 +245,18 @@ const EventDetailsModal = ({
   );
 };
 
-// --- COMPONENTE PRINCIPAL (CALENDAR VIEW) ---
 const CalendarView = ({
   selectedDate,
   onDateSelect,
+  viewType: externalViewType,
+  onViewChange,
   onEventCreate,
   events = [],
   onEventDeleted,
 }) => {
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
-  const [viewType, setViewType] = useState("month");
+  const [internalViewType, setInternalViewType] = useState("month");
+  const viewType = externalViewType || internalViewType;
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -293,7 +297,10 @@ const CalendarView = ({
     setCurrentDate(today);
     onDateSelect?.(today);
   };
-  const handleViewChange = (type) => setViewType(type);
+  const handleViewChange = (type) => {
+    if (onViewChange) onViewChange(type);
+    else setInternalViewType(type);
+  };
 
   const renderHeaderTitle = () => {
     if (viewType === "month")
@@ -407,7 +414,7 @@ const CalendarView = ({
           <div className="mx-2 h-6 w-px bg-gray-300 sm:mx-4"></div>
 
           <div className="flex items-center gap-0 rounded-lg border border-gray-300 bg-white p-1 shadow-sm">
-            {["day", "week", "month"].map((type) => (
+            {["list", "day", "week", "month"].map((type) => (
               <button
                 key={type}
                 onClick={() => handleViewChange(type)}
@@ -417,16 +424,31 @@ const CalendarView = ({
                     : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                <CalendarIcon size={18} />
-                {{ day: "Dia", week: "Semana", month: "Mês" }[type]}
+                {type === "list" ? <List size={18} /> : <CalendarIcon size={18} />}
+                {{ list: "Todos", day: "Dia", week: "Semana", month: "Mês" }[type]}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-hidden bg-gray-50/50">
         <AnimatePresence mode="wait">
+          {viewType === "list" && (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 flex flex-col"
+            >
+              <ListView
+                events={events}
+                onEventClick={handleEventClick}
+              />
+            </motion.div>
+          )}
           {viewType === "day" && (
             <motion.div
               key="day"

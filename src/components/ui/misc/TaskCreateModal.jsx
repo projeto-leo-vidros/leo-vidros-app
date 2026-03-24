@@ -951,7 +951,11 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                         ? "Buscando pedidos..."
                         : "Selecione o pedido"
                     }
-                    disabled={!formData?.tipoAgendamento || loadingOptions}
+                    disabled={
+                      !formData?.tipoAgendamento || 
+                      loadingOptions || 
+                      ((formData?.tipoAgendamento?.value === "SERVICO" || formData?.tipoAgendamento === "SERVICO") && pedidoOptions.length === 0)
+                    }
                   />
                   {errors?.pedido && (
                     <span className="mt-1 text-xs text-red-500">
