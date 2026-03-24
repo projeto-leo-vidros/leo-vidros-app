@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import LockIcon from "@mui/icons-material/Lock";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { UserCircle, Lock } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
 import { useUser } from "../../context/UserContext.jsx";
@@ -15,7 +14,6 @@ function Login() {
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useUser();
 
@@ -115,57 +113,28 @@ function Login() {
                   transition={{ duration: 0.4 }}
                   className="flex flex-col gap-6"
                 >
-                  <div className="space-y-3">
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-[#6b7280] text-left"
-                    >
-                      Email
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <AccountCircle className="text-[#6b7280] text-3xl" />
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="Digite seu email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
-                  </div>
+                  <UniversalInput
+                    variant="underline"
+                    label="Email"
+                    id="email"
+                    type="email"
+                    placeholder="Digite seu email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    startIcon={<UserCircle size={30} />}
+                  />
 
                   {/* Senha */}
-                  <div className="space-y-3">
-                    <label
-                      htmlFor="senha"
-                      className="block text-sm font-medium text-[#6b7280] text-left"
-                    >
-                      Senha
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <LockIcon className="text-[#6b7280] text-3xl" />
-                      <input
-                        id="senha"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Digite sua senha"
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-[#6b7280] hover:text-[#111827] transition-colors cursor-pointer"
-                      >
-                        {showPassword ? (
-                          <VisibilityOff className="text-3xl" />
-                        ) : (
-                          <Visibility className="text-3xl" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  <UniversalInput
+                    variant="underline"
+                    label="Senha"
+                    id="senha"
+                    type="password"
+                    placeholder="Digite sua senha"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    startIcon={<Lock size={30} />}
+                  />
                 </motion.div>
               </AnimatePresence>
 
@@ -222,47 +191,14 @@ function Login() {
           </div>
         </motion.div>
       </div>
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={() => setModalOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-15 h-15 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-bold text-[#111827] text-center">
-                  Login realizado com sucesso!
-                </h2>
-                <p className="text-[#6b7280] text-center">Redirecionando...</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <FeedbackModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        type="success"
+        title="Login realizado com sucesso!"
+        description="Redirecionando..."
+        duration={2000}
+      />
     </div>
   );
 }

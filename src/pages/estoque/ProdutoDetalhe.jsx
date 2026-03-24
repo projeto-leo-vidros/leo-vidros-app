@@ -28,6 +28,8 @@ import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import MovimentacaoDetalheModal from "./components/ModalEstoque/MovimentacaoDetalheModal";
 import Api from "../../api/client/Api";
 import { formatCurrency } from "../../utils/formatters";
+import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -301,12 +303,12 @@ export default function ProductDetailPage() {
       <div className="relative">
         {isEditing ? (
           <div className="flex items-center gap-2">
-            <input
+            <UniversalInput
               type={type}
               value={value}
               onChange={(e) => handleChange(e.target.value)}
               onBlur={() => setEditing((prev) => ({ ...prev, [field]: false }))}
-              className="flex-1 px-3 py-2 border-2 border-[#005a7a] rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
+              className="flex-1"
               autoFocus
             />
             <Check className="w-4 h-4 text-green-600" />
@@ -363,12 +365,12 @@ export default function ProductDetailPage() {
       <div className="flex bg-[#f7f9fa] min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Produto não encontrado</p>
-          <button
+          <Button
+            variant="primary"
             onClick={handleBack}
-            className="bg-[#007EA7] text-white px-4 py-2 rounded-md hover:bg-[#006891] transition-colors"
           >
             Voltar para Estoque
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -404,13 +406,14 @@ export default function ProductDetailPage() {
           <div className="w-full max-w-[1380px]">
             {/* Botão Voltar */}
             <div className="flex items-center justify-between mb-6 cursor-pointer">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleBack}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer transition-colors text-sm font-medium"
+                startIcon={<ArrowLeft className="w-5 h-5" />}
               >
-                <ArrowLeft className="w-5 h-5" />
                 Voltar para Estoque
-              </button>
+              </Button>
             </div>
 
             <div className="text-center mb-8">
@@ -689,11 +692,8 @@ export default function ProductDetailPage() {
                       >
                         <div className="flex-1 grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-left text-xs font-bold text-gray-600 mb-1">
-                              Tipo
-                            </label>
-                            <input
-                              type="text"
+                            <UniversalInput
+                              label="Tipo"
                               value={attr.tipo}
                               onChange={(e) =>
                                 handleAtributoChange(
@@ -703,15 +703,11 @@ export default function ProductDetailPage() {
                                 )
                               }
                               placeholder="Ex: cor, espessura"
-                              className="w-full px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                             />
                           </div>
                           <div>
-                            <label className="block text-left text-xs font-bold text-gray-600 mb-1">
-                              Valor
-                            </label>
-                            <input
-                              type="text"
+                            <UniversalInput
+                              label="Valor"
                               value={attr.valor}
                               onChange={(e) =>
                                 handleAtributoChange(
@@ -721,7 +717,6 @@ export default function ProductDetailPage() {
                                 )
                               }
                               placeholder="Ex: Incolor, 4mm"
-                              className="w-full px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                             />
                           </div>
                         </div>
@@ -734,13 +729,14 @@ export default function ProductDetailPage() {
                       </div>
                     ))}
 
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={handleAddAtributo}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#007EA7] text-white rounded-md hover:bg-[#006891] transition-colors text-sm font-medium"
+                      startIcon={<Plus className="w-4 h-4" />}
                     >
-                      <Plus className="w-4 h-4" />
                       Adicionar Atributo
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -896,15 +892,16 @@ export default function ProductDetailPage() {
                               {movimento.usuario?.nome || "N/A"}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 text-center">
-                              <button
+                              <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={() =>
                                   handleOpenMovimentacaoModal(movimento)
                                 }
-                                className="inline-flex items-center gap-1/5 px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                                startIcon={<Eye className="w-3 h-3" />}
                               >
-                                <Eye className="w-3 h-3" />
                                 Ver Detalhe
-                              </button>
+                              </Button>
                             </td>
                           </tr>
                         ))}

@@ -2,13 +2,14 @@ import { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import {
   Briefcase,
-  ChevronDown,
   Plus,
   AlertCircle,
   User,
 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { cpfMask, phoneMask, onlyLetters, cepMask } from "../../../utils/masks";
+import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import {
   pedidoServicoEtapa0Schema,
   pedidoServicoEtapa1Schema,
@@ -302,19 +303,19 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               {formData.tipoCliente === "existente" ? (
-                <div className="relative">
-                  <select className="w-full border p-3 rounded-lg appearance-none" value={formData.clienteId} onChange={handleClienteExistenteChange}>
-                    <option value="">Selecione um cliente...</option>
-                    {clientesExistentes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-4 w-4 h-4 text-gray-400" />
-                </div>
+                <UniversalInput
+                  as="select"
+                  placeholder="Selecione um cliente..."
+                  options={clientesExistentes.map(c => ({ value: String(c.id), label: c.nome }))}
+                  value={formData.clienteId}
+                  onChange={handleClienteExistenteChange}
+                />
               ) : (
                 <div className="grid gap-4">
-                  <input name="clienteNome" placeholder="Nome Completo" className="border p-3 rounded-lg" value={formData.clienteNome} onChange={handleChange} />
+                  <UniversalInput name="clienteNome" label="Nome Completo" placeholder="Nome Completo" value={formData.clienteNome} onChange={handleChange} />
                   <div className="grid grid-cols-2 gap-4">
-                    <input name="clienteCpf" placeholder="CPF" className="border p-3 rounded-lg" value={formData.clienteCpf} onChange={handleChange} />
-                    <input name="clienteTelefone" placeholder="Telefone" className="border p-3 rounded-lg" value={formData.clienteTelefone} onChange={handleChange} />
+                    <UniversalInput name="clienteCpf" label="CPF" placeholder="CPF" value={formData.clienteCpf} onChange={handleChange} />
+                    <UniversalInput name="clienteTelefone" label="Telefone" placeholder="Telefone" value={formData.clienteTelefone} onChange={handleChange} />
                   </div>
                 </div>
               )}
@@ -323,21 +324,21 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
           {currentStep === 1 && (
             <div className="grid grid-cols-3 gap-4">
-              <input name="cep" placeholder="CEP" className="border p-3 rounded-lg" value={formData.endereco.cep} onChange={handleEnderecoChange} />
-              <input name="rua" placeholder="Rua" className="col-span-2 border p-3 rounded-lg" value={formData.endereco.rua} onChange={handleEnderecoChange} />
-              <input name="numero" placeholder="Nº" className="border p-3 rounded-lg" value={formData.endereco.numero} onChange={handleEnderecoChange} />
-              <input name="bairro" placeholder="Bairro" className="border p-3 rounded-lg" value={formData.endereco.bairro} onChange={handleEnderecoChange} />
-              <input name="cidade" placeholder="Cidade" className="border p-3 rounded-lg" value={formData.endereco.cidade} onChange={handleEnderecoChange} />
+              <UniversalInput name="cep" label="CEP" placeholder="CEP" value={formData.endereco.cep} onChange={handleEnderecoChange} />
+              <UniversalInput name="rua" label="Rua" placeholder="Rua" wrapperClassName="col-span-2" value={formData.endereco.rua} onChange={handleEnderecoChange} />
+              <UniversalInput name="numero" label="Nº" placeholder="Nº" value={formData.endereco.numero} onChange={handleEnderecoChange} />
+              <UniversalInput name="bairro" label="Bairro" placeholder="Bairro" value={formData.endereco.bairro} onChange={handleEnderecoChange} />
+              <UniversalInput name="cidade" label="Cidade" placeholder="Cidade" value={formData.endereco.cidade} onChange={handleEnderecoChange} />
             </div>
           )}
 
           {currentStep === 2 && (
             <div className="space-y-4">
-              <button onClick={handleAddServico} className="bg-[#007EA7] text-white p-2 rounded-lg flex items-center gap-2"><Plus size={16}/> Add Serviço</button>
+              <Button variant="primary" size="sm" onClick={handleAddServico} startIcon={<Plus size={16}/>}>Add Serviço</Button>
               {formData.servicos.map((s, i) => (
                 <div key={i} className="p-4 border rounded-lg bg-gray-50 space-y-3">
-                  <input placeholder="Nome do serviço" className="w-full border p-2 rounded" value={s.nome} onChange={e => handleServicoChange(i, "nome", e.target.value)} />
-                  <input type="number" placeholder="Preço" className="w-full border p-2 rounded" value={s.precoEstimado} onChange={e => handleServicoChange(i, "precoEstimado", parseFloat(e.target.value))} />
+                  <UniversalInput label="Nome do serviço" placeholder="Nome do serviço" value={s.nome} onChange={e => handleServicoChange(i, "nome", e.target.value)} />
+                  <UniversalInput type="number" label="Preço" placeholder="Preço" value={s.precoEstimado} onChange={e => handleServicoChange(i, "precoEstimado", parseFloat(e.target.value))} />
                 </div>
               ))}
             </div>
@@ -352,12 +353,12 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <div className="px-8 py-4 border-t bg-gray-50 flex justify-between">
-          <button onClick={onClose} className="px-5 py-2 border rounded-lg">Cancelar</button>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <div className="flex gap-3">
-            {currentStep > 0 && <button onClick={() => setCurrentStep(c => c - 1)} className="px-5 py-2 border rounded-lg">Voltar</button>}
-            <button onClick={currentStep < 3 ? () => validateStep() && setCurrentStep(c => c + 1) : handleSave} className="bg-[#007EA7] text-white px-6 py-2 rounded-lg font-semibold">
+            {currentStep > 0 && <Button variant="secondary" onClick={() => setCurrentStep(c => c - 1)}>Voltar</Button>}
+            <Button variant="primary" onClick={currentStep < 3 ? () => validateStep() && setCurrentStep(c => c + 1) : handleSave}>
               {loading ? "Salvando..." : currentStep < 3 ? "Próximo" : "Salvar Pedido"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

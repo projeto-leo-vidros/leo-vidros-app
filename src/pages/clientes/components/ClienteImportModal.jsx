@@ -8,6 +8,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import clientesService from "../../../api/services/clientesService";
+import Button from "../../../components/ui/Button/Button.component";
 
 export default function ClienteImportModal({ open, onClose, onSuccess }) {
   const [file, setFile] = useState(null);
@@ -141,16 +142,18 @@ export default function ClienteImportModal({ open, onClose, onSuccess }) {
               )}
 
               <div className="mt-6 flex justify-end gap-3">
-                <button
+                <Button
+                  variant="ghost"
                   onClick={handleClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  size="sm"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
                   onClick={handleSubmit}
                   disabled={!file || uploading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#007EA7] hover:bg-[#006891] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                  size="sm"
                 >
                   {uploading ? (
                     <>
@@ -160,7 +163,7 @@ export default function ClienteImportModal({ open, onClose, onSuccess }) {
                   ) : (
                     "Importar"
                   )}
-                </button>
+                </Button>
               </div>
             </>
           ) : (

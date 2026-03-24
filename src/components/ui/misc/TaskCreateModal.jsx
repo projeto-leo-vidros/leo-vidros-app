@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Check, Trash2, CheckCircle, Package } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { cepMask } from "../../../utils/masks";
+import UniversalInput from "../Input/UniversalInput";
 
 const Button = ({
   children,
@@ -42,37 +43,6 @@ const Button = ({
     </button>
   );
 };
-
-const Input = ({
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  error,
-  maxLength,
-  className = "",
-  min,
-}) => (
-  <div className={`w-full ${className}`}>
-    <input
-      type={type}
-      value={value || ""}
-      onChange={onChange}
-      placeholder={placeholder}
-      maxLength={maxLength}
-      min={min}
-      className={`flex h-10 w-full rounded-md border ${error ? "border-red-500" : "border-gray-300"} bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm inherit`}
-      style={{
-        textAlign: className.includes("text-center") ? "center" : "left",
-      }}
-    />
-    {error && (
-      <span className="text-xs text-red-500 mt-1 block font-medium text-center">
-        {error}
-      </span>
-    )}
-  </div>
-);
 
 const Select = ({ value, onChange, options, placeholder, disabled }) => {
   const handleChange = (e) => {
@@ -1066,17 +1036,17 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 <div className="flex flex-col items-center">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Data do evento <span className="text-red-500">*</span>
-                  </label>
-                  <Input
+                  <UniversalInput
+                    label="Data do evento"
+                    required
                     type="date"
                     value={formData?.eventDate}
                     onChange={(e) =>
                       handleInputChange("eventDate", e?.target?.value)
                     }
                     error={errors?.eventDate}
-                    className="!w-[160px] text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
+                    wrapperClassName="!w-[160px]"
+                    className="text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
                   />
                 </div>
                 <div className="flex flex-col items-center">
@@ -1085,24 +1055,26 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                     <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center gap-3">
-                    <Input
+                    <UniversalInput
                       type="time"
                       value={formData?.startTime}
                       onChange={(e) =>
                         handleInputChange("startTime", e?.target?.value)
                       }
                       error={errors?.startTime}
-                      className="!w-[100px] text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
+                      wrapperClassName="!w-[100px]"
+                      className="text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
                     />
                     <span className="text-gray-500 font-medium pb-1">até</span>
-                    <Input
+                    <UniversalInput
                       type="time"
                       value={formData?.endTime}
                       onChange={(e) =>
                         handleInputChange("endTime", e?.target?.value)
                       }
                       error={errors?.endTime}
-                      className="!w-[100px] text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
+                      wrapperClassName="!w-[100px]"
+                      className="text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
                     />
                   </div>
                 </div>
@@ -1179,7 +1151,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="flex text-sm font-semibold text-gray-700 mb-2 justify-between">
+                  <div className="flex text-sm font-semibold text-gray-700 mb-2 justify-between">
                     <span>
                       CEP <span className="text-red-500">*</span>
                     </span>
@@ -1188,8 +1160,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                         Buscando...
                       </span>
                     )}
-                  </label>
-                  <Input
+                  </div>
+                  <UniversalInput
                     type="text"
                     value={formData?.cep}
                     onChange={(e) => handleCepChange(e?.target?.value)}
@@ -1198,113 +1170,74 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                     maxLength={9}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Rua <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.rua}
-                    onChange={(e) => handleInputChange("rua", e?.target?.value)}
-                    placeholder="Nome da rua"
-                    error={errors?.rua}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Número
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.numero}
-                    onChange={(e) =>
-                      handleInputChange("numero", e?.target?.value)
-                    }
-                    placeholder="Nº"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Complemento
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.complemento}
-                    onChange={(e) =>
-                      handleInputChange("complemento", e?.target?.value)
-                    }
-                    placeholder="Apto, Bloco..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Bairro
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.bairro}
-                    onChange={(e) =>
-                      handleInputChange("bairro", e?.target?.value)
-                    }
-                    placeholder="Bairro"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Cidade
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.cidade}
-                    onChange={(e) =>
-                      handleInputChange("cidade", e?.target?.value)
-                    }
-                    placeholder="Cidade"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    UF
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.uf}
-                    onChange={(e) => handleInputChange("uf", e?.target?.value)}
-                    placeholder="UF"
-                    maxLength={2}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    País
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData?.pais}
-                    onChange={(e) =>
-                      handleInputChange("pais", e?.target?.value)
-                    }
-                    placeholder="Brasil"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Observação
-                </label>
-                <Input
-                  type="text"
-                  value={formData?.observacao}
-                  onChange={(e) =>
-                    handleInputChange("observacao", e?.target?.value)
-                  }
-                  placeholder="Observação"
+                <UniversalInput
+                  label="Rua"
+                  required
+                  value={formData?.rua}
+                  onChange={(e) => handleInputChange("rua", e?.target?.value)}
+                  placeholder="Nome da rua"
+                  error={errors?.rua}
                 />
               </div>
+              <div className="grid grid-cols-3 gap-4">
+                <UniversalInput
+                  label="Número"
+                  value={formData?.numero}
+                  onChange={(e) =>
+                    handleInputChange("numero", e?.target?.value)
+                  }
+                  placeholder="Nº"
+                />
+                <UniversalInput
+                  label="Complemento"
+                  value={formData?.complemento}
+                  onChange={(e) =>
+                    handleInputChange("complemento", e?.target?.value)
+                  }
+                  placeholder="Apto, Bloco..."
+                />
+                <UniversalInput
+                  label="Bairro"
+                  value={formData?.bairro}
+                  onChange={(e) =>
+                    handleInputChange("bairro", e?.target?.value)
+                  }
+                  placeholder="Bairro"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <UniversalInput
+                  label="Cidade"
+                  value={formData?.cidade}
+                  onChange={(e) =>
+                    handleInputChange("cidade", e?.target?.value)
+                  }
+                  placeholder="Cidade"
+                />
+                <UniversalInput
+                  label="UF"
+                  value={formData?.uf}
+                  onChange={(e) => handleInputChange("uf", e?.target?.value)}
+                  placeholder="UF"
+                  maxLength={2}
+                />
+                <UniversalInput
+                  label="País"
+                  value={formData?.pais}
+                  onChange={(e) =>
+                    handleInputChange("pais", e?.target?.value)
+                  }
+                  placeholder="Brasil"
+                />
+              </div>
+              <UniversalInput
+                label="Observação"
+                value={formData?.observacao}
+                onChange={(e) =>
+                  handleInputChange("observacao", e?.target?.value)
+                }
+                placeholder="Observação"
+              />
             </>
           )}
 
@@ -1359,7 +1292,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                             {prod.nome}
                           </div>
                           <div className="col-span-4">
-                            <Input
+                            <UniversalInput
                               type="number"
                               value={prod.quantidade}
                               onChange={(e) =>
@@ -1404,10 +1337,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 Cancelar
               </Button>
               <Button
-                type="submit"
-                iconPosition="left"
-                size="md"
-                variant="btn-primary"
+                variant="primary"
+                className="w-full md:w-auto"
                 disabled={loading}
               >
                 {loading

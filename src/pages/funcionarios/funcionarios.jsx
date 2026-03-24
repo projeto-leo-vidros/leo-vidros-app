@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import { Search, Edit, Trash2, CalendarDays } from "lucide-react";
+import { Search, Edit, Trash2, CalendarDays, Plus } from "lucide-react";
 
 import FuncionarioForm from "./components/ModalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "./components/ModalFuncionarios/DeleteFuncionario";
 import AgendaFuncionario from "./components/ModalFuncionarios/AgendaFuncionario";
 import Api from "../../api/client/Api";
+import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 export default function Funcionarios() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -162,22 +164,22 @@ export default function Funcionarios() {
             <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-6">
               {/* Barra de ações */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                <button
+                <Button
+                  variant="primary"
                   onClick={abrirModalCriar}
-                  className="bg-[#007EA7] text-white font-semibold py-2.5 px-6 rounded-md cursor-pointer hover:bg-[#006891] transition-colors w-full md:w-auto"
+                  startIcon={<Plus className="w-6 h-6" />}
                 >
                   Novo Funcionário
-                </button>
+                </Button>
 
                 <div className="relative w-full md:max-w-md">
-                  <input
-                    type="text"
+                  <UniversalInput
+                    variant="search"
                     placeholder="Busque por nome..."
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
+                    startIcon={<Search className="w-5 h-5" />}
                   />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
               </div>
 
@@ -186,14 +188,13 @@ export default function Funcionarios() {
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-12 rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4">
-                    <input
-                      type="checkbox"
+                    <UniversalInput
+                      as="checkbox"
                       checked={
                         funcionariosFiltrados.length > 0 &&
                         selecionados.length === funcionariosFiltrados.length
                       }
                       onChange={handleSelectAllClick}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                   <div className="py-3 w-[20%] pl-2">Nome</div>
@@ -231,13 +232,12 @@ export default function Funcionarios() {
                           }`}
                         >
                           <div className="py-3 w-[5%] pl-4">
-                            <input
-                              type="checkbox"
+                            <UniversalInput
+                              as="checkbox"
                               checked={isItemSelected}
                               onChange={(event) =>
                                 handleSelectClick(event, f.id)
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                           </div>
                           <div className="py-3 w-[20%] pl-2 text-sm text-gray-900 truncate">
@@ -315,22 +315,24 @@ export default function Funcionarios() {
                   {funcionariosFiltrados.length} resultados
                 </span>
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
                     disabled={pagina === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Anterior
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setPagina((prev) => Math.min(prev + 1, totalPaginas))
                     }
                     disabled={pagina === totalPaginas}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Próximo
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

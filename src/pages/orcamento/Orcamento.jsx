@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../api/queryKeys";
 import Api from "../../api/client/Api";
 import OrcamentosService from "../../api/services/orcamentosService";
 import { useOrcamentoProgress } from "../../context/OrcamentoProgressContext.jsx";
@@ -16,6 +18,10 @@ import {
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
+import { OrcamentoProgressToast } from "../../components/feedback/OrcamentoProgressToast";
+import Button from "../../components/ui/Button/Button.component";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
+import { OrcamentoStatusOptions } from "../../types/enums";
 
 const gerarNumeroOrcamento = (pedidoId) => {
   const ano = new Date().getFullYear();
@@ -57,47 +63,17 @@ const criarItemVazio = (ordem = 1) => ({
   ordem,
 });
 
-const STATUS_OPTIONS = [
-  { value: "RASCUNHO", label: "Rascunho", color: "#64748b" },
-  { value: "ENVIADO", label: "Enviado", color: "#3b82f6" },
-  { value: "EM_ANALISE", label: "Em Análise", color: "#f59e0b" },
-  { value: "APROVADO", label: "Aprovado", color: "#10b981" },
-  { value: "RECUSADO", label: "Recusado", color: "#ef4444" },
-  { value: "EXPIRADO", label: "Expirado", color: "#6b7280" },
-];
-
 const tw = {
   card: "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden",
   cardHeader:
     "px-8 py-5 border-b border-slate-100 flex items-center gap-3 bg-slate-50",
   cardBody: "p-8",
-  fieldGroup: "flex flex-col gap-1",
   label:
     "text-[11px] font-semibold text-gray-700 mb-1 block uppercase tracking-[0.05em]",
-  errorText: "text-[11px] text-red-500 mt-1.5",
   input:
     "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none transition-colors box-border font-[inherit]",
   inputReadOnly: "!bg-slate-50 !text-slate-500 cursor-default",
-  select:
-    "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none cursor-pointer font-[inherit]",
-  btnPrimary:
-    "px-5 py-2 rounded-md text-white font-semibold text-sm cursor-pointer transition-opacity shadow-sm bg-[var(--button-color)] hover:opacity-90",
-  btnOutline:
-    "px-5 py-2 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold text-sm cursor-pointer hover:bg-slate-50 transition-colors",
-  btnSecondary:
-    "px-5 py-2 rounded-md border border-[#007EA7] bg-white text-[#007EA7] font-semibold text-sm cursor-pointer hover:bg-violet-50 transition-colors",
 };
-
-const Field = ({ label, required, error, children }) => (
-  <div className={tw.fieldGroup}>
-    <label className={tw.label}>
-      {label}
-      {required && <span className="ml-0.5 text-red-500">*</span>}
-    </label>
-    {children}
-    {error && <span className={tw.errorText}>{error}</span>}
-  </div>
-);
 
 const OrcamentoHeader = () => (
   <div className="mb-10 text-center">
@@ -109,8 +85,8 @@ const OrcamentoHeader = () => (
 
 const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
   const statusAtual =
-    STATUS_OPTIONS.find((s) => s.value === dados.status_id) ||
-    STATUS_OPTIONS[0];
+    OrcamentoStatusOptions.find((s) => s.value === dados.status_id) ||
+    OrcamentoStatusOptions[0];
   const clienteNome = dados.cliente_nome;
 
   return (
@@ -128,118 +104,104 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
             gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
           }}
         >
-          <Field label="Número do Orçamento">
-            <input
-              className={`${tw.input} ${tw.inputReadOnly}`}
-              value={dados.numero_orcamento}
-              placeholder="Selecione um pedido"
-              readOnly
+          <UniversalInput
+            label="Número do Orçamento"
+            value={dados.numero_orcamento}
+            placeholder="Selecione um pedido"
+            readOnly
+          />
+
+          <UniversalInput
+            label="Cliente"
+            required
+            error={errors.cliente_id}
+            value={clienteNome}
+            placeholder="Selecione um pedido"
+            readOnly
+          />
+
+          <UniversalInput
+            as="select"
+            label="Pedido"
+            required
+            error={errors.pedido_id}
+            value={dados.pedido_id}
+            onChange={(e) => onChange("pedido_id", e.target.value)}
+            placeholder="Selecione o pedido"
+            options={pedidos.map((p) => ({
+              value: p.id,
+              label: p.produtosDesc
+                ? `Pedido #${p.id} — ${p.produtosDesc}`
+                : `Pedido #${p.id}`,
+            }))}
+          />
+
+          <div className="flex items-end gap-2">
+            <UniversalInput
+              as="select"
+              label="Status"
+              wrapperClassName="flex-1"
+              value={dados.status_id}
+              onChange={(e) => onChange("status_id", e.target.value)}
+              options={OrcamentoStatusOptions.map((s) => ({
+                value: s.value,
+                label: s.label,
+              }))}
             />
-          </Field>
-
-          <Field label="Cliente" required error={errors.cliente_id}>
-            <input
-              className={`${tw.input} ${tw.inputReadOnly}`}
-              value={clienteNome}
-              placeholder="Selecione um pedido"
-              readOnly
+            <div
+              className="mt-6 h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: statusAtual.color }}
             />
-          </Field>
+          </div>
 
-          <Field label="Pedido" required error={errors.pedido_id}>
-            <select
-              className={`${tw.select} ${errors.pedido_id ? "border-red-400" : ""}`}
-              value={dados.pedido_id}
-              onChange={(e) => onChange("pedido_id", e.target.value)}
-            >
-              <option value="">Selecione o pedido</option>
-              {pedidos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.produtosDesc
-                    ? `Pedido #${p.id} — ${p.produtosDesc}`
-                    : `Pedido #${p.id}`}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Status">
-            <div className="flex items-center gap-2">
-              <select
-                className={tw.select}
-                value={dados.status_id}
-                onChange={(e) => onChange("status_id", e.target.value)}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <div
-                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: statusAtual.color }}
-              />
-            </div>
-          </Field>
-
-          <Field
+          <UniversalInput
             label="Data do Orçamento"
+            type="date"
             required
             error={errors.data_orcamento}
-          >
-            <input
-              type="date"
-              className={`${tw.input} ${errors.data_orcamento ? "border-red-400" : ""}`}
-              value={dados.data_orcamento}
-              onChange={(e) => onChange("data_orcamento", e.target.value)}
-            />
-          </Field>
+            value={dados.data_orcamento}
+            onChange={(e) => onChange("data_orcamento", e.target.value)}
+          />
 
-          <Field label="Prazo de Instalação">
-            <input
-              type="date"
-              className={tw.input}
-              value={dados.prazo_instalacao}
-              onChange={(e) => onChange("prazo_instalacao", e.target.value)}
-            />
-          </Field>
+          <UniversalInput
+            label="Prazo de Instalação"
+            type="date"
+            value={dados.prazo_instalacao}
+            onChange={(e) => onChange("prazo_instalacao", e.target.value)}
+          />
 
-          <Field label="Garantia">
-            <input
-              className={tw.input}
-              placeholder="Ex: 12 meses"
-              value={dados.garantia}
-              onChange={(e) => onChange("garantia", e.target.value)}
-            />
-          </Field>
+          <UniversalInput
+            label="Garantia"
+            placeholder="Ex: 12 meses"
+            value={dados.garantia}
+            onChange={(e) => onChange("garantia", e.target.value)}
+          />
 
-          <Field label="Forma de Pagamento">
-            <select
-              className={tw.select}
-              value={dados.forma_pagamento}
-              onChange={(e) => onChange("forma_pagamento", e.target.value)}
-            >
-              <option value="">Selecione</option>
-              <option value="BOLETO">Boleto Bancário</option>
-              <option value="PIX">PIX</option>
-              <option value="CARTAO_CREDITO">Cartão de Crédito</option>
-              <option value="TRANSFERENCIA">Transferência Bancária</option>
-              <option value="CHEQUE">Cheque</option>
-              <option value="DINHEIRO">Dinheiro</option>
-            </select>
-          </Field>
+          <UniversalInput
+            as="select"
+            label="Forma de Pagamento"
+            value={dados.forma_pagamento}
+            onChange={(e) => onChange("forma_pagamento", e.target.value)}
+            placeholder="Selecione"
+            options={[
+              { value: "BOLETO", label: "Boleto Bancário" },
+              { value: "PIX", label: "PIX" },
+              { value: "CARTAO_CREDITO", label: "Cartão de Crédito" },
+              { value: "TRANSFERENCIA", label: "Transferência Bancária" },
+              { value: "CHEQUE", label: "Cheque" },
+              { value: "DINHEIRO", label: "Dinheiro" },
+            ]}
+          />
 
-          <div style={{ gridColumn: "1 / -1" }}>
-            <Field label="Observações">
-              <textarea
-                className={`${tw.input} min-h-[88px] resize-y`}
-                placeholder="Anotações internas..."
-                value={dados.observacoes}
-                onChange={(e) => onChange("observacoes", e.target.value)}
-              />
-            </Field>
-          </div>
+          <UniversalInput
+            as="textarea"
+            label="Observações"
+            wrapperClassName="col-span-full"
+            placeholder="Anotações internas..."
+            value={dados.observacoes}
+            onChange={(e) => onChange("observacoes", e.target.value)}
+            className="min-h-[88px] resize-y"
+          />
         </div>
       </div>
     </div>
@@ -271,12 +233,14 @@ const OrcamentoItemRow = ({
           </div>
           <span className="text-sm font-semibold text-slate-600">Item</span>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => onRemove(item.id)}
-          className="flex cursor-pointer items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+          className="!bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100"
         >
-          <Trash2 size={12} /> Remover
-        </button>
+          Remover
+        </Button>
       </div>
 
       <div className="p-7">
@@ -284,64 +248,54 @@ const OrcamentoItemRow = ({
           className="mb-7 grid gap-6"
           style={{ gridTemplateColumns: "1fr 2fr" }}
         >
-          <Field label="Produto (opcional)">
-            <select
-              className={tw.select}
-              value={item.produto_id}
-              onChange={(e) => onProductSelect(item.id, e.target.value)}
-            >
-              <option value="">Sem produto vinculado</option>
-              {produtos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Descrição" required error={errItem.descricao}>
-            <input
-              className={`${tw.input} ${errItem.descricao ? "border-red-400" : ""}`}
-              placeholder="Descrição do item"
-              value={item.descricao}
-              onChange={(e) => onChange(item.id, "descricao", e.target.value)}
-            />
-          </Field>
+          <UniversalInput
+            as="select"
+            label="Produto (opcional)"
+            value={item.produto_id}
+            onChange={(e) => onProductSelect(item.id, e.target.value)}
+            placeholder="Sem produto vinculado"
+            options={produtos.map((p) => ({
+              value: p.id,
+              label: p.nome,
+            }))}
+          />
+          <UniversalInput
+            label="Descrição"
+            required
+            error={errItem.descricao}
+            placeholder="Descrição do item"
+            value={item.descricao}
+            onChange={(e) => onChange(item.id, "descricao", e.target.value)}
+          />
         </div>
 
         <div className="mb-7 grid grid-cols-4 gap-6">
-          <Field label="Quantidade">
-            <input
-              type="number"
-              className={tw.input}
-              value={item.quantidade}
-              onChange={(e) => onChange(item.id, "quantidade", e.target.value)}
-            />
-          </Field>
-          <Field label="Preço Unitário (R$)">
-            <input
-              type="number"
-              className={tw.input}
-              value={item.preco_unitario}
-              onChange={(e) =>
-                onChange(item.id, "preco_unitario", e.target.value)
-              }
-            />
-          </Field>
-          <Field label="Desconto (R$)">
-            <input
-              type="number"
-              className={tw.input}
-              value={item.desconto}
-              onChange={(e) => onChange(item.id, "desconto", e.target.value)}
-            />
-          </Field>
-          <Field label="Subtotal">
+          <UniversalInput
+            label="Quantidade"
+            type="number"
+            value={item.quantidade}
+            onChange={(e) => onChange(item.id, "quantidade", e.target.value)}
+          />
+          <UniversalInput
+            label="Preço Unitário (R$)"
+            type="number"
+            value={item.preco_unitario}
+            onChange={(e) => onChange(item.id, "preco_unitario", e.target.value)}
+          />
+          <UniversalInput
+            label="Desconto (R$)"
+            type="number"
+            value={item.desconto}
+            onChange={(e) => onChange(item.id, "desconto", e.target.value)}
+          />
+          <div className="flex flex-col gap-1">
+            <label className={tw.label}>Subtotal</label>
             <div
               className={`${tw.input} ${tw.inputReadOnly} flex items-center font-bold text-[var(--button-color)]`}
             >
               {formatCurrencyBR(subtotal)}
             </div>
-          </Field>
+          </div>
         </div>
       </div>
     </div>
@@ -365,12 +319,13 @@ const OrcamentoItens = ({
           Itens do Orçamento
         </h2>
       </div>
-      <button
+      <Button
+        variant="primary"
         onClick={onAdd}
-        className="flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.5px] border-[var(--primary-color)] bg-blue-50 px-4 py-2 text-sm font-semibold text-[var(--primary-color)] transition-colors hover:bg-blue-100"
+        startIcon={<Plus size={15} />}
       >
-        <Plus size={15} /> Adicionar Item
-      </button>
+        Adicionar Item
+      </Button>
     </div>
 
     <div className="flex flex-col gap-7 p-8">
@@ -414,27 +369,22 @@ const OrcamentoResumo = ({
         Resumo Financeiro
       </h2>
     </div>
-    <div className="flex flex-col gap-10 p-10">
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-8 p-8">
+      <UniversalInput
+        label="Desconto Geral (R$)"
+        type="number"
+        className="!border-yellow-400 !bg-amber-50"
+        value={descontoGeral}
+        onChange={(e) => onDescontoChange(e.target.value)}
+        placeholder="0"
+      />
+      <div className="flex items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-5 py-4">
         <span className={tw.label}>Subtotal Geral</span>
-        <div className="rounded-lg border-[1.5px] border-slate-200 bg-slate-50 px-5 py-4 text-right text-base font-bold text-slate-700">
-          {formatCurrencyBR(subtotalGeral)}
-        </div>
+        <span className="text-base font-bold text-slate-700">{formatCurrencyBR(subtotalGeral)}</span>
       </div>
-      <div className="flex flex-col gap-3">
-        <label className={tw.label}>Desconto Geral (R$)</label>
-        <input
-          type="number"
-          className={`${tw.input} border-yellow-300 bg-amber-50`}
-          value={descontoGeral}
-          onChange={(e) => onDescontoChange(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className={tw.label}>Total Final</span>
-        <div className="rounded-lg bg-[var(--button-color)] px-5 py-3 text-right text-xl font-extrabold text-white">
-          {formatCurrencyBR(totalFinal)}
-        </div>
+      <div className="flex items-center justify-between rounded-lg bg-[var(--button-color)] px-5 py-5">
+        <span className="text-sm font-bold uppercase tracking-wide text-white">Total Final</span>
+        <span className="text-2xl font-extrabold text-white">{formatCurrencyBR(totalFinal)}</span>
       </div>
     </div>
   </div>
@@ -457,7 +407,7 @@ const Toast = ({ message, type, onClose }) => {
   const c = map[type] || map.success;
   return (
     <div
-      className={`fixed top-6 right-6 z-[9999] flex items-center gap-2.5 rounded-xl border px-4 py-3.5 shadow-2xl ${c.cls}`}
+      className={`fixed bottom-6 right-6 z-[9999] flex items-center gap-2.5 rounded-xl border px-4 py-3.5 shadow-2xl ${c.cls}`}
     >
       {c.icon}
       <span className="text-sm font-semibold">{message}</span>
@@ -474,6 +424,7 @@ const Toast = ({ message, type, onClose }) => {
 export default function OrcamentoPage() {
   const navigate = useNavigate();
   const { pedidoId } = useParams();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [dadosGerais, setDadosGerais] = useState({
@@ -500,6 +451,7 @@ export default function OrcamentoPage() {
   // Estado do progress toast (geração assíncrona de PDF)
   const { startProgress } = useOrcamentoProgress();
   // { orcamentoId, numeroOrcamento }
+  const [savedOrcamentoId, setSavedOrcamentoId] = useState(null);
 
   const [pedidos, setPedidos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -657,9 +609,15 @@ export default function OrcamentoPage() {
         descontoGeral,
         totalFinal,
       );
-      const result = await OrcamentosService.criarOrcamento(payload);
+
+      const result = savedOrcamentoId
+        ? await OrcamentosService.atualizarOrcamento(savedOrcamentoId, payload)
+        : await OrcamentosService.criarOrcamento(payload);
+
       if (result.success) {
+        if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
         setLastSaved(new Date());
+        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
         setToast({ message: "Rascunho salvo!", type: "success" });
       } else {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
@@ -709,7 +667,11 @@ export default function OrcamentoPage() {
       const result = await OrcamentosService.criarOrcamento(payload);
 
       if (result.success && result.data) {
+        const orcId = result.data.id;
+        setSavedOrcamentoId(orcId);
         setLastSaved(new Date());
+        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
         
         // 🎯 NOVO: Redirecionar eventos do ID real para o ID temporário
         // Na verdade, vamos usar o ID real agora que o orçamento foi criado
@@ -719,7 +681,7 @@ export default function OrcamentoPage() {
         
         // Mostra o progress toast global para acompanhar a geração do PDF
         startProgress(
-          result.data.id,
+          orcId,
           result.data.numeroOrcamento || dadosGerais.numero_orcamento
         );
         setToast({ message: "Orçamento enviado para geração!", type: "success" });
@@ -752,12 +714,15 @@ export default function OrcamentoPage() {
             sidebarOpen={sidebarOpen}
           />
           <div className="flex w-full max-w-[1400px] flex-col gap-3 px-6 py-20">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate(-1)}
-              className="mb-8 flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+              className="mt-6 mb-4 self-start"
+              startIcon={<ArrowLeft size={16} />}
             >
-              <ArrowLeft size={20} /> Voltar para Pedidos
-            </button>
+              Voltar para Pedidos
+            </Button>
             <OrcamentoHeader />
             <div
               className="grid items-start gap-8"
@@ -794,28 +759,30 @@ export default function OrcamentoPage() {
                   : "Nenhuma alteração salva ainda"}
               </span>
               <div className="flex gap-4">
-                <button onClick={() => navigate(-1)} className={tw.btnOutline}>
+                <Button variant="ghost" onClick={() => navigate(-1)}>
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
                   onClick={handleSaveDraft}
                   disabled={isSaving}
-                  className={`${tw.btnSecondary} ${isSaving ? "opacity-60 cursor-wait" : ""}`}
                 >
                   {isSaving ? "Salvando..." : "Salvar Rascunho"}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
                   onClick={handleSaveAndDownload}
                   disabled={isSaving}
-                  className={`${tw.btnPrimary} flex items-center gap-2 ${isSaving ? "opacity-60 cursor-wait" : ""}`}
+                  startIcon={
+                    isSaving ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <Download size={15} />
+                    )
+                  }
                 >
-                  {isSaving ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <Download size={15} />
-                  )}
                   {isSaving ? "Gerando..." : "Gerar PDF"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -826,6 +793,16 @@ export default function OrcamentoPage() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+      {progressToast && (
+        <OrcamentoProgressToast
+          orcamentoId={progressToast.orcamentoId}
+          numeroOrcamento={progressToast.numeroOrcamento}
+          onClose={() => setProgressToast(null)}
+          onFinished={() => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+          }}
         />
       )}
     </>

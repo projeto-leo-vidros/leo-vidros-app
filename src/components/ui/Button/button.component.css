@@ -47,7 +47,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--tertiary-color);
+  transition: ease-in-out 0.2s;
+  background: var(--secondary-color);
   color: var(--neutral-color-0);
   border-radius: 8px;
 }
@@ -63,6 +64,17 @@
 
 .btn-outline:hover:not(:disabled) {
   color: var(--neutral-color-1);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: #f3f4f6;
 }
 
 .btn-danger {

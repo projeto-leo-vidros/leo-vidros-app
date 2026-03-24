@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import PropTypes from "prop-types"; // Importação adicionada
+import Button from "../../../../components/ui/Button/Button.component";
 
 export default function ModalConfirmacao({
   aberto,
@@ -73,18 +74,18 @@ export default function ModalConfirmacao({
             </div>
             
             <div className="flex gap-3 justify-end mt-8">
-              <button
+              <Button
+                variant="ghost"
                 onClick={onCancelar}
-                className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 {textoBotaoCancelar}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 onClick={onConfirmar}
-                className={`px-6 py-2 rounded-md text-sm font-medium text-white transition-colors cursor-pointer ${estilo.botao}`}
               >
                 {textoBotaoConfirmar}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </motion.div>
