@@ -2,9 +2,9 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000/api";
+  import.meta.env.VITE_BACKEND_URL;
 const ETL_URL =
-  import.meta.env.VITE_MICROSERVICE_ETL_URL || "http://localhost:3001/api";
+  import.meta.env.VITE_MICROSERVICE_ETL_URL;
 
 // Função para configurar interceptors em qualquer instância (reaproveitamento de código)
 const configureInterceptors = (instance) => {
@@ -14,6 +14,14 @@ const configureInterceptors = (instance) => {
         config.headers["Content-Type"] = "application/json";
       }
     }
+    
+    // 🎯 NOVO: Adicionar token JWT ao header Authorization se estiver em localStorage ou sessionStorage
+    // Isso garante que o token seja enviado mesmo que o cookie httpOnly não seja enviado
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token && !config.headers["Authorization"]) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    
     return config;
   });
 

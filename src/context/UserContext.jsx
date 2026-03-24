@@ -46,6 +46,8 @@ export function UserProvider({ children }) {
 
   const logout = useCallback(() => {
     sessionStorage.clear();
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setUser({
       id: null,
       name: "",

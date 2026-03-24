@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import Api from "../../api/client/Api";
 import OrcamentosService from "../../api/services/orcamentosService";
+import { useOrcamentoProgress } from "../../context/OrcamentoProgressContext.jsx";
 import {
   Trash2,
   Plus,
@@ -15,9 +16,7 @@ import {
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import { OrcamentoProgressToast } from "../../components/feedback/OrcamentoProgressToast";
 
-// Gera o número do orçamento no formato ORC-ANO-P{id}
 const gerarNumeroOrcamento = (pedidoId) => {
   const ano = new Date().getFullYear();
   if (!pedidoId) return "";
@@ -499,7 +498,7 @@ export default function OrcamentoPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Estado do progress toast (geração assíncrona de PDF)
-  const [progressToast, setProgressToast] = useState(null);
+  const { startProgress } = useOrcamentoProgress();
   // { orcamentoId, numeroOrcamento }
 
   const [pedidos, setPedidos] = useState([]);
@@ -693,15 +692,36 @@ export default function OrcamentoPage() {
         totalFinal,
       );
 
+      // 🎯 NOVO: Usar um ID temporário para conectar ao SSE ANTES do POST
+      const tempId = `temp_${Date.now()}`;
+      
+      // 🎯 NOVO: Abrir conexão SSE PRIMEIRO (antes do POST)
+      let sseConnection = null;
+      const ssePromise = new Promise((resolve) => {
+        sseConnection = OrcamentosService.monitorarProgresso(tempId, (eventData) => {
+          // Evento recebido com sucesso!
+          console.log("📨 Evento SSE recebido:", eventData);
+          resolve(eventData);
+        });
+      });
+
+      // 🎯 NOVO: Fazer POST agora que SSE está aguardando
       const result = await OrcamentosService.criarOrcamento(payload);
 
       if (result.success && result.data) {
         setLastSaved(new Date());
-        // Mostra o progress toast para acompanhar a geração do PDF
-        setProgressToast({
-          orcamentoId: result.data.id,
-          numeroOrcamento: result.data.numeroOrcamento || dadosGerais.numero_orcamento,
-        });
+        
+        // 🎯 NOVO: Redirecionar eventos do ID real para o ID temporário
+        // Na verdade, vamos usar o ID real agora que o orçamento foi criado
+        if (sseConnection) {
+          sseConnection.close();
+        }
+        
+        // Mostra o progress toast global para acompanhar a geração do PDF
+        startProgress(
+          result.data.id,
+          result.data.numeroOrcamento || dadosGerais.numero_orcamento
+        );
         setToast({ message: "Orçamento enviado para geração!", type: "success" });
         setTimeout(() => setToast(null), 3000);
       } else {
@@ -709,6 +729,9 @@ export default function OrcamentoPage() {
           message: result.error || "Erro ao gerar orçamento.",
           type: "error",
         });
+        if (sseConnection) {
+          sseConnection.close();
+        }
         setTimeout(() => setToast(null), 4000);
       }
     } catch (e) {
@@ -791,7 +814,7 @@ export default function OrcamentoPage() {
                   ) : (
                     <Download size={15} />
                   )}
-                  {isSaving ? "Gerando..." : "Salvar e Gerar PDF"}
+                  {isSaving ? "Gerando..." : "Gerar PDF"}
                 </button>
               </div>
             </div>
@@ -803,16 +826,6 @@ export default function OrcamentoPage() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
-        />
-      )}
-      {progressToast && (
-        <OrcamentoProgressToast
-          orcamentoId={progressToast.orcamentoId}
-          numeroOrcamento={progressToast.numeroOrcamento}
-          onClose={() => setProgressToast(null)}
-          onFinished={() => {
-            // Opcional: pode navegar ou atualizar estado
-          }}
         />
       )}
     </>

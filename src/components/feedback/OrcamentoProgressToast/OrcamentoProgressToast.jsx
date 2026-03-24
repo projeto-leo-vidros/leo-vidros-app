@@ -24,7 +24,7 @@ const STATUS_CONFIG = {
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200",
-    progress: 33,
+    progress: 0,
     animate: true,
   },
   GERANDO_PDF: {
@@ -33,7 +33,7 @@ const STATUS_CONFIG = {
     color: "text-amber-600",
     bg: "bg-amber-50",
     border: "border-amber-200",
-    progress: 66,
+    progress: 0,
     animate: true,
   },
   FINALIZADO: {
@@ -80,9 +80,67 @@ export default function OrcamentoProgressToast({
   const sseRef = useRef(null);
   const autoCloseTimerRef = useRef(null);
 
+  // 🎯 DEFINIR handleDownload ANTES de usar em useEffect
+  const handleDownload = useCallback(async () => {
+    if (!orcamentoId) {
+      return;
+    }
+    setIsDownloading(true);
+
+    try {
+
+      // 🎯 NOVO: Primeiro, verifica o status do PDF no servidor
+      if (numeroOrcamento) {
+        const statusCheck = await OrcamentosService.verificarStatusPdf(numeroOrcamento, 30, 1000);
+        
+        if (statusCheck.success && statusCheck.pronto) {
+          // Pula direto para o download
+        } else {
+          // Continua com fallback de polling local
+        }
+      }
+      
+      let result = null;
+      let tentativas = 0;
+      const maxTentativas = 15; // 15 tentativas = 30 segundos com 2s entre cada
+
+      // Faz polling para aguardar o PDF estar pronto no cache
+      while (tentativas < maxTentativas) {
+        result = await OrcamentosService.baixarPdf(orcamentoId, numeroOrcamento);
+        
+        if (result.success && result.data) {
+          // PDF pronto, fazer download
+          
+          const url = window.URL.createObjectURL(result.data);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `orcamento_${numeroOrcamento || orcamentoId}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          
+          return; // Sucesso!
+        }
+
+        tentativas++;
+        if (tentativas < maxTentativas) {
+          // Aguardar 2 segundos antes de tentar novamente
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      // Se chegou aqui, timeout
+    } catch (e) {
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [orcamentoId, numeroOrcamento]);
+
   // Conectar ao SSE quando o componente montar
   useEffect(() => {
     if (!orcamentoId) return;
+
 
     const sse = OrcamentosService.monitorarProgresso(
       orcamentoId,
@@ -92,17 +150,19 @@ export default function OrcamentoProgressToast({
 
         if (newStatus === "FINALIZADO") {
           onFinished?.();
-          // Auto-close após 10s quando finalizado
-          autoCloseTimerRef.current = setTimeout(() => {
-            onClose?.();
-          }, 10000);
+          
+          // 🎯 NOVO: Dispara automaticamente o download quando PDF está pronto
+          setTimeout(() => {
+            handleDownload();
+          }, 500); // Aguarda 500ms para garantir que o PDF está em cache
+          
+          // ❌ REMOVIDO: Não fecha automaticamente mais
+          // Usuário pode fechar manualmente clicando no X
         }
 
         if (newStatus === "ERRO") {
-          // Auto-close após 8s quando erro
-          autoCloseTimerRef.current = setTimeout(() => {
-            onClose?.();
-          }, 8000);
+          // ❌ REMOVIDO: Não fecha automaticamente após erro
+          // Usuário pode ver a mensagem de erro e fechar manualmente
         }
       },
     );
@@ -115,30 +175,7 @@ export default function OrcamentoProgressToast({
         clearTimeout(autoCloseTimerRef.current);
       }
     };
-  }, [orcamentoId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleDownload = useCallback(async () => {
-    if (!orcamentoId) return;
-    setIsDownloading(true);
-
-    try {
-      const result = await OrcamentosService.baixarPdf(orcamentoId);
-      if (result.success && result.data) {
-        const url = window.URL.createObjectURL(result.data);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `orcamento_${numeroOrcamento || orcamentoId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (e) {
-      console.error("Erro ao baixar PDF:", e);
-    } finally {
-      setIsDownloading(false);
-    }
-  }, [orcamentoId, numeroOrcamento]);
+  }, [orcamentoId, handleDownload]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClose = useCallback(() => {
     sseRef.current?.close();
@@ -203,74 +240,7 @@ export default function OrcamentoProgressToast({
             style={{ width: `${config.progress}%` }}
           />
         </div>
-
-        {/* Steps */}
-        <div className="flex items-center justify-between gap-1 px-1">
-          <StepIndicator
-            label="Orçamento"
-            done={
-              status === "GERANDO_PDF" ||
-              status === "FINALIZADO" ||
-              status === "ERRO"
-            }
-            active={status === "GERANDO_ORCAMENTO"}
-            error={false}
-          />
-          <div className="h-px flex-1 bg-slate-300" />
-          <StepIndicator
-            label="PDF"
-            done={status === "FINALIZADO"}
-            active={status === "GERANDO_PDF"}
-            error={status === "ERRO"}
-          />
-          <div className="h-px flex-1 bg-slate-300" />
-          <StepIndicator
-            label="Concluído"
-            done={status === "FINALIZADO"}
-            active={false}
-            error={status === "ERRO"}
-          />
-        </div>
-
-        {/* Download button */}
-        {status === "FINALIZADO" && (
-          <button
-            onClick={handleDownload}
-            disabled={isDownloading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
-          >
-            {isDownloading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {isDownloading ? "Baixando..." : "Baixar PDF"}
-          </button>
-        )}
       </div>
-    </div>
-  );
-}
-
-function StepIndicator({ label, done, active, error }) {
-  let dotClass = "bg-slate-300";
-  let textClass = "text-slate-400";
-
-  if (error) {
-    dotClass = "bg-red-500";
-    textClass = "text-red-600";
-  } else if (done) {
-    dotClass = "bg-green-500";
-    textClass = "text-green-700";
-  } else if (active) {
-    dotClass = "bg-blue-500 animate-pulse";
-    textClass = "text-blue-700 font-semibold";
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
-      <span className={`text-[10px] ${textClass}`}>{label}</span>
     </div>
   );
 }
