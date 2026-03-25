@@ -74,10 +74,10 @@ const tw = {
   inputReadOnly: "!bg-slate-50 !text-slate-500 cursor-default",
 };
 
-const OrcamentoHeader = () => (
+const OrcamentoHeader = ({ isEdicao = false }) => (
   <div className="mb-10 text-center">
     <h1 className="pb-6 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
-      Gerar Novo Orçamento
+      {isEdicao ? "Editar Orçamento" : "Gerar Novo Orçamento"}
     </h1>
   </div>
 );
@@ -422,9 +422,10 @@ const Toast = ({ message, type, onClose }) => {
 
 export default function OrcamentoPage() {
   const navigate = useNavigate();
-  const { pedidoId } = useParams();
+  const { pedidoId, orcamentoId } = useParams();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoadingOrcamento, setIsLoadingOrcamento] = useState(!!orcamentoId);
 
   const [dadosGerais, setDadosGerais] = useState({
     numero_orcamento: gerarNumeroOrcamento(pedidoId || ""),
@@ -439,7 +440,7 @@ export default function OrcamentoPage() {
     observacoes: "",
   });
 
-  const [itens, setItens] = useState([criarItemVazio(1)]);
+  const [itens, setItens] = useState([]);
   const [descontoGeral, setDescontoGeral] = useState("");
   const [errors, setErrors] = useState({});
   const [itemErrors, setItemErrors] = useState({});
@@ -449,7 +450,7 @@ export default function OrcamentoPage() {
 
   const { startProgress } = useOrcamentoProgress();
 
-  const [savedOrcamentoId, setSavedOrcamentoId] = useState(null);
+  const [savedOrcamentoId, setSavedOrcamentoId] = useState(orcamentoId || null);
 
   const [pedidos, setPedidos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -488,6 +489,58 @@ export default function OrcamentoPage() {
       .catch(() => setProdutos([]));
   }, []);
 
+  useEffect(() => {
+    if (!orcamentoId) {
+      setIsLoadingOrcamento(false);
+      return;
+    }
+
+    OrcamentosService.buscarPorId(orcamentoId)
+      .then((result) => {
+        if (result.success && result.data) {
+          const orc = result.data;
+          setDadosGerais({
+            numero_orcamento: orc.numeroOrcamento || "",
+            cliente_id: String(orc.clienteId || ""),
+            cliente_nome: orc.clienteNome || "",
+            pedido_id: String(orc.pedidoId || ""),
+            status_id: orc.statusId || "RASCUNHO",
+            data_orcamento: orc.dataOrcamento?.split("T")[0] || "",
+            prazo_instalacao: orc.prazoInstalacao?.split("T")[0] || "",
+            garantia: orc.garantia || "",
+            forma_pagamento: orc.formaPagamento || "",
+            observacoes: orc.observacoes || "",
+          });
+
+          if (orc.itens && Array.isArray(orc.itens)) {
+            setItens(
+              orc.itens.map((item) => ({
+                id: item.id || Date.now() + Math.random(),
+                produto_id: item.produtoId || "",
+                descricao: item.descricao || "",
+                quantidade: String(item.quantidade || ""),
+                preco_unitario: String(item.precoUnitario || ""),
+                desconto: String(item.desconto || ""),
+                observacao: item.observacao || "",
+                ordem: item.ordem || 1,
+              })),
+            );
+          }
+
+          setDescontoGeral(String(orc.descontoGeral || ""));
+          setLastSaved(new Date());
+        }
+      })
+      .catch(() => {
+        setToast({
+          message: "Erro ao carregar orçamento.",
+          type: "error",
+        });
+        setTimeout(() => setToast(null), 3000);
+      })
+      .finally(() => setIsLoadingOrcamento(false));
+  }, [orcamentoId]);
+
   const subtotalGeral = useMemo(() => calcularSubtotalGeral(itens), [itens]);
   const totalFinal = useMemo(
     () => calcularTotalFinal(subtotalGeral, descontoGeral),
@@ -507,7 +560,7 @@ export default function OrcamentoPage() {
         numero_orcamento: gerarNumeroOrcamento(pedido.id),
       }));
     }
-  }, [pedidos]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pedidos]); 
 
   const handleDadosChange = useCallback(
     (field, value) => {
@@ -616,15 +669,20 @@ export default function OrcamentoPage() {
         if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
         setLastSaved(new Date());
         queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-        setToast({ message: "Rascunho salvo!", type: "success" });
+        setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
+        setTimeout(() => {
+          setToast(null);
+          navigate("/pedidos?tab=servico");
+        }, 2000);
       } else {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
+        setTimeout(() => setToast(null), 3000);
       }
     } catch (e) {
       setToast({ message: "Erro ao salvar rascunho.", type: "error" });
+      setTimeout(() => setToast(null), 3000);
     } finally {
       setIsSaving(false);
-      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -704,77 +762,86 @@ export default function OrcamentoPage() {
             sidebarOpen={sidebarOpen}
           />
           <div className="flex w-full max-w-[1400px] flex-col gap-3 px-6 py-20">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="mt-6 mb-4 self-start"
-              startIcon={<ArrowLeft size={16} />}
-            >
-              Voltar para Pedidos
-            </Button>
-            <OrcamentoHeader />
-            <div
-              className="grid items-start gap-8"
-              style={{ gridTemplateColumns: "1fr 320px" }}
-            >
-              <div className="flex flex-col gap-8">
-                <OrcamentoInformacoes
-                  dados={dadosGerais}
-                  onChange={handleDadosChange}
-                  errors={errors}
-                  pedidos={pedidos}
-                />
-                <OrcamentoItens
-                  itens={itens}
-                  onAdd={handleAddItem}
-                  onRemove={handleRemoveItem}
-                  onChange={handleItemChange}
-                  onProductSelect={handleItemProductSelect}
-                  errors={itemErrors}
-                  produtos={produtos}
-                />
+            {isLoadingOrcamento ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-20">
+                <Loader2 size={48} className="animate-spin text-slate-400" />
+                <p className="text-slate-500">Carregando orçamento...</p>
               </div>
-              <OrcamentoResumo
-                subtotalGeral={subtotalGeral}
-                descontoGeral={descontoGeral}
-                totalFinal={totalFinal}
-                onDescontoChange={setDescontoGeral}
-              />
-            </div>
-            <div className="mt-15 flex items-center justify-between rounded-2xl border bg-white p-6 shadow-sm">
-              <span className="text-xs text-slate-400">
-                {lastSaved
-                  ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
-                  : "Nenhuma alteração salva ainda"}
-              </span>
-              <div className="flex gap-4">
-                <Button variant="ghost" onClick={() => navigate(-1)}>
-                  Cancelar
-                </Button>
+            ) : (
+              <>
                 <Button
-                  variant="secondary"
-                  onClick={handleSaveDraft}
-                  disabled={isSaving}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(-1)}
+                  className="mt-6 mb-4 self-start"
+                  startIcon={<ArrowLeft size={16} />}
                 >
-                  {isSaving ? "Salvando..." : "Salvar Rascunho"}
+                  Voltar
                 </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleSaveAndDownload}
-                  disabled={isSaving}
-                  startIcon={
-                    isSaving ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      <Download size={15} />
-                    )
-                  }
+                <OrcamentoHeader isEdicao={!!orcamentoId} />
+                <div
+                  className="grid items-start gap-8"
+                  style={{ gridTemplateColumns: "1fr 320px" }}
                 >
-                  {isSaving ? "Gerando..." : "Gerar PDF"}
-                </Button>
-              </div>
-            </div>
+                  <div className="flex flex-col gap-8">
+                    <OrcamentoInformacoes
+                      dados={dadosGerais}
+                      onChange={handleDadosChange}
+                      errors={errors}
+                      pedidos={pedidos}
+                    />
+                    <OrcamentoItens
+                      itens={itens}
+                      onAdd={handleAddItem}
+                      onRemove={handleRemoveItem}
+                      onChange={handleItemChange}
+                      onProductSelect={handleItemProductSelect}
+                      errors={itemErrors}
+                      produtos={produtos}
+                    />
+                  </div>
+                  <OrcamentoResumo
+                    subtotalGeral={subtotalGeral}
+                    descontoGeral={descontoGeral}
+                    totalFinal={totalFinal}
+                    onDescontoChange={setDescontoGeral}
+                  />
+                </div>
+                <div className="mt-15 flex items-center justify-between rounded-2xl border bg-white p-6 shadow-sm">
+                  <span className="text-xs text-slate-400">
+                    {lastSaved
+                      ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
+                      : "Nenhuma alteração salva ainda"}
+                  </span>
+                  <div className="flex gap-4">
+                    <Button variant="ghost" onClick={() => navigate(-1)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleSaveDraft}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? "Salvando..." : "Salvar Rascunho"}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={handleSaveAndDownload}
+                      disabled={isSaving}
+                      startIcon={
+                        isSaving ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Download size={15} />
+                        )
+                      }
+                    >
+                      {isSaving ? "Gerando..." : "Gerar PDF"}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
