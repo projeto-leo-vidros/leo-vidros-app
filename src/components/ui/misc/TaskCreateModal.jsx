@@ -591,6 +591,19 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!formData?.startTime?.trim() && !newErrors.startTime)
         newErrors.startTime = "* Obrigatório";
       if (!formData?.endTime?.trim()) newErrors.endTime = "* Obrigatório";
+      
+      // Validar que startTime é menor que endTime
+      if (formData?.startTime && formData?.endTime) {
+        const [startHour, startMinute] = formData.startTime.split(":").map(Number);
+        const [endHour, endMinute] = formData.endTime.split(":").map(Number);
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
+        
+        if (startTotalMinutes >= endTotalMinutes) {
+          newErrors.endTime = "* A hora final deve ser maior que a hora inicial";
+        }
+      }
+      
       if (!selectedFuncionarios || selectedFuncionarios.length === 0)
         newErrors.funcionarios = "* Selecione pelo menos um funcionário";
     }
