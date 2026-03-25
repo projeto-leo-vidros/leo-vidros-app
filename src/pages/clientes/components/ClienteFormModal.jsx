@@ -25,17 +25,9 @@ const DEFAULT_VALUES = {
   uf: "",
 };
 
-//  Helper para gerar classes de input com suporte a erro
-const getMaskedInputClasses = (hasError) =>
-  cn(
-    "w-full px-4 py-2 border rounded-md bg-white text-sm text-gray-900",
-    "placeholder-gray-600 transition-all duration-150",
-    "focus:outline-none focus:ring-2 focus:border-[#007EA7]",
-    "disabled:opacity-60 disabled:cursor-not-allowed",
-    hasError
-      ? "border-red-400 focus:ring-red-400 focus:ring-2"
-      : "border-gray-300 focus:ring-[#007EA7] focus:ring-2"
-  );
+//  Helper para gerar classes adicionais específicas de máscara.
+//  O estilo base (bordas, foco, erro, desabilitado, etc.) vem do UniversalInput.
+const getMaskedInputClasses = () => "";
 
 
 
