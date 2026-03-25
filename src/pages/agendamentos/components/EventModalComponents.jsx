@@ -47,7 +47,7 @@ export const EventHeader = ({ title, badges, onClose }) => {
         <div className="mt-1 flex-1 px-6">
           <div className="flex items-center gap-2 pb-2 text-start text-2xl leading-tight font-bold text-[#134074ff]">
             <Calendar size={20} strokeWidth={2.5} />
-            Detalhes do Agendamento
+            {title || "Detalhes do Agendamento"}
           </div>
 
           {badges && badges.length > 0 && (
@@ -155,13 +155,13 @@ export const EventInfo = ({
 
           <div className="my-2 h-px w-full bg-[#134074ff]/10 sm:my-0 sm:h-12 sm:w-px" />
 
-          <span className="flex w-max items-center gap-1.5 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 whitespace-nowrap">
+          <span className="flex w-max items-center gap-1.5 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-gray-600">
             Cód: {servico.codigo}
           </span>
 
-          <div className="my-2 h-px w-full bg-[#134074ff]/10 sm:my-0 sm:h-12 sm:w-px shrink-0" />
+          <div className="my-2 h-px w-full shrink-0 bg-[#134074ff]/10 sm:my-0 sm:h-12 sm:w-px" />
 
-          <span className="flex w-max items-center gap-1.5 rounded-md bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 whitespace-nowrap">
+          <span className="flex w-max items-center gap-1.5 rounded-md bg-green-50 px-2.5 py-1 text-xs font-bold whitespace-nowrap text-green-700">
             <Tag size={12} />
             <span className="text-sm font-bold text-green-700">
               R$ {servico.precoBase?.toFixed(2)}
@@ -181,7 +181,7 @@ export const EventInfo = ({
         <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
           <MapPin className="h-5 w-5" />
         </div>
-        <div className="mt-1 flex-1 text-left ">
+        <div className="mt-1 flex-1 text-left">
           <h3 className="pb-1.5 text-sm font-bold tracking-wider text-gray-900 uppercase">
             Localização
           </h3>
@@ -246,11 +246,11 @@ export const EventTeam = ({ funcionarios }) => {
   return (
     <div className="flex flex-col gap-3 px-6 pt-6">
       <div className="flex items-start gap-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
+        <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
           <Users className="h-5 w-5" />
         </div>
         <div className="mt-1 flex-1">
-          <h3 className="mb-3 text-sm text-start font-bold tracking-wider text-gray-900 uppercase">
+          <h3 className="mb-3 text-start text-sm font-bold tracking-wider text-gray-900 uppercase">
             Equipe Responsável
           </h3>
 

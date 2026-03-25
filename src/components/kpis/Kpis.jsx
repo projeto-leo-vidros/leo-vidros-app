@@ -6,7 +6,23 @@ export default function Kpis({ stats = [] }) {
         return (
           <div
             key={index}
-            onClick={stat.onClick}
+             onClick={stat.onClick}
+            role={stat.onClick ? "button" : undefined}
+            tabIndex={stat.onClick ? 0 : undefined}
+            onKeyDown={
+              stat.onClick
+                ? (event) => {
+                    if (
+                      event.key === "Enter" ||
+                      event.key === " " ||
+                      event.key === "Spacebar"
+                    ) {
+                      event.preventDefault();
+                      stat.onClick(event);
+                    }
+                  }
+                : undefined
+            }
             className={`flex flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-5 text-center transition-all duration-200 ${stat.onClick ? "cursor-pointer shadow-sm hover:border-blue-300 hover:shadow-md" : "shadow-sm hover:shadow-md"}`}
           >
             {/* Título e ícone */}

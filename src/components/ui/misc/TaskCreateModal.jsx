@@ -51,13 +51,13 @@ const MultipleSelectCheckmarks = ({
                 <Check size={12} className="text-white" />
               )}
             </div>
-            
+
             <div className="flex items-center gap-2.5 overflow-hidden py-1">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#134074ff] text-xs font-bold tracking-wider text-white uppercase shadow-sm">
                 {getInitials(opt.label)}
               </div>
               <span
-                className={`text-sm truncate ${value.includes(opt.value) ? "font-bold text-gray-900" : "font-medium text-gray-700"}`}
+                className={`truncate text-sm ${value.includes(opt.value) ? "font-bold text-gray-900" : "font-medium text-gray-700"}`}
               >
                 {opt.label}
               </span>
@@ -75,7 +75,6 @@ const categoryOptions = [
 ];
 
 const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
- 
   const [formData, setFormData] = useState({
     id: null,
     tipoAgendamento: "",
@@ -565,23 +564,31 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!tipoValue) newErrors.tipoAgendamento = "* Obrigatório";
       if (!formData?.eventDate?.trim()) {
         newErrors.eventDate = "* Obrigatória";
-      } else if (!initialData) {
-        const selectedDate = new Date(formData.eventDate + 'T00:00:00');
+      } else if (!formData?.id) {
+        const selectedDate = new Date(formData.eventDate + "T00:00:00");
         const todayDate = new Date();
         todayDate.setHours(0, 0, 0, 0);
-        
+
         if (selectedDate < todayDate) {
           newErrors.eventDate = "* Não é permitido agendar no passado";
-        } else if (selectedDate.getTime() === todayDate.getTime() && formData?.startTime) {
-          const [hours, minutes] = formData.startTime.split(':');
+        } else if (
+          selectedDate.getTime() === todayDate.getTime() &&
+          formData?.startTime
+        ) {
+          const [hours, minutes] = formData.startTime.split(":");
           const now = new Date();
-          if (parseInt(hours) < now.getHours() || (parseInt(hours) === now.getHours() && parseInt(minutes) < now.getMinutes())) {
+          if (
+            parseInt(hours) < now.getHours() ||
+            (parseInt(hours) === now.getHours() &&
+              parseInt(minutes) < now.getMinutes())
+          ) {
             newErrors.startTime = "* O horário escolhido já passou";
           }
         }
       }
 
-      if (!formData?.startTime?.trim() && !newErrors.startTime) newErrors.startTime = "* Obrigatório";
+      if (!formData?.startTime?.trim() && !newErrors.startTime)
+        newErrors.startTime = "* Obrigatório";
       if (!formData?.endTime?.trim()) newErrors.endTime = "* Obrigatório";
       if (!selectedFuncionarios || selectedFuncionarios.length === 0)
         newErrors.funcionarios = "* Selecione pelo menos um funcionário";
@@ -790,10 +797,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         onClick={onClose}
       >
         <div
-          className="p-3 flex w-full max-w-md scale-100 transform flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-10 text-center shadow-2xl transition-all"
+          className="flex w-full max-w-md scale-100 transform flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-3 p-10 text-center shadow-2xl transition-all"
           onClick={(e) => e?.stopPropagation()}
         >
-          <div className="pb-6 flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-green-100">
+          <div className="flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-green-100 pb-6">
             <CheckCircle className="h-12 w-12 text-green-600" />
           </div>
           <h2 className="pb-2 text-2xl font-bold text-gray-900">
@@ -907,7 +914,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             <>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="pb-2 block text-sm font-semibold text-gray-700">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Tipo de agendamento <span className="text-red-500">*</span>
                   </label>
                   <UniversalInput
@@ -934,7 +941,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   )}
                 </div>
                 <div>
-                  <label className="pb-2 block text-sm font-semibold text-gray-700">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     <span>
                       Pedido Vinculado <span className="text-red-500">*</span>
                     </span>
@@ -961,9 +968,11 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                         : "Selecione o pedido"
                     }
                     disabled={
-                      !formData?.tipoAgendamento || 
-                      loadingOptions || 
-                      ((formData?.tipoAgendamento?.value === "SERVICO" || formData?.tipoAgendamento === "SERVICO") && pedidoOptions.length === 0)
+                      !formData?.tipoAgendamento ||
+                      loadingOptions ||
+                      ((formData?.tipoAgendamento?.value === "SERVICO" ||
+                        formData?.tipoAgendamento === "SERVICO") &&
+                        pedidoOptions.length === 0)
                     }
                   />
                   {errors?.pedido && (
@@ -1019,13 +1028,17 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="flex flex-col">
-                  <label className="pb-2 block text-sm font-semibold text-gray-700">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Data do evento <span className="text-red-500">*</span>
                   </label>
                   <UniversalInput
                     required
                     type="date"
-                    min={!initialData ? new Date().toISOString().split('T')[0] : undefined}
+                    min={
+                      !initialData
+                        ? new Date().toISOString().split("T")[0]
+                        : undefined
+                    }
                     value={formData?.eventDate}
                     onChange={(e) =>
                       handleInputChange("eventDate", e?.target?.value)
@@ -1034,7 +1047,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="pb-2 block text-sm font-semibold text-gray-700">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Horário (Início e Fim){" "}
                     <span className="text-red-500">*</span>
                   </label>
