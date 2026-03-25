@@ -19,17 +19,6 @@ const TYPE_CONFIG = {
   },
 };
 
-/**
- * FeedbackModal — Unified feedback component for success/error states.
- *
- * @param {object}   props
- * @param {boolean}  props.isOpen       - Controls visibility
- * @param {function} props.onClose      - Called when the modal is dismissed
- * @param {'success'|'error'} [props.type='success'] - Visual variant
- * @param {string}   [props.title]      - Heading text
- * @param {string}   [props.description] - Body text
- * @param {number}   [props.duration=3000] - Auto-close delay in ms (0 to disable)
- */
 export default function FeedbackModal({
   isOpen,
   onClose,
@@ -49,7 +38,6 @@ export default function FeedbackModal({
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
 
-  // ── Auto-close timer via rAF ────────────────────────────────
   const tick = useCallback(() => {
     if (!startRef.current) startRef.current = performance.now();
     const elapsed = elapsedRef.current + (performance.now() - startRef.current);
@@ -80,7 +68,6 @@ export default function FeedbackModal({
     };
   }, [isOpen, paused, duration, tick]);
 
-  // Reset progress on open
   useEffect(() => {
     if (isOpen) {
       setProgress(0);
@@ -90,7 +77,6 @@ export default function FeedbackModal({
     }
   }, [isOpen]);
 
-  // ── Keyboard: Escape to close ───────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -103,13 +89,11 @@ export default function FeedbackModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // ── Focus trap ──────────────────────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
 
     previousFocusRef.current = document.activeElement;
 
-    // Slight delay to let the modal render first
     const timer = setTimeout(() => {
       modalRef.current?.focus();
     }, 50);
@@ -120,7 +104,6 @@ export default function FeedbackModal({
     };
   }, [isOpen]);
 
-  // ── Hover pause ─────────────────────────────────────────────
   const handleMouseEnter = () => setPaused(true);
   const handleMouseLeave = () => setPaused(false);
 

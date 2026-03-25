@@ -3,10 +3,6 @@ import BaseService from "../client/BaseService";
 
 const BASE = "/dashboard";
 
-/**
- * Service do painel de indicadores — estende BaseService.
- * As funções exportadas abaixo mantêm compatibilidade com imports existentes.
- */
 class DashboardService extends BaseService {
   constructor() {
     super(Api);
@@ -58,8 +54,6 @@ class DashboardService extends BaseService {
 
 const dashboardService = new DashboardService();
 
-// ─── Exports nomeados para compatibilidade com imports existentes ────────────
-// Wrappers garantem que nunca retornam data:null — fallback seguro p/ callers
 export const getQtdItensCriticos = async () => {
   const r = await dashboardService.getQtdItensCriticos();
   return r.success ? r : { ...r, data: { quantidade: 0 } };
