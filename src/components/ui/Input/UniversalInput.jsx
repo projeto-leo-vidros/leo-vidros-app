@@ -98,7 +98,6 @@ const UniversalInput = React.forwardRef(
     const errorId = `${inputId}-error`;
     const hintId = `${inputId}-hint`;
 
-    // Normalise error — accept string or { message } from react-hook-form
     const errorMessage =
       typeof error === "string"
         ? error
@@ -117,6 +116,7 @@ const UniversalInput = React.forwardRef(
       ref,
       disabled,
       readOnly,
+      placeholder,
       "aria-invalid": !!errorMessage || undefined,
       "aria-describedby":
         [errorMessage && errorId, hint && hintId].filter(Boolean).join(" ") ||
@@ -128,8 +128,8 @@ const UniversalInput = React.forwardRef(
 
     // ── Base classes per variant ─────────────────────────────
     const baseDefault = cn(
-      "w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-900",
-      "placeholder-gray-400 transition-all duration-150",
+      "w-full py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-900",
+      "placeholder-gray-600 transition-all duration-150",
       "focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]",
       "disabled:opacity-60 disabled:cursor-not-allowed",
       readOnly && "bg-gray-100 cursor-default",
@@ -137,8 +137,8 @@ const UniversalInput = React.forwardRef(
     );
 
     const baseSearch = cn(
-      "w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900",
-      "placeholder-gray-400 transition-all duration-150",
+      "w-full py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900",
+      "placeholder-gray-600 transition-all duration-150",
       "focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]",
     );
 
@@ -154,13 +154,20 @@ const UniversalInput = React.forwardRef(
           ? baseUnderline
           : baseDefault;
 
-    // Adjust padding when icons are present (default variant only)
-    const iconPadding =
+    const paddingClasses =
       variant === "default"
-        ? cn(startIcon && "pl-10", endIcon && !isPassword && "pr-10")
-        : "";
+        ? cn(
+            startIcon ? "pl-10" : "px-4",
+            endIcon && !isPassword ? "pr-10" : !startIcon ? "px-4" : "pr-4"
+          )
+        : variant === "search"
+          ? cn(
+              startIcon ? "pl-10" : "pl-4",
+              endIcon ? "pr-10" : "pr-4"
+            )
+          : "";
 
-    const inputClasses = cn(variantClasses, iconPadding, className);
+    const inputClasses = cn(variantClasses, paddingClasses, className);
 
     // ── Label ───────────────────────────────────────────────
     const renderLabel = () =>
@@ -299,11 +306,8 @@ const UniversalInput = React.forwardRef(
     }
 
     // ── INPUT (default) ─────────────────────────────────────
-    // If children are provided, render them instead of a native <input>.
-    // This enables IMaskInput or any other custom element.
     const renderField = () => {
       if (children) {
-        // Clone child to inject shared props (id, aria-*, etc.)
         return React.Children.map(children, (child) =>
           React.isValidElement(child)
             ? React.cloneElement(child, {
@@ -313,7 +317,8 @@ const UniversalInput = React.forwardRef(
                 "aria-required": sharedProps["aria-required"],
                 disabled,
                 readOnly,
-                className: cn(inputClasses, child.props.className),
+                ...(placeholder !== undefined && { placeholder }),
+                className: cn(child.props.className, inputClasses),
               })
             : child,
         );
