@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Clock, Calendar as CalendarIcon, MapPin, User } from "lucide-react";
-import { getBadgeColor } from "../../utils/eventHelpers";
+import { getBadgeColor, normalizeStatus } from "../../utils/eventHelpers";
 
 const ListView = ({ events = [], onEventClick }) => {
   const sortedEvents = useMemo(() => {
@@ -18,7 +18,7 @@ const ListView = ({ events = [], onEventClick }) => {
   const groupedEvents = useMemo(() => {
     const groups = {};
     sortedEvents.forEach((event) => {
-      const dateStr = event.date; // format yyyy-MM-dd
+      const dateStr = String(event.date).split("T")[0];
       if (!groups[dateStr]) {
         groups[dateStr] = [];
       }
@@ -41,7 +41,7 @@ const ListView = ({ events = [], onEventClick }) => {
 
   return (
     <div className="scrollbar-thin scrollbar-thumb-gray-200 h-full flex-1 overflow-y-auto bg-gray-50/50 p-4 sm:p-6">
-      <div className="mx-auto max-w-4xl space-y-8 pb-10">
+      <div className="mx-auto w-full max-w-6xl space-y-8 pb-10">
         {Object.entries(groupedEvents).map(([dateStr, dayEvents]) => {
           const dateObj = parseISO(
             dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`,
@@ -76,9 +76,10 @@ const ListView = ({ events = [], onEventClick }) => {
               <div className="flex flex-col gap-3 pl-4 sm:pl-16">
                 {dayEvents.map((event) => {
                   const badgeColor = getBadgeColor(event.tipoAgendamento);
+                  const statusNorm = normalizeStatus(event.statusAgendamento);
                   const isCompleted =
-                    event.statusAgendamento?.nome === "CONCLUIDO" ||
-                    event.statusAgendamento?.nome === "CANCELADO";
+                    statusNorm === "CONCLUIDO" ||
+                    statusNorm === "CANCELADO";
 
                   return (
                     <div

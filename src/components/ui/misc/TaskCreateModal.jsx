@@ -564,19 +564,19 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!tipoValue) newErrors.tipoAgendamento = "* Obrigatório";
       if (!formData?.eventDate?.trim()) {
         newErrors.eventDate = "* Obrigatória";
-      } else if (!formData?.id) {
-        const selectedDate = new Date(formData.eventDate + "T00:00:00");
-        const todayDate = new Date();
-        todayDate.setHours(0, 0, 0, 0);
+      } else {
+        const now = new Date();
+      const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const hasDateOrTimeChanged = formData?.eventDate !== initialData?.eventDate || formData?.startTime !== initialData?.startTime;
 
-        if (selectedDate < todayDate) {
+      if (!formData?.id || hasDateOrTimeChanged) {
+        if (formData?.eventDate < todayYMD) {
           newErrors.eventDate = "* Não é permitido agendar no passado";
         } else if (
-          selectedDate.getTime() === todayDate.getTime() &&
+          formData?.eventDate === todayYMD &&
           formData?.startTime
         ) {
           const [hours, minutes] = formData.startTime.split(":");
-          const now = new Date();
           if (
             parseInt(hours) < now.getHours() ||
             (parseInt(hours) === now.getHours() &&
@@ -585,6 +585,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             newErrors.startTime = "* O horário escolhido já passou";
           }
         }
+      }
       }
 
       if (!formData?.startTime?.trim() && !newErrors.startTime)

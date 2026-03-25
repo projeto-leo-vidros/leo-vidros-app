@@ -172,7 +172,7 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
               </div>
 
               <div className="relative">
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setOpenDropdownId(openDropdownId === event.id ? null : event.id);
@@ -185,7 +185,7 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
                   <>
                     <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpenDropdownId(null); }} />
                     <div className="absolute right-0 top-full mt-1 z-50 w-36 bg-white border border-gray-200 shadow-lg rounded-xl py-1">
-                      <button 
+                      <button
                         onClick={(e) => {
                            e.stopPropagation();
                            setOpenDropdownId(null);
@@ -203,9 +203,9 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
           </div>
         ))}
       </div>
-        
+
       <div className="border-t border-hairline">
-        <button 
+        <button
           onClick={onViewCalendar}
           className="w-full flex items-center justify-center gap-2 py-2 text-sm text-primary hover:bg-primary/10 rounded-modern transition-micro"
         >

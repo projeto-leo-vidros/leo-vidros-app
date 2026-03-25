@@ -181,7 +181,7 @@ const EsqueceuSenha = () => {
                 Ainda não tem uma conta?{" "}
                 <button
                   type="button"
-                  onClick={() => navigate("/Cadastro")}
+                  onClick={() => navigate("/cadastro")}
                   className="text-[#007EA7] hover:text-[#005f73] font-medium transition-colors cursor-pointer"
                 >
                   Cadastre-se

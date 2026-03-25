@@ -39,41 +39,34 @@ export const EventInfoRow = ({
 
 export const EventHeader = ({ title, badges, onClose }) => {
   return (
-    <div className="relative overflow-hidden rounded-t-2xl border-b border-gray-100 bg-white px-7 pt-6 pb-3">
-      {/* Accent Brand Line Top */}
-      <div className="absolute top-0 left-0 h-1.5 w-full bg-[#134074ff]" />
-
-      <div className="flex items-start justify-between">
-        <div className="mt-1 flex-1 px-6">
-          <div className="flex items-center gap-2 pb-2 text-start text-2xl leading-tight font-bold text-[#134074ff]">
-            <Calendar size={20} strokeWidth={2.5} />
-            {title || "Detalhes do Agendamento"}
+    <div className="flex flex-row items-center justify-between border-b border-gray-100 px-6 pt-5 pb-4">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-xl font-bold text-gray-900">
+          {title || "Detalhes do Agendamento"}
+        </h2>
+        {badges && badges.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {badges.map((badge, index) => (
+              <span
+                key={index}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold",
+                  badge.className,
+                )}
+              >
+                {badge.label}
+              </span>
+            ))}
           </div>
-
-          {badges && badges.length > 0 && (
-            <div className="flex flex-wrap gap-2.5">
-              {badges.map((badge, index) => (
-                <span
-                  key={index}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold",
-                    badge.className,
-                  )}
-                >
-                  {badge.label}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={onClose}
-          className="mt-1 cursor-pointer rounded-full bg-gray-50 p-2.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-        >
-          <X size={20} />
-        </button>
+        )}
       </div>
+
+      <button
+        onClick={onClose}
+        className="cursor-pointer rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+      >
+        <X size={20} />
+      </button>
     </div>
   );
 };
@@ -102,34 +95,34 @@ export const EventInfo = ({
   };
 
   return (
-    <div className="flex flex-col gap-3 px-6">
+    <div className="flex flex-col gap-5 px-6 pt-2">
       {/* Data e Horário em Destaque Absoluto */}
-      <div className="flex flex-col rounded-2xl border border-[#134074ff]/10 bg-[#134074ff]/[0.03] p-5 sm:flex-row sm:items-center sm:gap-10">
-        <div className="flex flex-1 items-center gap-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
-            <Calendar className="h-6 w-6" strokeWidth={2} />
+      <div className="flex flex-col rounded-lg border border-gray-200 bg-gray-50/50 p-4 sm:flex-row sm:items-center sm:gap-6">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="rounded-md border border-gray-200 bg-white p-2.5 text-gray-500 shadow-sm">
+            <Calendar className="h-5 w-5" strokeWidth={2} />
           </div>
           <div>
-            <p className="mb-0.5 text-xs font-bold tracking-wider text-[#134074ff]/70 uppercase">
+            <p className="mb-0.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Data do Agendamento
             </p>
-            <span className="text-lg font-extrabold text-[#134074ff]">
+            <span className="text-base font-bold text-gray-900">
               {date}
             </span>
           </div>
         </div>
 
-        <div className="hidden h-12 w-px bg-[#134074ff]/10 sm:block" />
+        <div className="hidden h-10 w-px bg-gray-200 sm:block" />
 
-        <div className="flex flex-1 items-center gap-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#007EA7] shadow-sm">
-            <Clock className="h-6 w-6" strokeWidth={2} />
+        <div className="flex flex-1 items-center gap-3">
+          <div className="rounded-md border border-gray-200 bg-white p-2.5 text-gray-500 shadow-sm">
+            <Clock className="h-5 w-5" strokeWidth={2} />
           </div>
           <div>
-            <p className="mb-0.5 text-xs font-bold tracking-wider text-[#007EA7]/80 uppercase">
+            <p className="mb-0.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Horário
             </p>
-            <span className="text-lg font-extrabold text-[#007EA7]">
+            <span className="text-base font-bold text-gray-900">
               {startTime} — {endTime}
             </span>
           </div>
@@ -138,8 +131,8 @@ export const EventInfo = ({
 
       {/* Serviço */}
       {servico ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-[#134074ff]/10 bg-[#134074ff]/[0.03] p-5 sm:flex-row sm:items-center sm:gap-10">
-          <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
+        <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50/50 p-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="rounded-md border border-gray-200 bg-white p-2.5 text-gray-500 shadow-sm">
             <FileText className="h-5 w-5" />
           </div>
           <div className="mt-1 w-full text-start">
@@ -153,13 +146,13 @@ export const EventInfo = ({
             )}
           </div>
 
-          <div className="my-2 h-px w-full bg-[#134074ff]/10 sm:my-0 sm:h-12 sm:w-px" />
+          <div className="my-2 h-px w-full bg-gray-200 sm:my-0 sm:h-12 sm:w-px" />
 
           <span className="flex w-max items-center gap-1.5 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-gray-600">
             Cód: {servico.codigo}
           </span>
 
-          <div className="my-2 h-px w-full shrink-0 bg-[#134074ff]/10 sm:my-0 sm:h-12 sm:w-px" />
+          <div className="my-2 h-px w-full shrink-0 bg-gray-200 sm:my-0 sm:h-12 sm:w-px" />
 
           <span className="flex w-max items-center gap-1.5 rounded-md bg-green-50 px-2.5 py-1 text-xs font-bold whitespace-nowrap text-green-700">
             <Tag size={12} />
@@ -178,7 +171,7 @@ export const EventInfo = ({
 
       {/* Localização */}
       <div className="flex items-start gap-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
+        <div className="rounded-md border border-gray-200 bg-white p-2 text-gray-500 shadow-sm">
           <MapPin className="h-5 w-5" />
         </div>
         <div className="mt-1 flex-1 text-left">
@@ -199,7 +192,7 @@ export const EventInfo = ({
       {/* Produtos */}
       {produtos && produtos.length > 0 && (
         <div className="flex items-start gap-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
+          <div className="rounded-md border border-gray-200 bg-white p-2 text-gray-500 shadow-sm">
             <Package className="h-5 w-5" />
           </div>
           <div className="mt-1 flex-1">
@@ -244,9 +237,9 @@ export const EventInfo = ({
 
 export const EventTeam = ({ funcionarios }) => {
   return (
-    <div className="flex flex-col gap-3 px-6 pt-6">
+    <div className="flex flex-col gap-3 px-6 pt-3 pb-2">
       <div className="flex items-start gap-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-3 text-[#134074ff] shadow-sm">
+        <div className="rounded-md border border-gray-200 bg-white p-2 text-gray-500 shadow-sm">
           <Users className="h-5 w-5" />
         </div>
         <div className="mt-1 flex-1">
@@ -286,16 +279,15 @@ export const EventObservations = ({ observacao }) => {
   if (!observacao) return null;
 
   return (
-    <div className="px-7 py-6">
-      <div className="relative overflow-hidden rounded-xl border border-amber-200/60 bg-[#FFFDF0] p-5 text-sm text-amber-900">
-        <div className="absolute top-0 left-0 h-full w-1 bg-amber-400" />
-        <div className="mb-2.5 flex items-center gap-2">
+    <div className="px-6 py-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="mb-2 flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-amber-600" />
-          <h3 className="text-xs font-bold tracking-wider text-amber-700 uppercase">
+          <h3 className="text-xs font-bold tracking-wider text-amber-800 uppercase">
             Observações Importantes
           </h3>
         </div>
-        <p className="pl-6 leading-relaxed whitespace-pre-wrap opacity-90">
+        <p className="leading-relaxed whitespace-pre-wrap">
           {observacao}
         </p>
       </div>
@@ -312,7 +304,7 @@ export const EventFooter = ({
   hasAddress,
 }) => {
   return (
-    <div className="mt-4 flex flex-wrap-reverse items-center justify-end gap-3 rounded-b-2xl border-t border-gray-100 bg-gray-50/70 px-7 py-5 sm:flex-nowrap">
+    <div className="mt-4 flex flex-wrap-reverse items-center justify-end gap-3 rounded-b-xl border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-nowrap">
       <Button
         variant="danger"
         onClick={onDelete}

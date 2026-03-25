@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { format, addDays, startOfWeek, addMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,18 +15,11 @@ import {
   X,
   List,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   useEventDetails,
   useDeleteAgendamento,
-  useEventsByDate,
 } from "../hooks/useCalendarEvents";
-import {
-  getBadgeColor,
-  formatAddress,
-  getPedidoLabel,
-  getEventDate,
-} from "../utils/eventHelpers";
+import { getBadgeColor } from "../utils/eventHelpers";
 import {
   EventHeader,
   EventInfo,
@@ -308,19 +302,21 @@ const CalendarView = ({
   }, []);
 
   const handlePrev = () => {
-    setCurrentDate((d) =>
+    const newDate =
       viewType === "month"
-        ? addMonths(d, -1)
-        : addDays(d, viewType === "week" ? -7 : -1),
-    );
+        ? addMonths(currentDate, -1)
+        : addDays(currentDate, viewType === "week" ? -7 : -1);
+    setCurrentDate(newDate);
+    onDateSelect?.(newDate);
   };
 
   const handleNext = () => {
-    setCurrentDate((d) =>
+    const newDate =
       viewType === "month"
-        ? addMonths(d, 1)
-        : addDays(d, viewType === "week" ? 7 : 1),
-    );
+        ? addMonths(currentDate, 1)
+        : addDays(currentDate, viewType === "week" ? 7 : 1);
+    setCurrentDate(newDate);
+    onDateSelect?.(newDate);
   };
 
   const handleTodayClick = () => {
@@ -343,6 +339,7 @@ const CalendarView = ({
     }
     if (viewType === "day")
       return format(currentDate, "d 'de' MMMM yyyy", { locale: ptBR });
+    if (viewType === "list") return "Lista de Agendamentos";
     return "";
   };
 
@@ -440,7 +437,7 @@ const CalendarView = ({
             onClick={handleCreateClick}
             startIcon={<Plus size={18} className="shrink-0" />}
           >
-            <span className="hidden md:inline">Nova Tarefa</span>
+            <span className="hidden md:inline">Novo Agendamento</span>
           </Button>
           <div className="mx-2 h-6 w-px bg-gray-300 sm:mx-4"></div>
 

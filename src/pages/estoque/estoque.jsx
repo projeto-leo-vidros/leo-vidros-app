@@ -284,7 +284,7 @@ export default function Estoque() {
         console.error("Erro: ID do estoque é undefined!");
         return;
       }
-      navigate(`/Estoque/${estoqueId}`);
+      navigate(`/estoque/${estoqueId}`);
     },
     [navigate],
   );

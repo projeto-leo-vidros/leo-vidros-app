@@ -144,7 +144,7 @@ const EditarAgendamentoSimples = ({
           className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          
+
             <div className="absolute top-0 left-0 h-1.5 w-full bg-[#134074ff]" />
 
             {/* Header */}

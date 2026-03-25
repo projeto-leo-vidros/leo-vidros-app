@@ -628,7 +628,7 @@ export default function OrcamentoPage() {
     setToast({ message: "Planilha gerada com sucesso!", type: "success" });
     setTimeout(() => {
       setToast(null);
-      navigate("/Pedidos");
+      navigate("/pedidos");
     }, 2000);
   };
 

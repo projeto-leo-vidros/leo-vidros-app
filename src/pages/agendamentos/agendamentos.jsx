@@ -598,8 +598,10 @@ export default function Agendamentos() {
         >
           <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-10 pb-4 md:px-6">
             {/* ====== Header ====== */}
-            <div className="flex shrink-0 items-center justify-center">
-              <h1 className="text-2xl font-bold text-gray-800">Agendamentos</h1>
+            <div className="text-center w-full mx-auto mb-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 gap-2">
+                Agendamentos
+              </h1>
             </div>
 
             {/* ====== Stats ====== */}
