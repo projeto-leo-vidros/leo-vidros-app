@@ -277,7 +277,10 @@ export default function ClienteFormModal({
                         {...field}
                         mask="00000-000"
                         placeholder="Ex: 80035-010"
-                        className={getMaskedInputClasses(!!errors.cep || !!cepApiError)}
+                        className={cn(
+                          getMaskedInputClasses(!!errors.cep || !!cepApiError),
+                          loadingCep && "pr-10"
+                        )}
                         onAccept={(value) => {
                           field.onChange(value);
                           buscarCep(value);
