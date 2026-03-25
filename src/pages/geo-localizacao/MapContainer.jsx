@@ -47,11 +47,11 @@ const maskCep = (value) => {
 
 export default function RotasResponsivoCompacto() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const [headerHeight, setHeaderHeight] = useState(80);
   const headerRef = useRef(null);
 
-  const location = useLocation();
   const addressFromState = location.state?.address;
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
