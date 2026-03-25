@@ -265,7 +265,7 @@ class PedidosService extends BaseService {
         statusMapeado = "Finalizado";
         break;
       case "PENDENTE":
-        statusMapeado = "Em Andamento";
+        statusMapeado = "Ativo";
         break;
       case "CANCELADO":
         statusMapeado = "Cancelado";
