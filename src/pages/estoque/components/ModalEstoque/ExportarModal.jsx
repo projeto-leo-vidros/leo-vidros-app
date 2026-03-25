@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { EtlApi } from "../../../../api/client/Api"; // Ajuste o caminho conforme a sua estrutura de pastas
 import Swal from "sweetalert2";
+import Button from "../../../../components/ui/Button/Button.component";
 
 const ExportarModal = ({ isOpen, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -74,17 +75,19 @@ const ExportarModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             disabled={isExporting}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            size="sm"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleExportar}
             disabled={isExporting}
-            className="px-4 py-2 bg-[#007EA7] text-white rounded-md hover:bg-[#006891] transition-colors font-medium text-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            size="sm"
           >
             {isExporting ? (
               <>
@@ -94,7 +97,7 @@ const ExportarModal = ({ isOpen, onClose }) => {
             ) : (
               "Exportar Planilha"
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

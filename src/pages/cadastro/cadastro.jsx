@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import EmailIcon from "@mui/icons-material/Email";
-import BadgeIcon from "@mui/icons-material/Badge";
-import PhoneIcon from "@mui/icons-material/Phone";
+import { UserCircle, Mail, BadgeCheck, Phone } from "lucide-react";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -167,21 +166,15 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      Nome
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <AccountCircle className="text-[#6b7280] text-3xl" />
-                      <input
-                        type="text"
-                        placeholder="Digite seu nome"
-                        value={nome}
-                        onChange={(e) => setNome(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="Nome"
+                      placeholder="Digite seu nome"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      startIcon={<UserCircle size={30} />}
+                    />
                   </motion.div>
                 )}
 
@@ -193,21 +186,16 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      Email
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <EmailIcon className="text-[#6b7280] text-3xl" />
-                      <input
-                        type="email"
-                        placeholder="Digite seu email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="Email"
+                      type="email"
+                      placeholder="Digite seu email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      startIcon={<Mail size={30} />}
+                    />
                   </motion.div>
                 )}
 
@@ -219,21 +207,15 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      CPF
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <BadgeIcon className="text-[#6b7280] text-3xl" />
-                      <input
-                        type="text"
-                        placeholder="Digite seu CPF"
-                        value={cpf}
-                        onChange={handleCpfChange}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="CPF"
+                      placeholder="Digite seu CPF"
+                      value={cpf}
+                      onChange={handleCpfChange}
+                      startIcon={<BadgeCheck size={30} />}
+                    />
                   </motion.div>
                 )}
 
@@ -245,21 +227,15 @@ function Cadastro() {
                     animate="animate"
                     exit="exit"
                     transition={{ duration: 0.4 }}
-                    className="space-y-3"
                   >
-                    <label className="block text-sm font-medium text-[#6b7280] text-left">
-                      Telefone
-                    </label>
-                    <div className="flex items-center gap-3 border-b-2 border-[#8a8e97] bg-transparent focus-within:border-[#007EA7] transition-all py-3">
-                      <PhoneIcon className="text-[#6b7280] text-3xl" />
-                      <input
-                        type="text"
-                        placeholder="Digite seu telefone"
-                        value={telefone}
-                        onChange={handleTelefoneChange}
-                        className="w-full bg-transparent text-[#111827] placeholder-[#9ca3af] focus:outline-none text-lg py-3"
-                      />
-                    </div>
+                    <UniversalInput
+                      variant="underline"
+                      label="Telefone"
+                      placeholder="Digite seu telefone"
+                      value={telefone}
+                      onChange={handleTelefoneChange}
+                      startIcon={<Phone size={30} />}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -289,13 +265,13 @@ function Cadastro() {
                       : "Solicitar cadastro"}
                 </Button>
                 {step > 1 && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="lg"
                     onClick={() => setStep(step - 1)}
-                    className="px-8 py-4 text-[#007EA7] hover:bg-[#f0f0f0] rounded-lg transition-colors font-medium cursor-pointer"
                   >
                     Voltar
-                  </button>
+                  </Button>
                 )}
               </div>
             </form>
@@ -320,52 +296,14 @@ function Cadastro() {
         </motion.div>
       </div>
 
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={() => setModalOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-15 h-15 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-bold text-[#111827] text-center">
-                  Cadastro realizado com sucesso!
-                </h2>
-                <p className="text-[#6b7280] text-center">
-                  Aguarde a aprovação do administrador.
-                </p>
-                <p className="text-sm text-[#9ca3af] text-center">
-                  Redirecionando...
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <FeedbackModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        type="success"
+        title="Cadastro realizado com sucesso!"
+        description="Aguarde a aprovação do administrador. Redirecionando..."
+        duration={3000}
+      />
     </div>
   );
 }

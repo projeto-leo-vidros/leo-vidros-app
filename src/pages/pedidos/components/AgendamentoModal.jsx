@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Calendar, Clock, X, Save } from "lucide-react";
+import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -79,72 +81,51 @@ const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
           </p>
 
           {/* Data do Agendamento */}
-          <div className="flex flex-col gap-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Data do Agendamento *
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                name="dataAgendamento"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007EA7] focus:border-transparent"
-                value={formData.dataAgendamento}
-                onChange={handleChange}
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-          </div>
+          <UniversalInput
+            type="date"
+            label="Data do Agendamento"
+            required
+            name="dataAgendamento"
+            value={formData.dataAgendamento}
+            onChange={handleChange}
+            min={new Date().toISOString().split("T")[0]}
+          />
 
           {/* Hora do Agendamento */}
-          <div className="flex flex-col gap-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Hora do Agendamento *
-            </label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="time"
-                name="horaAgendamento"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007EA7] focus:border-transparent"
-                value={formData.horaAgendamento}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+          <UniversalInput
+            type="time"
+            label="Hora do Agendamento"
+            required
+            name="horaAgendamento"
+            startIcon={<Clock className="w-5 h-5" />}
+            value={formData.horaAgendamento}
+            onChange={handleChange}
+          />
 
           {/* Observações */}
-          <div className="flex flex-col gap-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Observações (opcional)
-            </label>
-            <textarea
-              name="observacoes"
-              rows={3}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-[#007EA7] focus:border-transparent"
-              placeholder="Adicione informações adicionais sobre o agendamento..."
-              value={formData.observacoes}
-              onChange={handleChange}
-            />
-          </div>
+          <UniversalInput
+            as="textarea"
+            label="Observações (opcional)"
+            name="observacoes"
+            rows={3}
+            placeholder="Adicione informações adicionais sobre o agendamento..."
+            value={formData.observacoes}
+            onChange={handleChange}
+          />
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-          >
+          <Button variant="ghost" onClick={handleCancel}>
             Cancelar
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSave}
-            className="px-5 py-2.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
+            startIcon={<Save className="w-4 h-4" />}
           >
-            <Save className="w-4 h-4" />
             Confirmar Agendamento
-          </button>
+          </Button>
         </div>
       </div>
     </div>

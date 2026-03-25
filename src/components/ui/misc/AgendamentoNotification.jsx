@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Calendar, Clock, X, RefreshCw, XCircle, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Button from "../Button/Button.component";
 
 const AgendamentoNotification = ({
   agendamento,
@@ -139,33 +140,37 @@ const AgendamentoNotification = ({
 
               {/* Ações */}
               <div className="space-y-2">
-                <button
+                <Button
+                  variant="primary"
                   onClick={handleIniciar}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  fullWidth
+                  startIcon={<Play className="w-4 h-4" />}
+                  className="bg-green-600 hover:bg-green-700"
                 >
-                  <Play className="w-4 h-4" />
                   {loading ? "Processando..." : "Marcar como Em Andamento"}
-                </button>
+                </Button>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={handleReagendar}
                     disabled={loading}
-                    className="flex items-center justify-center gap-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    startIcon={<RefreshCw className="w-4 h-4" />}
                   >
-                    <RefreshCw className="w-4 h-4" />
                     Reagendar
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={handleCancelar}
                     disabled={loading}
-                    className="flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    startIcon={<XCircle className="w-4 h-4" />}
                   >
-                    <XCircle className="w-4 h-4" />
                     Cancelar
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

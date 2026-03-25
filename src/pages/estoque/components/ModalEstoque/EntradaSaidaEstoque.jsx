@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { ArrowRightLeft, ChevronDown, Hash, AlertCircle } from "lucide-react";
+import { ArrowRightLeft, Hash, AlertCircle } from "lucide-react";
 import Api from "../../../../api/client/Api";
 import { useNavigate } from "react-router-dom";
+import Button from "../../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../../components/ui/Input/UniversalInput";
 
 const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
   const navigate = useNavigate();
@@ -134,52 +136,44 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
           )}
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-900">Tipo</label>
-              <select
-                className="w-full rounded-lg border-2 border-gray-200 bg-white py-3 pl-3 pr-10 text-sm font-medium outline-none focus:border-blue-500"
-                value={tipoMovimento}
-                onChange={(e) => setTipoMovimento(e.target.value)}
-                disabled={loading}
-              >
-                <option value="entrada">Entrada</option>
-                <option value="saida">Saída</option>
-              </select>
-            </div>
+            <UniversalInput
+              as="select"
+              label="Tipo"
+              value={tipoMovimento}
+              onChange={(e) => setTipoMovimento(e.target.value)}
+              disabled={loading}
+              options={[
+                { value: "entrada", label: "Entrada" },
+                { value: "saida", label: "Saída" },
+              ]}
+            />
 
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-900">
-                Quantidade ({unidadeMedida})
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min="1"
-                  className="w-full rounded-lg border-2 border-gray-200 py-3 pl-11 pr-4 text-sm font-medium outline-none focus:border-blue-500"
-                  value={quantidade}
-                  onChange={(e) => setQuantidade(e.target.value)}
-                  disabled={loading}
-                />
-                <Hash className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-600" />
-              </div>
-            </div>
+            <UniversalInput
+              type="number"
+              label={`Quantidade (${unidadeMedida})`}
+              min="1"
+              value={quantidade}
+              onChange={(e) => setQuantidade(e.target.value)}
+              disabled={loading}
+              startIcon={<Hash className="h-4 w-4 text-blue-600" />}
+            />
           </div>
         </div>
 
         <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="rounded-lg border-2 border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSaveClick}
             disabled={loading || quantidade <= 0 || success}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {loading ? "Processando..." : currentItemIndex < itemsInfo.length - 1 ? "Próximo Item" : "Finalizar"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

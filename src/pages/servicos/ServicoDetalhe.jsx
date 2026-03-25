@@ -1,839 +1,1060 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Wrench,
+  X,
   Save,
-  Calendar,
-  ClipboardList,
-  User,
-  MapPin,
-  Phone,
-  Mail,
   FileText,
-  Clock,
-  Edit,
-  AlertTriangle,
-  CheckCircle2,
-  Hash,
+  MapPin,
+  ChevronDown,
+  Plus,
+  Calendar,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import SuccessModal from "../../components/overlay/Modal/SuccessModal";
-import EditarAgendamentoModal from "../pedidos/components/EditarAgendamentoModal";
+import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import Api from "../../api/client/Api";
 import PedidosService from "../../api/services/pedidosService";
-import { formatDate } from "../../utils/formatters";
+import { formatCurrency, formatDate } from "../../utils/formatters";
 
-const ETAPAS_SERVICO = [
-  { valor: "PENDENTE", label: "Pendente", progresso: 1 },
-  { valor: "AGUARDANDO ORÇAMENTO", label: "Aguardando Orçamento", progresso: 2 },
-  { valor: "ANÁLISE DO ORÇAMENTO", label: "Análise do Orçamento", progresso: 3 },
-  { valor: "ORÇAMENTO APROVADO", label: "Orçamento Aprovado", progresso: 4 },
-  { valor: "SERVIÇO AGENDADO", label: "Serviço Agendado", progresso: 5 },
-  { valor: "SERVIÇO EM EXECUÇÃO", label: "Serviço em Execução", progresso: 6 },
-  { valor: "CONCLUÍDO", label: "Concluído", progresso: 7 },
+const STEPS = [
+  { label: "PENDENTE" },
+  { label: "AGUARDANDO ORÇAMENTO" },
+  { label: "ANÁLISE DO ORÇAMENTO" },
+  { label: "ORÇAMENTO APROVADO" },
+  { label: "SERVIÇO AGENDADO" },
+  { label: "SERVIÇO EM EXECUÇÃO" },
+  { label: "CONCLUÍDO" },
 ];
 
-const limparTextoParaComparacao = (texto) => {
-  if (!texto) return "";
-  return texto
-    .toUpperCase()
+const ETAPA_OPTIONS = STEPS.map((step) => step.label);
+
+function getStepIndex(status) {
+  if (!status) return 0;
+  const s = status
+    .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ /g, "_");
-};
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\u0300-\u036f]/g, "");
 
-const encontrarEtapaCorrespondente = (etapaDoBackend) => {
-  if (!etapaDoBackend) return "PENDENTE";
-  const backendLimpo = limparTextoParaComparacao(etapaDoBackend);
-  const etapaEncontrada = ETAPAS_SERVICO.find(
-    (e) => limparTextoParaComparacao(e.valor) === backendLimpo,
+  if (s.includes("conclu") || s.includes("finaliz")) return 6;
+  if (s.includes("execu") || s.includes("instal")) return 5;
+  if (s.includes("agendad")) return 4;
+  if (s.includes("aprovad")) return 3;
+  if (s.includes("analise")) return 2;
+  if (s.includes("orcamento") || s.includes("vistoria") || s.includes("aguardando")) return 1;
+  return 0;
+}
+
+function Stepper({ status }) {
+  const activeStep = getStepIndex(status);
+
+  return (
+    <div className="bg-transparent rounded-lg border border-gray-200 px-6 py-6 shadow-sm flex flex-col gap-2">
+      <p className="text-sm font-semibold text-gray-600 mb-12">Progresso do Serviço</p>
+
+      <div className="relative flex items-start justify-between">
+        <div
+          className="absolute h-[2px] bg-gray-200 z-0"
+          style={{ top: "18px", left: "4%", right: "4%" }}
+        />
+        <div
+          className="absolute h-[2px] bg-[#0099bf] z-0 transition-all duration-500"
+          style={{ top: "18px", left: "4%", width: `${(activeStep / 6) * 92}%` }}
+        />
+
+        {STEPS.map((step, i) => {
+          const done   = i < activeStep;
+          const active = i === activeStep;
+
+          return (
+            <div key={i} className="z-10 flex w-24 flex-col items-center text-center">
+              <div
+                className={`h-9 w-9 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                  done
+                    ? "bg-[#007EA7] border-[#007EA7] text-white"
+                    : active
+                    ? "bg-[#e6f5fb] border-[#56b9d2] text-[#007EA7] shadow-[0_0_0_5px_rgba(86,185,210,0.18)]"
+                    : "bg-[#f8fafb] border-gray-200 text-gray-400"
+                }`}
+              >
+                {done ? (
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  i + 1
+                )}
+              </div>
+
+              <span
+                className={`mt-8 text-[10px] leading-[1.05rem] font-semibold uppercase ${
+                  active ? "text-[#007EA7]" : done ? "text-gray-600" : "text-gray-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
-  return etapaEncontrada ? etapaEncontrada.valor : etapaDoBackend || "PENDENTE";
-};
+}
 
-/* ── Status badge config ── */
-const STATUS_CONFIG = {
-  Ativo:        { bg: "bg-blue-50",   text: "text-blue-700",   dot: "bg-blue-500",   label: "Ativo" },
-  Finalizado:   { bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500",  label: "Finalizado" },
-  "Em Andamento":{ bg: "bg-amber-50", text: "text-amber-700",  dot: "bg-amber-500",  label: "Em Andamento" },
-  Cancelado:    { bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500",    label: "Cancelado" },
-};
+function AgendamentoTabs({ agendamentos }) {
+  const [activeTab, setActiveTab] = useState("orcamento");
 
-export default function ServicoDetalhe() {
-  const { id } = useParams();
+  const getEnderecoTexto = (endereco) => {
+    if (!endereco) return "";
+    const rua    = endereco.rua    || endereco.logradouro || "";
+    const numero = endereco.numero || "s/n";
+    const bairro = endereco.bairro || "";
+    const cidade = endereco.cidade || "";
+    const uf     = endereco.uf     || "";
+
+    const linhaPrincipal  = rua ? `${rua}, ${numero}` : "";
+    const linhaSecundaria = [bairro, cidade, uf].filter(Boolean).join(" - ");
+    return [linhaPrincipal, linhaSecundaria].filter(Boolean).join(" • ");
+  };
+
+  const getLocalServico = (agendamento) => {
+    const localDireto =
+      agendamento.localServico          ||
+      agendamento.local                 ||
+      agendamento.enderecoCompleto      ||
+      agendamento.enderecoServicoTexto  ||
+      agendamento.enderecoTexto         ||
+      agendamento.logradouro;
+    if (localDireto) return localDireto;
+
+    const enderecoObjeto =
+      agendamento.enderecoServico  ||
+      agendamento.endereco         ||
+      agendamento.localizacao      ||
+      agendamento.clienteEndereco;
+    const enderecoFormatado = getEnderecoTexto(enderecoObjeto);
+    if (enderecoFormatado) return enderecoFormatado;
+
+    if (agendamento.mesmoEnderecoCliente === true || agendamento.usarEnderecoCliente === true) {
+      return "Mesmo endereço cadastrado do cliente";
+    }
+    return "Local do serviço não informado";
+  };
+
+  const orcamento = agendamentos.filter(
+    (a) =>
+      a.tipoAgendamento?.toUpperCase().includes("ORC") ||
+      a.tipoAgendamento?.toUpperCase().includes("VISTORIA")
+  );
+  const servico = agendamentos.filter(
+    (a) =>
+      !a.tipoAgendamento?.toUpperCase().includes("ORC") &&
+      !a.tipoAgendamento?.toUpperCase().includes("VISTORIA")
+  );
+  const current = activeTab === "orcamento" ? orcamento : servico;
+
+  return (
+    <>
+      <div className="px-5 pt-5">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+          Clique para alternar o tipo de agendamento
+        </p>
+      </div>
+
+      <div className="mx-5 mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2">
+        {[
+          { id: "orcamento", label: "Orçamento",            count: orcamento.length },
+          { id: "servico",   label: "Prestação de Serviço", count: servico.length  },
+        ].map(({ id, label, count }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center justify-center py-3.5 px-4 text-xs font-semibold rounded-md border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#56b9d2] ${
+              activeTab === id
+                ? "bg-white border-[#007EA7] text-[#002A4B] shadow-sm"
+                : "bg-gray-100 border-transparent text-gray-500 hover:bg-white hover:border-gray-300 hover:text-gray-700"
+            }`}
+          >
+            {label}
+            {count > 0 && (
+              <span
+                className={`ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  activeTab === id
+                    ? "bg-[#dce7f2] text-[#002A4B]"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-6 flex flex-col gap-8">
+        {current.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg shadow-sm">
+            Nenhum agendamento
+          </div>
+        ) : (
+          current.map((ag, i) => (
+            <div
+              key={`${activeTab}-${ag.id || i}`}
+              className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex flex-col gap-4"
+            >
+              <div className="flex flex-wrap items-center gap-5">
+                <p className="text-sm font-semibold text-gray-800">
+                  {ag.tipoAgendamento || "Agendamento"}
+                </p>
+                <span className="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-[#007EA7] text-[#007EA7] shadow-sm">
+                  {ag.statusAgendamento?.nome || "Pendente"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-md border border-[#b9deeb] bg-[#eef8fc] px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#00617f]">Data</p>
+                  <p className="text-xs font-semibold text-[#004f68] mt-0.5">
+                    {ag.dataAgendamento ? formatDate(ag.dataAgendamento) : "Não informada"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-[#b9deeb] bg-[#eef8fc] px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#00617f]">Horário</p>
+                  <p className="text-xs font-semibold text-[#004f68] mt-0.5">
+                    {ag.horaAgendamento || "Não informado"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-gray-200 bg-white px-5 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                  Local do serviço
+                </p>
+                <div className="flex items-start gap-1.5 text-xs text-gray-700">
+                  <MapPin className="w-3.5 h-3.5 text-[#007EA7] mt-0.5 shrink-0" />
+                  <p>{getLocalServico(ag)}</p>
+                </div>
+              </div>
+
+              {ag.observacao && (
+                <div className="rounded-md border border-gray-200 bg-white px-5 py-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                    Observações
+                  </p>
+                  <p className="text-xs text-gray-600 leading-relaxed">{ag.observacao}</p>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+export default function PedidoDetalhe() {
+  const { id }   = useParams();
   const navigate = useNavigate();
 
-  const [servico, setServico] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [etapaAnterior, setEtapaAnterior] = useState("");
-  const [mostrarModalExcluirAgendamentos, setMostrarModalExcluirAgendamentos] = useState(false);
-  const [agendamentoSelecionado, setAgendamentoSelecionado] = useState(null);
-  const [mostrarEditarAgendamento, setMostrarEditarAgendamento] = useState(false);
+  const [pedido,           setPedido]           = useState(null);
+  const [rawPedido,        setRawPedido]         = useState(null);
+  const [loading,          setLoading]           = useState(true);
+  const [saving,           setSaving]            = useState(false);
+  const [error,            setError]             = useState(null);
+  const [sidebarOpen,      setSidebarOpen]       = useState(false);
+  const [showSuccessModal, setShowSuccessModal]  = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    servico:     true,
+    instalacao:  true,
+    agendamento: true,
+  });
 
   const [formData, setFormData] = useState({
-    servicoNome: "",
-    servicoCodigo: "",
-    precoBase: 0,
-    descricao: "",
-    etapa: "PENDENTE",
-    progressoValor: 1,
-    progressoTotal: 7,
-    valorTotal: 0,
-    formaPagamento: "",
-    status: "Ativo",
+    clienteNome:         "",
+    formaPagamento:      "",
+    observacoes:         "",
+    etapaServico:        "",
+    produtos:            [],
+    servicoNome:         "",
+    servicoDescricao:    "",
+    servicoPrecoBase:    undefined,
+    servicoAtivo:        undefined,
   });
+
+  const [etapaOriginal, setEtapaOriginal] = useState("");
+  const temMudancaEtapa = formData.etapaServico !== etapaOriginal;
 
   const toggleSidebar = () => setSidebarOpen((p) => !p);
 
-  const fetchServico = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await Api.get(`/pedidos/${id}`);
-      if (response.status !== 200) throw new Error("Serviço não encontrado");
-      const mapped = PedidosService.mapearParaFrontend(response.data);
-      const rawEtapa = mapped.etapaOriginal || mapped.etapa || "PENDENTE";
-      const etapaCalc = encontrarEtapaCorrespondente(rawEtapa);
-      const etapaInfo = ETAPAS_SERVICO.find((e) => e.valor === etapaCalc);
-
-      setServico(mapped);
-      setEtapaAnterior(etapaCalc);
-      setFormData({
-        servicoNome: mapped.servico?.nome || mapped.servicoNome || "",
-        servicoCodigo: mapped.servico?.codigo || "",
-        precoBase: mapped.servico?.precoBase || 0,
-        descricao: mapped.descricao || "",
-        etapa: etapaCalc,
-        progressoValor: etapaInfo ? etapaInfo.progresso : mapped.progresso?.[0] || 1,
-        progressoTotal: 7,
-        valorTotal: mapped.valorTotal || 0,
-        formaPagamento: mapped.formaPagamento || "",
-        status: mapped.status || "Ativo",
-      });
-    } catch (err) {
-      console.error("Erro ao buscar serviço:", err);
-      alert("Erro ao carregar serviço");
-      navigate("/Servicos");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const fetchPedido = async () => {
+      setLoading(true);
+      try {
+        const response = await Api.get(`/pedidos/${id}`);
+        if (response.status !== 200) throw new Error("Pedido não encontrado");
+        const raw    = response.data;
+        setRawPedido(raw);
+        const mapped = PedidosService.mapearParaFrontend(raw);
+        setPedido(mapped);
+        
+        // Normaliza etapa para sempre ser uma string
+        let etapa = "PENDENTE";
+        if (mapped.servico?.etapa) {
+          etapa = typeof mapped.servico.etapa === "string" 
+            ? mapped.servico.etapa 
+            : mapped.servico.etapa.nome || "PENDENTE";
+        } else if (mapped.status) {
+          etapa = typeof mapped.status === "string"
+            ? mapped.status
+            : mapped.status.nome || "PENDENTE";
+        }
+        
+        setEtapaOriginal(etapa);
+        setFormData({
+          clienteNome:         mapped.clienteNome           || "",
+          formaPagamento:      mapped.formaPagamento        || "",
+          observacoes:         mapped.observacoes           || "",
+          etapaServico:        etapa,
+          produtos:            mapped.produtos              || [],
+          servicoNome:         mapped.servico?.nome         || "",
+          servicoDescricao:    mapped.servico?.descricao    || "",
+          servicoPrecoBase:    mapped.servico?.precoBase    || 0,
+          servicoAtivo:        mapped.servico?.ativo        !== false,
+        });
+      } catch (err) {
+        console.error("Erro ao buscar pedido:", err);
+        alert("Erro ao carregar pedido");
+        navigate("/Pedidos");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPedido();
   }, [id, navigate]);
 
-  useEffect(() => { fetchServico(); }, [fetchServico]);
+  const calcularValorTotal = () =>
+    formData.produtos.reduce(
+      (acc, p) => acc + (parseFloat(p.quantidade) || 0) * (parseFloat(p.preco) || 0),
+      0
+    );
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "etapa") {
-      const etapaInfo = ETAPAS_SERVICO.find((e) => e.valor === value);
-      setFormData((prev) => ({
-        ...prev,
-        etapa: value,
-        progressoValor: etapaInfo ? etapaInfo.progresso : prev.progressoValor,
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+  const handleFieldChange = (field, value) =>
+    setFormData((p) => ({ ...p, [field]: value }));
+
+  const toggleSection = (section) =>
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+
+  const handleProdutoChange = (index, field, value) => {
+    const updated = [...formData.produtos];
+    updated[index] = {
+      ...updated[index],
+      [field]:
+        field === "quantidade" || field === "preco"
+          ? parseFloat(value) || 0
+          : value,
+    };
+    setFormData((p) => ({ ...p, produtos: updated }));
   };
+
+  const handleAdicionarProduto = () =>
+    setFormData((p) => ({
+      ...p,
+      produtos: [
+        ...p.produtos,
+        { nome: "", quantidade: 1, preco: 0, estoqueId: 0, observacao: "" },
+      ],
+    }));
+
+  const handleRemoverProduto = (index) =>
+    setFormData((p) => ({
+      ...p,
+      produtos: p.produtos.filter((_, i) => i !== index),
+    }));
 
   const handleSave = async () => {
-    const voltouParaPendente = etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
-    if (voltouParaPendente && servico?.servico?.agendamentos?.length > 0) {
-      setMostrarModalExcluirAgendamentos(true);
-      return;
-    }
-    await salvarAlteracoes();
-  };
-
-  const salvarAlteracoes = async () => {
     setSaving(true);
     setError(null);
+    let requestBody = null;
+    
     try {
-      const voltouParaPendente = etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
-      if (voltouParaPendente && servico?.servico?.agendamentos?.length > 0) {
-        await Promise.all(servico.servico.agendamentos.map((ag) => Api.delete(`/agendamentos/${ag.id}`)));
-      }
-
-      const pedidoData = {
+      const valorTotal  = calcularValorTotal();
+      requestBody = {
         pedido: {
-          valorTotal: parseFloat(formData.valorTotal) || 0.0,
-          ativo: formData.status === "Ativo",
-          formaPagamento: formData.formaPagamento || "A negociar",
-          observacao: formData.descricao || "",
+          valorTotal,
+          ativo:          rawPedido?.ativo !== undefined ? rawPedido.ativo : true,
+          formaPagamento: formData.formaPagamento,
+          observacao:     formData.observacoes,
           cliente: {
-            id: servico.clienteId || servico.clienteInfo?.id,
-            nome: servico.clienteNome || servico.clienteInfo?.nome || "",
-            cpf: servico.clienteInfo?.cpf || "",
-            email: servico.clienteInfo?.email || "",
-            telefone: servico.clienteInfo?.telefone || "",
-            status: "Ativo",
-            enderecos: servico.clienteInfo?.endereco
-              ? [{ id: servico.clienteInfo.endereco.id || 0, rua: servico.clienteInfo.endereco.rua || "", complemento: servico.clienteInfo.endereco.complemento || "", cep: servico.clienteInfo.endereco.cep || "", cidade: servico.clienteInfo.endereco.cidade || "", bairro: servico.clienteInfo.endereco.bairro || "", uf: servico.clienteInfo.endereco.uf || "", pais: servico.clienteInfo.endereco.pais || "Brasil", numero: servico.clienteInfo.endereco.numero || 0 }]
+            id:       pedido.clienteId || pedido.clienteInfo?.id || 0,
+            nome:     formData.clienteNome,
+            cpf:      pedido.clienteInfo?.cpf      || "",
+            email:    pedido.clienteInfo?.email    || "",
+            telefone: pedido.clienteInfo?.telefone || "",
+            status:   "Ativo",
+            enderecos: pedido.clienteInfo?.endereco
+              ? [
+                  {
+                    id:          pedido.clienteInfo.endereco.id          || 0,
+                    rua:         pedido.clienteInfo.endereco.rua         || "",
+                    complemento: pedido.clienteInfo.endereco.complemento || "",
+                    cep:         pedido.clienteInfo.endereco.cep         || "",
+                    cidade:      pedido.clienteInfo.endereco.cidade      || "",
+                    bairro:      pedido.clienteInfo.endereco.bairro      || "",
+                    uf:          pedido.clienteInfo.endereco.uf          || "",
+                    pais:        pedido.clienteInfo.endereco.pais        || "Brasil",
+                    numero:      pedido.clienteInfo.endereco.numero      || 0,
+                  },
+                ]
               : [],
           },
-          status: { tipo: "PEDIDO", nome: formData.status.toUpperCase() },
+          status: {
+            tipo: pedido.statusOriginal?.tipo || "PEDIDO",
+            nome: formData.etapaServico || pedido.statusOriginal?.nome || "ATIVO",
+          },
         },
-        servico: {
-          id: servico.servico?.id,
-          nome: formData.servicoNome || servico.servico?.nome || "Serviço",
-          codigo: formData.servicoCodigo || servico.servico?.codigo || "",
-          descricao: formData.descricao || "",
-          precoBase: parseFloat(formData.precoBase) || 0.0,
-          ativo: true,
-          etapa: { tipo: "PEDIDO", nome: formData.etapa },
-        },
+        servico: rawPedido?.servico
+          ? {
+              ...rawPedido.servico,
+              nome: formData.servicoNome || rawPedido.servico.nome,
+              descricao: formData.servicoDescricao || rawPedido.servico.descricao,
+              precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : rawPedido.servico.precoBase,
+              ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : rawPedido.servico.ativo,
+              etapa: {
+                tipo: "PEDIDO",
+                nome: formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE",
+              },
+            }
+          : null,
+        produtos: formData.produtos.map((p) => ({
+          estoqueId:              p.estoqueId              || 0,
+          quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
+          precoUnitarioNegociado: parseFloat(p.preco)      || 0,
+          observacao:             p.observacao             || "",
+        })),
       };
 
-      const response = await Api.put(`/pedidos/${id}`, pedidoData);
-      if (response.status === 200 || response.status === 204) {
-        setEtapaAnterior(formData.etapa);
-        setMostrarModalExcluirAgendamentos(false);
-        await fetchServico();
-        setShowSuccessModal(true);
-        setTimeout(() => setShowSuccessModal(false), 2500);
-      } else {
-        setError("Erro ao atualizar serviço");
-      }
+      console.log("🔄 Enviando salvamento:", requestBody);
+
+      const response = await Api.put(`/pedidos/${id}`, requestBody);
+      
+      console.log("✅ Resposta da API:", response);
+
+      setPedido((prev) => ({
+        ...prev,
+        clienteNome:    formData.clienteNome,
+        formaPagamento: formData.formaPagamento,
+        observacoes:    formData.observacoes,
+        status:         formData.etapaServico || prev.status,
+        servico:        prev.servico
+          ? { ...prev.servico, etapa: formData.etapaServico || prev.servico.etapa }
+          : prev.servico,
+        produtos:   formData.produtos,
+        valorTotal,
+        itensCount: formData.produtos.length,
+      }));
+
+      setShowSuccessModal(true);
+      setEtapaOriginal(formData.etapaServico);
+      setTimeout(() => setShowSuccessModal(false), 2500);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Erro ao salvar");
+      console.error("❌ Erro ao salvar:", {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        message: err.response?.data?.message || err.message,
+        data: err.response?.data,
+      });
+      
+      let mensagemErro = "Erro ao salvar";
+      
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        mensagemErro = "❌ Acesso negado. Você precisa estar logado para realizar alterações.";
+      } else if (err.response?.status === 404) {
+        mensagemErro = "❌ Pedido não encontrado na API.";
+      } else if (err.response?.status === 400) {
+        mensagemErro = `❌ Dados inválidos: ${err.response?.data?.message || "Verifique os dados preenchidos."}`;
+      } else if (err.response?.data?.message) {
+        mensagemErro = `❌ ${err.response.data.message}`;
+      } else if (err.message) {
+        mensagemErro = `❌ ${err.message}`;
+      }
+      
+      setError(mensagemErro);
+      console.error("Payload enviado:", requestBody);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleAgendarOrcamento = () => navigate("/Agendamentos", { state: { tipo: "orcamento", servicoId: id, clienteNome: servico?.clienteNome, servicoNome: formData.servicoNome } });
-  const handleAgendarServico = () => navigate("/Agendamentos", { state: { tipo: "servico", servicoId: id, clienteNome: servico?.clienteNome, servicoNome: formData.servicoNome } });
-
-  const handleEditarAgendamento = (agendamento) => {
-    setAgendamentoSelecionado(agendamento);
-    setMostrarEditarAgendamento(true);
-  };
-
-  const handleAgendamentoEditadoSuccess = async () => {
-    try {
-      const result = await PedidosService.buscarPorId(id);
-      if (!result.success) return;
-      const servicoAtualizado = PedidosService.mapearParaFrontend(result.data);
-      const rawEtapa = servicoAtualizado.etapaOriginal || servicoAtualizado.etapa || "PENDENTE";
-      const etapaCalc = encontrarEtapaCorrespondente(rawEtapa);
-      if (etapaCalc !== etapaAnterior) {
-        const pedidoData = { pedido: { valorTotal: servicoAtualizado.valorTotal || 0.0, ativo: servicoAtualizado.status === "Ativo", formaPagamento: servicoAtualizado.formaPagamento || "A negociar", observacao: servicoAtualizado.descricao || "", cliente: { id: servicoAtualizado.clienteId || servicoAtualizado.clienteInfo?.id, nome: servicoAtualizado.clienteNome || "", cpf: servicoAtualizado.clienteInfo?.cpf || "", email: servicoAtualizado.clienteInfo?.email || "", telefone: servicoAtualizado.clienteInfo?.telefone || "", status: "Ativo", enderecos: servicoAtualizado.clienteInfo?.endereco ? [{ ...servicoAtualizado.clienteInfo.endereco, pais: servicoAtualizado.clienteInfo.endereco.pais || "Brasil" }] : [] }, status: { tipo: "PEDIDO", nome: servicoAtualizado.status.toUpperCase() } }, servico: { id: servico.servico?.id, nome: servicoAtualizado.servicoNome || servicoAtualizado.servico?.nome || "Serviço", descricao: servicoAtualizado.descricao || "", precoBase: servicoAtualizado.servico?.precoBase || 0.0, ativo: true, etapa: { tipo: "PEDIDO", nome: etapaCalc } } };
-        await Api.put(`/pedidos/${id}`, pedidoData);
-      }
-      await fetchServico();
-      setMostrarEditarAgendamento(false);
-      setAgendamentoSelecionado(null);
-    } catch {
-      setError("Erro ao atualizar informações. Recarregue a página.");
-    }
-  };
-
-  const mostrarBotaoAgendarOrcamento = formData.etapa?.toUpperCase() === "PENDENTE";
-  const mostrarBotaoAgendarServico = formData.etapa?.toUpperCase() === "ORÇAMENTO APROVADO";
-
   /* ── Loading ── */
   if (loading) {
     return (
-      <div className="flex bg-[#f0f4f7] min-h-screen items-center justify-center">
+      <div className="flex bg-[#f7f9fa] min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-5">
-            <div className="absolute inset-0 rounded-full border-4 border-[#007EA7]/20" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-[#007EA7] animate-spin" />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">Carregando serviço...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#007EA7] mx-auto mb-4" />
+          <p className="text-gray-500">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  if (!servico) {
+  /* ── Not found ── */
+  if (!pedido) {
     return (
-      <div className="flex bg-[#f0f4f7] min-h-screen items-center justify-center">
+      <div className="flex bg-[#f7f9fa] min-h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Serviço não encontrado</p>
-          <button onClick={() => navigate("/Pedidos")} className="bg-[#007EA7] text-white px-4 py-2 rounded-md hover:bg-[#006891] transition-colors">Voltar</button>
+          <p className="text-gray-500 mb-4">Pedido não encontrado</p>
+          <button
+            onClick={() => navigate("/Pedidos")}
+            className="bg-[#007EA7] text-white px-4 py-2 rounded-md hover:bg-[#006891] transition-colors"
+          >
+            Voltar para Pedidos
+          </button>
         </div>
       </div>
     );
   }
 
-  const statusCfg = STATUS_CONFIG[servico.status] || STATUS_CONFIG["Ativo"];
-  const etapaLabel = ETAPAS_SERVICO.find((e) => e.valor === formData.etapa)?.label || formData.etapa;
-  const agendamentos = servico?.servico?.agendamentos || [];
+  const valorTotal    = calcularValorTotal();
+  const endereco      = pedido.clienteInfo?.endereco;
+  const agendamentos  = pedido.servico?.agendamentos || [];
+  const servicoInfo   = pedido.servico || null;
+  const produtosCount = formData.produtos.length;
 
   return (
-    <div className="flex bg-[#f0f4f7] min-h-screen">
+    <div className="flex bg-[#f7f9fa] h-screen overflow-hidden">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* ── Coluna principal ── */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-        <div className="pt-20 lg:pt-20" />
 
-        <main className="flex-1 flex flex-col items-center px-4 md:px-6 lg:px-8 pt-5 pb-12">
-          <div className="max-w-7xl w-full">
+        {/* ── Área de scroll ── */}
+        <main className="flex-1 overflow-y-auto px-6 pt-20 pb-6 flex justify-center">
+          <div className="w-full max-w-[1400px] flex flex-col gap-5">
 
-            {/* ── Top bar ── */}
-            <div className="flex items-center mb-6">
+            {/* Topbar */}
+            <div className="relative py-5 min-h-[106px] flex items-center justify-center">
               <button
-                onClick={() => navigate("/Pedidos")}
-                className="flex items-center gap-2 text-gray-500 hover:text-gray-800 hover:text-[#007EA7] transition-colors text-sm font-medium"
+                onClick={() => navigate("/Pedidos", { state: { initialTab: "servicos" } })}
+                className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar para Serviços
               </button>
+
+              <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-2">
+                <p className="text-xl font-bold text-gray-800 leading-tight flex items-center justify-center gap-3">
+                  <span className="inline-flex items-center justify-center bg-[#e0f2fa] p-1.5 rounded-md shadow-sm">
+                    {/* w-4.5 é inválido no Tailwind — corrigido para w-[18px] */}
+                    <Wrench className="w-[18px] h-[18px] text-[#007EA7]" />
+                  </span>
+                  Pedido #{String(pedido.id).padStart(3, "0")}
+                </p>
+                <p className="text-sm text-gray-500 mt-6">
+                  {formatDate(pedido.dataCompra)} · {pedido.clienteNome}
+                </p>
+              </div>
             </div>
 
-            {/* ── Single-column layout ── */}
-            <div className="flex flex-col gap-5">
-
-                {/* ── Page header ── */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-[#007EA7]/10 flex items-center justify-center">
-                  <Wrench className="w-7 h-7 text-[#007EA7]" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-center gap-3 flex-wrap">
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      {formData.servicoNome || "Serviço"}
-                    </h1>
-                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
-                      <Hash className="w-3 h-3" />
-                      {String(servico.id).padStart(3, "0")}
-                    </span>
-                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusCfg.bg} ${statusCfg.text}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                      {statusCfg.label}
-                    </span>
+            {error && (
+              <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">❌</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-red-800 mb-1">Erro ao Salvar</p>
+                    <p className="text-sm text-red-700 whitespace-pre-wrap break-words">{error}</p>
+                    <p className="text-xs text-red-600 mt-2">🔍 Verifique o console do navegador (F12) para mais detalhes</p>
                   </div>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Cliente: <span className="text-gray-600 font-medium">{servico.clienteNome}</span>
-                    &nbsp;·&nbsp;
-                    {formatDate(servico.dataCompra)}
-                  </p>
                 </div>
               </div>
+            )}
 
-              {/* Progress stepper */}
-              <div className="mt-6 pt-5 border-t border-gray-100">
-                {/* Label da etapa atual */}
-                <div className="flex items-center mb-4">
-                  <span className="text-xs text-gray-400 font-medium">Progresso do Serviço</span>
-                </div>
+            {/* Stepper */}
+            <Stepper status={formData.etapaServico || pedido.servico?.etapa || pedido.status} />
 
-                {/* Steps */}
-                <div className="relative flex items-start justify-between">
-                  {/* Track background */}
-                  <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-100 z-0" />
-                  {/* Track progress */}
-                  <div
-                    className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-[#007EA7] to-[#00b4d8] z-0 transition-all duration-700 ease-in-out"
-                    style={{ width: `${((formData.progressoValor - 1) / 6) * 100}%` }}
-                  />
+            {/* Grid principal */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                  {ETAPAS_SERVICO.map((etapa) => {
-                    const done = etapa.progresso < formData.progressoValor;
-                    const active = etapa.progresso === formData.progressoValor;
-                    return (
-                      <div key={etapa.valor} className="flex flex-col items-center gap-2 z-10 flex-1">
-                        {/* Circle */}
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          done
-                            ? "bg-[#007EA7] shadow-sm shadow-[#007EA7]/30"
-                            : active
-                            ? "bg-white border-2 border-[#007EA7] shadow-md shadow-[#007EA7]/25 ring-4 ring-[#007EA7]/10 scale-110"
-                            : "bg-white border-2 border-gray-200"
-                        }`}>
-                          {done ? (
-                            <CheckCircle2 className="w-5 h-5 text-white" />
-                          ) : active ? (
-                            <span className="text-sm font-bold text-[#007EA7]">{etapa.progresso}</span>
-                          ) : (
-                            <span className="text-xs font-semibold text-gray-300">{etapa.progresso}</span>
+              {/* Coluna esquerda (1/3) */}
+              <div className="flex flex-col gap-8">
+
+                {/* CLIENTE */}
+                <SectionCard title="CLIENTE">
+                  <div className="p-6 flex flex-col gap-5">
+                    <FieldGroup label="Nome">
+                      <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                        {formData.clienteNome}
+                      </div>
+                    </FieldGroup>
+                    {pedido.clienteInfo?.email && (
+                      <FieldGroup label="E-mail">
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 truncate shadow-sm">
+                          {pedido.clienteInfo.email}
+                        </div>
+                      </FieldGroup>
+                    )}
+                    {pedido.clienteInfo?.telefone && (
+                      <FieldGroup label="Telefone">
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                          {pedido.clienteInfo.telefone}
+                        </div>
+                      </FieldGroup>
+                    )}
+                    {pedido.clienteInfo?.cpf && (
+                      <FieldGroup label="CPF">
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                          {pedido.clienteInfo.cpf}
+                        </div>
+                      </FieldGroup>
+                    )}
+                  </div>
+                </SectionCard>
+
+                {/* ENDEREÇO */}
+                <SectionCard title="ENDEREÇO">
+                  <div className="p-6">
+                    {endereco ? (
+                      <div className="flex flex-col gap-5">
+                        <div className="grid grid-cols-3 gap-4">
+                          <FieldGroup label="Rua" className="col-span-2">
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 truncate shadow-sm">
+                              {endereco.rua || "—"}
+                            </div>
+                          </FieldGroup>
+                          <FieldGroup label="Nº">
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 text-center shadow-sm">
+                              {endereco.numero || "s/n"}
+                            </div>
+                          </FieldGroup>
+                        </div>
+                        <FieldGroup label="Bairro">
+                          <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                            {endereco.bairro || "—"}
+                          </div>
+                        </FieldGroup>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FieldGroup label="Cidade">
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 truncate shadow-sm">
+                              {endereco.cidade || "—"}
+                            </div>
+                          </FieldGroup>
+                          <FieldGroup label="CEP">
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                              {endereco.cep || "—"}
+                            </div>
+                          </FieldGroup>
+                        </div>
+                        <button
+                          onClick={() => navigate("/geo-localizacao")}
+                          className="w-full mt-2 flex items-center justify-center gap-2.5 px-4 py-3 border border-gray-100 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors cursor-pointer shadow-sm"
+                        >
+                          <MapPin className="w-4 h-4" />
+                          Ver no Mapa
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-8 text-sm text-gray-400 border border-dashed border-gray-200 rounded-md shadow-sm">
+                        Endereço não informado
+                      </div>
+                    )}
+                  </div>
+                </SectionCard>
+              </div>
+
+              {/* Coluna direita (2/3) */}
+              <div className="lg:col-span-2 flex flex-col gap-7">
+
+                {/* SERVIÇO */}
+                <SectionCard
+                  title="SERVIÇO"
+                  collapsible
+                  isOpen={expandedSections.servico}
+                  onToggle={() => toggleSection("servico")}
+                >
+                  <div className="p-6 rounded-b-lg bg-[#f5fbfe] border-t border-[#deedf3] flex flex-col gap-6">
+                    <FieldGroup label="Nome do Serviço">
+                      <input
+                        type="text"
+                        value={formData.servicoNome || servicoInfo?.nome || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, servicoNome: e.target.value }))}
+                        placeholder="Nome do serviço"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
+                      />
+                    </FieldGroup>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FieldGroup label="Preço Base">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : (servicoInfo?.precoBase || 0)}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, servicoPrecoBase: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
+                        />
+                      </FieldGroup>
+                      <FieldGroup label="Preço Total">
+                        <div className="px-3 py-2 bg-white border border-[#b9deeb] rounded-md text-sm text-[#007EA7] font-semibold shadow-sm">
+                          {formatCurrency(valorTotal || 0)}
+                        </div>
+                      </FieldGroup>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
+                          Forma de Pagamento
+                        </label>
+                        <select
+                          value={formData.formaPagamento}
+                          onChange={(e) => handleFieldChange("formaPagamento", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white outline-none shadow-sm"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="Dinheiro">Dinheiro</option>
+                          <option value="Pix">Pix</option>
+                          <option value="PIX">PIX</option>
+                          <option value="Cartão de crédito">Cartão de crédito</option>
+                          <option value="Cartão de débito">Cartão de débito</option>
+                          <option value="Boleto">Boleto</option>
+                          <option value="Transferência">Transferência bancária</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
+                          Observações
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={formData.observacoes}
+                          onChange={(e) => handleFieldChange("observacoes", e.target.value)}
+                          placeholder="Observações sobre o pedido..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] resize-none outline-none shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 pl-1">
+                          <label className="block text-left text-xs font-semibold text-gray-500">
+                            Etapa do Serviço
+                          </label>
+                          {temMudancaEtapa && (
+                            <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold animate-pulse">
+                              ⚠ Não Salvo
+                            </span>
                           )}
                         </div>
-                        {/* Label */}
-                        <span className={`text-[9px] font-semibold text-center leading-snug max-w-[58px] uppercase tracking-wide transition-colors ${
-                          active ? "text-[#007EA7]" : done ? "text-gray-400" : "text-gray-300"
-                        }`}>
-                          {etapa.label}
-                        </span>
+                        <select
+                          value={formData.etapaServico}
+                          onChange={(e) => handleFieldChange("etapaServico", e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
+                            temMudancaEtapa
+                              ? "border-amber-400 bg-amber-50"
+                              : "border-gray-300 focus:border-[#007EA7]"
+                          }`}
+                        >
+                          {ETAPA_OPTIONS.map((etapa) => (
+                            <option key={etapa} value={etapa}>{etapa}</option>
+                          ))}
+                        </select>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-                </div>
-
-                {/* Error */}
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                )}
-
-                {/* 1. Cliente Card */}
-                {(servico.clienteInfo || servico.clienteNome) && (
-                  <SectionCard
-                    title={servico.clienteNome || "Cliente"}
-                    icon={<User className="w-4 h-4 text-emerald-600" />}
-                    iconBg="bg-emerald-100"
-                  >
-                    {/* Contact info */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {servico.clienteInfo?.email && (
-                        <ClientInfoRow
-                          icon={<Mail className="w-4 h-4 text-[#007EA7]" />}
-                          label="E-mail"
-                          value={servico.clienteInfo.email}
-                        />
-                      )}
-                      {servico.clienteInfo?.telefone && (
-                        <ClientInfoRow
-                          icon={<Phone className="w-4 h-4 text-[#007EA7]" />}
-                          label="Telefone"
-                          value={servico.clienteInfo.telefone}
-                        />
-                      )}
-                      {servico.clienteInfo?.cpf && (
-                        <ClientInfoRow
-                          icon={<Hash className="w-4 h-4 text-[#007EA7]" />}
-                          label="CPF"
-                          value={servico.clienteInfo.cpf}
-                        />
-                      )}
+                      <div>
+                        <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
+                          Status do Serviço
+                        </label>
+                        <select
+                          value={formData.servicoAtivo !== undefined ? (formData.servicoAtivo ? "Ativo" : "Inativo") : (servicoInfo?.ativo ? "Ativo" : "Inativo")}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, servicoAtivo: e.target.value === "Ativo" }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white outline-none shadow-sm"
+                        >
+                          <option value="Ativo">Ativo</option>
+                          <option value="Inativo">Inativo</option>
+                        </select>
+                      </div>
                     </div>
-                  </SectionCard>
-                )}
 
-                {/* 1b. Endereço Card */}
-                {servico.clienteInfo?.endereco && (
-                  <SectionCard
-                    title="Endereço"
-                    icon={<MapPin className="w-4 h-4 text-violet-600" />}
-                    iconBg="bg-violet-100"
-                    action={
-                      <button
-                        onClick={() => {
-                          const end = servico.clienteInfo.endereco;
-                          const parts = [
-                            end.rua,
-                            end.numero,
-                            end.bairro,
-                            end.cidade && end.uf ? `${end.cidade} - ${end.uf}` : end.cidade || end.uf,
-                            end.cep,
-                          ].filter(Boolean);
-                          sessionStorage.removeItem("routeAddresses");
-                          navigate("/geo-localizacao", {
-                            state: { address: parts.join(", ") },
-                          });
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors font-medium text-xs shadow-sm whitespace-nowrap cursor-pointer"
-                      >
-                        <MapPin className="w-3.5 h-3.5" />
-                        Ver no Mapa
-                      </button>
-                    }
-                  >
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 mb-4">
-                      <div>
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Rua</p>
-                        <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.rua || "—"}</p>
+                    <div>
+                      <label className="block text-left text-xs font-semibold text-gray-500 mb-1">
+                        Descrição do Serviço
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={formData.servicoDescricao !== undefined ? formData.servicoDescricao : (servicoInfo?.descricao || "")}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, servicoDescricao: e.target.value }))}
+                        placeholder="Descrição do serviço..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] resize-none outline-none shadow-sm"
+                      />
+                    </div>
+                  </div>
+                </SectionCard>
+
+                {/* INSTALAÇÃO */}
+                <SectionCard
+                  title={
+                    <>
+                      <span className="text-white/80 pr-2">INSTALAÇÃO - atualmente</span>
+                      <span className="ml-2 bg-white text-[#002A4B] px-2 py-0.5 rounded-full font-extrabold">
+                        {produtosCount} {produtosCount === 1 ? "produto" : "produtos"}
+                      </span>
+                    </>
+                  }
+                  collapsible
+                  isOpen={expandedSections.instalacao}
+                  onToggle={() => toggleSection("instalacao")}
+                  action={
+                    <button
+                      onClick={handleAdicionarProduto}
+                      className="flex items-center gap-2 bg-white/25 text-white px-4 py-2 rounded-lg hover:bg-white/35 transition-all cursor-pointer font-semibold text-sm shadow-md hover:shadow-lg hover:scale-105"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Adicionar Produto
+                    </button>
+                  }
+                >
+                  <div className="p-6">
+                    {formData.produtos.length === 0 ? (
+                      <div className="flex items-center justify-center py-10 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm shadow-sm">
+                        Nenhum produto adicionado
                       </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Número</p>
-                        <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.numero || "S/N"}</p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-6">
+                        {formData.produtos.map((produto, index) => (
+                          <div
+                            key={index}
+                            className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative shadow-sm"
+                          >
+                            <button
+                              onClick={() => handleRemoverProduto(index)}
+                              className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                            <p className="text-xs font-bold text-[#007EA7] mb-4 uppercase tracking-wide">
+                              Item #{String(index + 1).padStart(2, "0")}
+                            </p>
+                            <div className="flex flex-col gap-4">
+                              <FieldGroup label="Produto">
+                                <input
+                                  type="text"
+                                  value={produto.nome}
+                                  onChange={(e) => handleProdutoChange(index, "nome", e.target.value)}
+                                  placeholder="Nome do produto"
+                                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
+                                />
+                              </FieldGroup>
+                              <div className="grid grid-cols-3 gap-3">
+                                <FieldGroup label="Qtd">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={produto.quantidade}
+                                    onChange={(e) => handleProdutoChange(index, "quantidade", e.target.value)}
+                                    placeholder="0"
+                                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
+                                  />
+                                </FieldGroup>
+                                <FieldGroup label="Preço Unit.">
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={produto.preco}
+                                    onChange={(e) => handleProdutoChange(index, "preco", e.target.value)}
+                                    placeholder="0,00"
+                                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
+                                  />
+                                </FieldGroup>
+                                <div className="flex flex-col">
+                                  <label className="text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
+                                    Subtotal
+                                  </label>
+                                  <div className="px-2.5 py-1.5 bg-blue-50 border border-blue-100 rounded-md text-xs font-bold text-[#007EA7] text-center shadow-sm">
+                                    {formatCurrency(
+                                      (parseFloat(produto.quantidade) || 0) *
+                                        (parseFloat(produto.preco) || 0)
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      {servico.clienteInfo.endereco.complemento && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Complemento</p>
-                          <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.complemento}</p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Bairro</p>
-                        <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.bairro || "—"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Cidade / UF</p>
-                        <p className="text-sm text-gray-800 font-medium">
-                          {servico.clienteInfo.endereco.cidade || "—"} / {servico.clienteInfo.endereco.uf || "—"}
+                    )}
+
+                    {formData.produtos.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-200 flex justify-end">
+                        <p className="text-sm font-bold text-gray-800">
+                          Total:{" "}
+                          <span className="text-[#007EA7]">{formatCurrency(valorTotal)}</span>
                         </p>
                       </div>
-                      {servico.clienteInfo.endereco.cep && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">CEP</p>
-                          <p className="text-sm text-gray-800 font-medium">{servico.clienteInfo.endereco.cep}</p>
-                        </div>
-                      )}
-                    </div>
-                  </SectionCard>
-                )}
+                    )}
+                  </div>
+                </SectionCard>
 
-                {/* 2. Service Info Card */}
-                <SectionCard title="Informações do Serviço" icon={<Wrench className="w-4 h-4 text-[#007EA7]" />} iconBg="bg-[#007EA7]/10">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField label="Nome do Serviço">
-                      <input
-                        type="text"
-                        name="servicoNome"
-                        value={formData.servicoNome}
-                        onChange={handleChange}
-                        placeholder="Nome do serviço"
-                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
-                      />
-                    </FormField>
-
-                    <FormField label="Código">
-                      <input
-                        type="text"
-                        value={formData.servicoCodigo || "—"}
-                        readOnly
-                        className="w-full px-3 py-2.5 border border-gray-100 rounded-lg text-sm text-center bg-gray-50 text-gray-400 cursor-not-allowed"
-                      />
-                    </FormField>
-
-                    <FormField label="Preço Base">
-                      <input
-                        type="number"
-                        step="0.01"
-                        name="precoBase"
-                        value={formData.precoBase}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
-                      />
-                    </FormField>
-
-                    <FormField label="Valor Total">
-                      <input
-                        type="number"
-                        step="0.01"
-                        name="valorTotal"
-                        value={formData.valorTotal}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none"
-                      />
-                    </FormField>
-
-                    <FormField label="Forma de Pagamento">
-                      <select
-                        name="formaPagamento"
-                        value={formData.formaPagamento}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none bg-white cursor-pointer"
+                {/* AGENDAMENTO */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="bg-[#002A4B] px-5 py-4 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white tracking-wide uppercase">Agendamento</h3>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-white/70 hidden sm:block">
+                        {formatDate(pedido.dataCompra)} · {pedido.status}
+                      </span>
+                      <button
+                        onClick={() => toggleSection("agendamento")}
+                        className="h-8 w-8 flex items-center justify-center rounded-md border border-white/25 text-white/90 hover:bg-white/10 transition-colors cursor-pointer"
+                        aria-label={
+                          expandedSections.agendamento ? "Recolher agendamento" : "Expandir agendamento"
+                        }
                       >
-                        <option value="">A negociar</option>
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="Pix">Pix</option>
-                        <option value="PIX">PIX</option>
-                        <option value="Cartão de crédito">Cartão de crédito</option>
-                        <option value="Cartão de débito">Cartão de débito</option>
-                        <option value="Boleto">Boleto</option>
-                        <option value="Transferência">Transferência bancária</option>
-                      </select>
-                    </FormField>
-
-                    <FormField label="Etapa Atual">
-                      <select
-                        name="etapa"
-                        value={formData.etapa}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none bg-white cursor-pointer"
-                      >
-                        {ETAPAS_SERVICO.map((etapa) => (
-                          <option key={etapa.valor} value={etapa.valor}>{etapa.label}</option>
-                        ))}
-                      </select>
-                    </FormField>
-
-                    <div className="sm:col-span-2">
-                      <FormField label="Descrição">
-                        <textarea
-                          name="descricao"
-                          rows={3}
-                          value={formData.descricao}
-                          onChange={handleChange}
-                          placeholder="Descreva detalhes do serviço..."
-                          className="w-full px-3 py-2.5 border-2 border-[#818182] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#007EA7]/30 focus:border-[#007EA7] transition-all outline-none resize-none"
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform ${
+                            expandedSections.agendamento ? "rotate-180" : ""
+                          }`}
                         />
-                      </FormField>
+                      </button>
                     </div>
                   </div>
-
-                  {/* Schedule action buttons */}
-                  {(mostrarBotaoAgendarOrcamento || mostrarBotaoAgendarServico) && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex gap-3 flex-wrap">
-                      {mostrarBotaoAgendarOrcamento && (
-                        <button
-                          onClick={handleAgendarOrcamento}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
-                        >
-                          Agendar Orçamento
-                        </button>
-                      )}
-                      {mostrarBotaoAgendarServico && (
-                        <button
-                          onClick={handleAgendarServico}
-                          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm shadow-sm"
-                        >
-                          Agendar Serviço
-                        </button>
-                      )}
-                    </div>
+                  {expandedSections.agendamento && (
+                    <AgendamentoTabs agendamentos={agendamentos} />
                   )}
-                </SectionCard>
-
-                {/* 3. Appointments Card */}
-                <SectionCard
-                  title="Agendamentos"
-                  icon={<Calendar className="w-4 h-4 text-orange-600" />}
-                  iconBg="bg-orange-100"
-                  badge={agendamentos.length}
-                >
-                  {agendamentos.length === 0 ? (
-                    <div className="py-12 flex flex-col items-center gap-3 text-center">
-                      <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center">
-                        <Calendar className="w-7 h-7 text-gray-300" />
-                      </div>
-                      <p className="text-gray-500 font-medium text-sm">Nenhum agendamento</p>
-                      <p className="text-gray-400 text-xs">Os agendamentos aparecerão aqui quando criados</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {agendamentos.map((agendamento) => (
-                        <AppointmentCard
-                          key={agendamento.id}
-                          agendamento={agendamento}
-                          onEdit={handleEditarAgendamento}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </SectionCard>
-
-                {/* Save + Gerar Orçamento buttons */}
-                <div className="pb-2 flex items-center justify-center gap-3 flex-wrap">
-                  <button
-                    onClick={() => navigate(`/Pedidos/${id}/orcamento`)}
-                    className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl hover:border-[#007EA7] hover:text-[#007EA7] transition-all text-sm font-semibold shadow-sm"
-                  >
-                    <FileText className="w-4 h-4" />
-                    Gerar Orçamento
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center justify-center gap-2 px-5 py-3 bg-[#007EA7] text-white rounded-xl hover:bg-[#006891] active:scale-95 transition-all disabled:opacity-50 font-semibold text-sm shadow-md shadow-[#007EA7]/20"
-                  >
-                    {saving ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Salvar Alterações
-                      </>
-                    )}
-                  </button>
                 </div>
+
+              </div>
             </div>
 
+            {/* Espaço inferior para não ficar escondido atrás da barra fixa */}
+            <div className="h-6" />
           </div>
         </main>
-      </div>
 
-      {/* ── Modal: Confirmar exclusão de agendamentos ── */}
-      {mostrarModalExcluirAgendamentos && (
-        <div
-          className="fixed inset-0 z-[9999] grid place-items-center bg-black/40 px-4 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) setMostrarModalExcluirAgendamentos(false); }}
-        >
-          <div className="flex flex-col gap-4 w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6">
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-amber-500" />
-              </div>
-              <h2 className="text-xl font-bold text-slate-800">Excluir Todos os Agendamentos?</h2>
-              <div className="text-slate-600 space-y-2 w-full">
-                <p className="text-sm">
-                  Ao voltar para <span className="font-bold text-amber-600">PENDENTE</span>, todos os agendamentos serão{" "}
-                  <span className="font-bold text-red-600">excluídos permanentemente</span>.
-                </p>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left mt-3">
-                  <p className="text-xs font-bold text-amber-700 mb-2 uppercase tracking-wide">Agendamentos afetados</p>
-                  <ul className="space-y-1.5">
-                    {agendamentos.map((ag) => (
-                      <li key={ag.id} className="flex items-center gap-2 text-sm text-amber-800">
-                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full shrink-0" />
-                        <span className="font-mono font-medium">#AG{ag.id.toString().padStart(3, "0")}</span>
-                        <span className="text-amber-600">·</span>
-                        <span>{ag.tipoAgendamento === "ORCAMENTO" ? "Orçamento" : "Execução"}</span>
-                        <span className="text-amber-600">·</span>
-                        <span>{ag.dataAgendamento}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <p className="text-xs text-red-500 font-semibold mt-2">⚠️ Esta ação não pode ser desfeita!</p>
-              </div>
+        {/* ── Barra de ações FIXA na parte inferior ── */}
+        <div className="shrink-0 border-t-2 bg-white px-6 py-3 flex items-center justify-between gap-4 shadow-[0_-2px_12px_rgba(0,0,0,0.1)]" style={{ borderColor: temMudancaEtapa ? "#f59e0b" : "#e5e7eb" }}>
+          {/* Mensagem de erro ou mudança de etapa */}
+          {error ? (
+            <p className="text-sm text-red-600 font-medium truncate">{error}</p>
+          ) : temMudancaEtapa ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse" />
+              <p className="text-sm font-semibold text-amber-700">
+                ⚠ Etapa modificada: <span className="text-amber-900">{formData.etapaServico}</span> — Clique em "Salvar Alterações" para confirmar
+              </p>
             </div>
-            <div className="flex gap-3 mt-1">
-              <button
-                onClick={() => setMostrarModalExcluirAgendamentos(false)}
-                disabled={saving}
-                className="flex-1 h-11 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvarAlteracoes}
-                disabled={saving}
-                className="flex-1 h-11 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 text-sm shadow-md shadow-red-600/20"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Excluindo...
-                  </>
-                ) : "Sim, Excluir Todos"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <EditarAgendamentoModal
-        isOpen={mostrarEditarAgendamento}
-        onClose={() => { setMostrarEditarAgendamento(false); setAgendamentoSelecionado(null); }}
-        agendamento={agendamentoSelecionado}
-        onSuccess={handleAgendamentoEditadoSuccess}
-      />
-
-      <SuccessModal
-        open={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        title="Sucesso!"
-        message="Serviço atualizado com sucesso!"
-      />
-    </div>
-  );
-}
-
-/* ── Sub-components ── */
-
-function SectionCard({ title, icon, iconBg, badge, action, children }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-      <div className="flex items-center justify-center gap-3 px-5 py-4 border-b border-gray-100 relative">
-        <div className={`p-2 rounded-lg ${iconBg}`}>{icon}</div>
-        <h2 className="font-semibold text-gray-800 text-base text-center">{title}</h2>
-        {action && action}
-        {badge !== undefined && (
-          <span className="absolute right-5 px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-semibold rounded-full">{badge}</span>
-        )}
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
-
-function FormField({ label, children }) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function ClientInfoRow({ icon, label, value }) {
-  return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col items-center justify-center text-center gap-2">
-      <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center shrink-0">{icon}</div>
-      <div className="min-w-0 w-full">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
-        <p className="text-sm text-gray-800 font-medium break-all">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function AppointmentCard({ agendamento, onEdit }) {
-  const isOrcamento = agendamento.tipoAgendamento === "ORCAMENTO";
-  const statusNome = agendamento.statusAgendamento?.nome;
-  const statusStyle =
-    statusNome === "PENDENTE"     ? "bg-yellow-100 text-yellow-700 border-yellow-200" :
-    statusNome === "EM ANDAMENTO" ? "bg-blue-100 text-blue-700 border-blue-200" :
-    statusNome === "CONCLUÍDO"    ? "bg-green-100 text-green-700 border-green-200" :
-                                    "bg-gray-100 text-gray-600 border-gray-200";
-
-  return (
-    <div className="border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-[#007EA7]/30 hover:shadow-md transition-all bg-white">
-      <div className="flex items-center justify-center gap-2 flex-wrap mb-4 relative">
-        <div className="flex items-center gap-2 flex-wrap justify-center">
-          <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${isOrcamento ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-            {isOrcamento ? "Orçamento" : "Execução"}
-          </span>
-          <span className={`px-2.5 py-1 text-xs font-medium rounded-lg border ${statusStyle}`}>
-            {statusNome || "N/A"}
-          </span>
-          <span className="text-xs font-mono text-gray-400">#AG{agendamento.id.toString().padStart(3, "0")}</span>
-        </div>
-        <button
-          onClick={() => onEdit(agendamento)}
-          className="absolute right-0 p-1.5 text-gray-400 hover:text-[#007EA7] hover:bg-blue-50 rounded-lg transition-colors"
-          title="Editar agendamento"
-        >
-          <Edit className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4 mb-3 text-center">
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Data</span>
-          <div className="flex items-center gap-2 justify-center">
-            <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="text-sm font-semibold text-gray-700">{agendamento.dataAgendamento}</span>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Horário</span>
-          <div className="flex items-center gap-2 justify-center">
-            <Clock className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="text-sm font-semibold text-gray-700">
-              {agendamento.inicioAgendamento} — {agendamento.fimAgendamento}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {agendamento.endereco && (
-        <div className="flex flex-col items-center gap-1 border border-gray-100 rounded-xl p-3 mb-2 bg-gray-50 text-center">
-          <div className="flex items-center gap-1.5 justify-center">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <p className="text-xs font-medium text-gray-700">
-              {agendamento.endereco.rua}, {agendamento.endereco.numero || "S/N"}
+          ) : (
+            <p className="text-sm text-gray-400 hidden sm:block">
+              Pedido #{String(pedido.id).padStart(3, "0")} · {pedido.clienteNome}
             </p>
-          </div>
-          <p className="text-xs text-gray-500">
-            {agendamento.endereco.bairro}, {agendamento.endereco.cidade} — {agendamento.endereco.uf}
-          </p>
-        </div>
-      )}
+          )}
 
-      {agendamento.observacao && (
-        <div className="flex items-start gap-2 bg-amber-50 rounded-lg px-3 py-2">
-          <FileText className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-800 line-clamp-2">{agendamento.observacao}</p>
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              onClick={() => navigate(`/Agendamentos`, { state: { servicoId: id, clienteNome: pedido.clienteNome, servicoNome: servicoInfo?.nome || formData.servicoNome } })}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+              title="Agendar orçamento ou serviço"
+            >
+              <Calendar className="w-4 h-4" />
+              Agendar
+            </button>
+
+            <button
+              onClick={() => navigate(`/Pedidos/${id}/orcamento`)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+            >
+              <FileText className="w-4 h-4" />
+              Gerar Orçamento
+            </button>
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`flex items-center gap-2 px-6 py-2.5 text-white rounded-lg text-sm font-semibold shadow-md cursor-pointer transition-all ${
+                temMudancaEtapa
+                  ? "bg-amber-500 hover:bg-amber-600 animate-pulse ring-2 ring-amber-300"
+                  : "bg-[#007EA7] hover:bg-[#006891]"
+              } disabled:opacity-50`}
+            >
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {temMudancaEtapa ? "Salvar Etapa" : "Salvar Alterações"}
+                </>
+              )}
+            </button>
+          </div>
         </div>
-      )}
+      </div>
+
+      <FeedbackModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        type="success"
+        title="Sucesso!"
+        description="Pedido atualizado com sucesso!"
+        duration={2500}
+      />
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  badge,
+  action,
+  children,
+  collapsible = false,
+  isOpen      = true,
+  onToggle,
+}) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-[#002A4B] px-5 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <h3 className="text-sm font-bold text-white tracking-wide uppercase">{title}</h3>
+          {badge && (
+            <span className="bg-white/25 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+              {badge}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {action && action}
+          {collapsible && (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="h-8 w-8 flex items-center justify-center rounded-md border border-white/25 text-white/90 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+          )}
+        </div>
+      </div>
+      {(!collapsible || isOpen) && children}
+    </div>
+  );
+}
+
+function FieldGroup({ label, className = "", children }) {
+  return (
+    <div className={className}>
+      <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { useState, useEffect, Fragment } from "react"; // <-- Importado o Fragme
 import PropTypes from "prop-types"; // <-- Importado o PropTypes
 import {
   Wrench,
-  ChevronDown,
   Plus,
   AlertCircle,
   MapPin,
@@ -11,6 +10,8 @@ import {
 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import axios from "axios";
+import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import {
   cpfMask,
   phoneMask,
@@ -497,89 +498,59 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               {formData.tipoCliente === "existente" ? (
-                <div className="flex flex-col gap-1">
-                  <label className="block text-md font-semibold text-gray-900 mb-2 text-left">
-                    Selecionar Cliente
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="clienteId"
-                      className="w-full border border-gray-300 rounded-md px-4 py-3 text-left appearance-none shadow-sm cursor-pointer"
-                      value={formData.clienteId}
-                      onChange={handleClienteExistenteChange}
-                    >
-                      <option value="">Selecione um cliente...</option>
-                      {clientesExistentes.map((cliente) => (
-                        <option key={cliente.id} value={String(cliente.id)}>
-                          {cliente.nome}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
+                <UniversalInput
+                  as="select"
+                  label="Selecionar Cliente"
+                  name="clienteId"
+                  value={formData.clienteId}
+                  onChange={handleClienteExistenteChange}
+                  placeholder="Selecione um cliente..."
+                  options={clientesExistentes.map((cliente) => ({
+                    value: String(cliente.id),
+                    label: cliente.nome,
+                  }))}
+                />
               ) : (
                 <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                      Nome Completo{" "}
-                      <span className="text-red-500 text-md">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="clienteNome"
-                      placeholder="Digite o nome do cliente"
-                      className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                      value={formData.clienteNome}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <UniversalInput
+                    label="Nome Completo"
+                    name="clienteNome"
+                    placeholder="Digite o nome do cliente"
+                    value={formData.clienteNome}
+                    onChange={handleChange}
+                    required
+                  />
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                        CPF <span className="text-red-500 text-md">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="clienteCpf"
-                        placeholder="000.000.000-00"
-                        maxLength={14}
-                        className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                        value={formData.clienteCpf}
-                        onChange={handleChange}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                        Telefone <span className="text-red-500 text-md">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="clienteTelefone"
-                        placeholder="(00) 00000-0000"
-                        maxLength={15}
-                        className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                        value={formData.clienteTelefone}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                      E-mail
-                    </label>
-                    <input
-                      type="email"
-                      name="clienteEmail"
-                      placeholder="cliente@email.com"
-                      className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                      value={formData.clienteEmail}
+                    <UniversalInput
+                      label="CPF"
+                      name="clienteCpf"
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      value={formData.clienteCpf}
                       onChange={handleChange}
+                      required
+                    />
+
+                    <UniversalInput
+                      label="Telefone"
+                      name="clienteTelefone"
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                      value={formData.clienteTelefone}
+                      onChange={handleChange}
+                      required
                     />
                   </div>
+
+                  <UniversalInput
+                    label="E-mail"
+                    type="email"
+                    name="clienteEmail"
+                    placeholder="cliente@email.com"
+                    value={formData.clienteEmail}
+                    onChange={handleChange}
+                  />
                 </div>
               )}
             </div>
@@ -597,146 +568,111 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               <div className="flex flex-row gap-12 items-end">
-                <div className="flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Número <span className="text-red-500 text-md">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="numero"
-                    placeholder="123"
-                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                    value={formData.numero}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    CEP <span className="text-red-500 text-md">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="cep"
-                    placeholder="00000-000"
-                    maxLength={9}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
-                    value={formData.cep}
-                    onChange={handleChange}
-                  />
-                </div>
-                <button
+                <UniversalInput
+                  label="Número"
+                  name="numero"
+                  placeholder="123"
+                  value={formData.numero}
+                  onChange={handleChange}
+                  required
+                />
+                <UniversalInput
+                  label="CEP"
+                  name="cep"
+                  placeholder="00000-000"
+                  maxLength={9}
+                  value={formData.cep}
+                  onChange={handleChange}
+                  required
+                />
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={handleBuscarCep}
                   disabled={loadingCep}
-                  className="w-40 h-12 bg-[#007EA7] text-white rounded-md hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-md cursor-pointer"
                 >
                   {loadingCep ? "Buscando..." : "Buscar"}
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-3 flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Rua <span className="text-red-500 text-md">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="rua"
-                    placeholder="Nome da rua"
-                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                    value={formData.rua}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Complemento
-                </label>
-                <input
-                  type="text"
-                  name="complemento"
-                  placeholder="Apto, bloco, etc."
-                  className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                  value={formData.complemento}
+                <UniversalInput
+                  label="Rua"
+                  name="rua"
+                  placeholder="Nome da rua"
+                  value={formData.rua}
                   onChange={handleChange}
+                  required
+                  wrapperClassName="col-span-3"
                 />
               </div>
 
+              <UniversalInput
+                label="Complemento"
+                name="complemento"
+                placeholder="Apto, bloco, etc."
+                value={formData.complemento}
+                onChange={handleChange}
+              />
+
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Bairro <span className="text-red-500 text-md">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="bairro"
-                    placeholder="Nome do bairro"
-                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                    value={formData.bairro}
-                    onChange={handleChange}
-                  />
-                </div>
+                <UniversalInput
+                  label="Bairro"
+                  name="bairro"
+                  placeholder="Nome do bairro"
+                  value={formData.bairro}
+                  onChange={handleChange}
+                  required
+                />
 
-                <div className="flex flex-col gap-1">
-                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                    Cidade <span className="text-red-500 text-md">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="cidade"
-                    placeholder="Nome da cidade"
-                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                    value={formData.cidade}
-                    onChange={handleChange}
-                  />
-                </div>
+                <UniversalInput
+                  label="Cidade"
+                  name="cidade"
+                  placeholder="Nome da cidade"
+                  value={formData.cidade}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  UF <span className="text-red-500 text-md">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="uf"
-                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left appearance-none"
-                    value={formData.uf}
-                    onChange={handleChange}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="AC">AC</option>
-                    <option value="AL">AL</option>
-                    <option value="AP">AP</option>
-                    <option value="AM">AM</option>
-                    <option value="BA">BA</option>
-                    <option value="CE">CE</option>
-                    <option value="DF">DF</option>
-                    <option value="ES">ES</option>
-                    <option value="GO">GO</option>
-                    <option value="MA">MA</option>
-                    <option value="MT">MT</option>
-                    <option value="MS">MS</option>
-                    <option value="MG">MG</option>
-                    <option value="PA">PA</option>
-                    <option value="PB">PB</option>
-                    <option value="PR">PR</option>
-                    <option value="PE">PE</option>
-                    <option value="PI">PI</option>
-                    <option value="RJ">RJ</option>
-                    <option value="RN">RN</option>
-                    <option value="RS">RS</option>
-                    <option value="RO">RO</option>
-                    <option value="RR">RR</option>
-                    <option value="SC">SC</option>
-                    <option value="SP">SP</option>
-                    <option value="SE">SE</option>
-                    <option value="TO">TO</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
+              <UniversalInput
+                as="select"
+                label="UF"
+                name="uf"
+                value={formData.uf}
+                onChange={handleChange}
+                placeholder="Selecione..."
+                required
+                options={[
+                  { value: "AC", label: "AC" },
+                  { value: "AL", label: "AL" },
+                  { value: "AP", label: "AP" },
+                  { value: "AM", label: "AM" },
+                  { value: "BA", label: "BA" },
+                  { value: "CE", label: "CE" },
+                  { value: "DF", label: "DF" },
+                  { value: "ES", label: "ES" },
+                  { value: "GO", label: "GO" },
+                  { value: "MA", label: "MA" },
+                  { value: "MT", label: "MT" },
+                  { value: "MS", label: "MS" },
+                  { value: "MG", label: "MG" },
+                  { value: "PA", label: "PA" },
+                  { value: "PB", label: "PB" },
+                  { value: "PR", label: "PR" },
+                  { value: "PE", label: "PE" },
+                  { value: "PI", label: "PI" },
+                  { value: "RJ", label: "RJ" },
+                  { value: "RN", label: "RN" },
+                  { value: "RS", label: "RS" },
+                  { value: "RO", label: "RO" },
+                  { value: "RR", label: "RR" },
+                  { value: "SC", label: "SC" },
+                  { value: "SP", label: "SP" },
+                  { value: "SE", label: "SE" },
+                  { value: "TO", label: "TO" },
+                ]}
+              />
             </div>
           )}
 
@@ -751,33 +687,24 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Data de Lançamento no sistema (Hoje)
-                </label>
-                <input
-                  type="date"
-                  name="data"
-                  className="w-full border border-gray-300 rounded-md px-4 py-3 text-left bg-gray-100"
-                  value={formData.data}
-                  readOnly
-                />
-              </div>
+              <UniversalInput
+                label="Data de Lançamento no sistema (Hoje)"
+                type="date"
+                name="data"
+                value={formData.data}
+                readOnly
+              />
 
-              <div className="flex flex-col gap-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                  Descrição do Serviço{" "}
-                  <span className="text-red-500 text-md">*</span>
-                </label>
-                <textarea
-                  name="descricao"
-                  placeholder="Descreva detalhadamente o serviço a ser realizado..."
-                  rows={6}
-                  className="border border-gray-300 rounded-md px-4 py-3 resize-none text-left"
-                  value={formData.descricao}
-                  onChange={handleChange}
-                />
-              </div>
+              <UniversalInput
+                as="textarea"
+                label="Descrição do Serviço"
+                name="descricao"
+                placeholder="Descreva detalhadamente o serviço a ser realizado..."
+                rows={6}
+                value={formData.descricao}
+                onChange={handleChange}
+                required
+              />
 
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <div className="flex items-center justify-center gap-3">
@@ -896,42 +823,42 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <div className="px-8 py-3 border-t bg-gray-50 flex justify-between">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
-          </button>
+          </Button>
 
           <div className="flex gap-3">
             {currentStep > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setCurrentStep(currentStep - 1)}
                 disabled={loading}
-                className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Voltar
-              </button>
+              </Button>
             )}
 
             {currentStep < steps.length - 1 ? (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleNext}
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#007EA7] font-semibold text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Próxima Etapa
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleSave}
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#007EA7] font-semibold text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? (
                   <>
@@ -941,7 +868,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 ) : (
                   <>Salvar Serviço</>
                 )}
-              </button>
+              </Button>
             )}
           </div>
         </div>

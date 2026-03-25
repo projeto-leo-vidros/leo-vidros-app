@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
+import Button from "../../../../components/ui/Button/Button.component";
 
 const InativarProdutoModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
@@ -30,19 +31,21 @@ const InativarProdutoModal = ({ isOpen, onClose, onConfirm }) => {
         </p>
         <br />
         <div className="flex items-center justify-between mt-4 gap-3">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="flex-1 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+            fullWidth
           >
             Cancelar
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="danger"
             onClick={onConfirm}
-            className="flex-1 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+            fullWidth
           >
             Inativar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

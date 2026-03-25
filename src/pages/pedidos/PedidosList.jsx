@@ -2,15 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useModal } from '../../hooks/useModal';
 import { usePagination } from '../../hooks/usePagination';
 import { useNavigate } from 'react-router-dom';
-import { FaBox, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
-import { BiSolidPencil } from "react-icons/bi";
-import { FileText } from 'lucide-react';
+import { Package, Trash2, AlertTriangle, FileText, Pencil } from 'lucide-react';
 import SkeletonLoader from '../../components/feedback/Skeleton/SkeletonLoader';
 import NovoPedidoProdutoModal from './components/NovoPedidoProdutoModal';
 import EditarPedidoModal from './components/EditarPedidoModal';
 import PedidosService from '../../api/services/pedidosService';
 import { usePedidosProduto, useDeletarPedido } from '../../hooks/queries/usePedidos';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import Button from '../../components/ui/Button/Button.component';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -118,12 +117,9 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                     <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg border border-red-200">
                         <p className="font-medium">Erro ao carregar pedidos</p>
                         <p className="text-sm mt-1">{queryError?.message}</p>
-                        <button 
-                            onClick={() => refetch()}
-                            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                        >
+                        <Button variant="danger" size="sm" onClick={() => refetch()}>
                             Tentar Novamente
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -141,7 +137,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                         <header className="flex items-center justify-between pb-2 border-b border-slate-100">
                             <div className="flex items-center gap-3">
                                 <div className={`p-2 rounded-md ${item.status === 'Finalizado' ? 'text-gray-400 bg-gray-200' : 'text-slate-400 bg-slate-100'}`}>
-                                    <FaBox />
+                                    <Package size={16} />
                                 </div>
                                 <div>
                                     <h3 className={`font-semibold text-sm md:text-base ${item.status === 'Finalizado' ? 'text-gray-600' : 'text-slate-800'}`}>
@@ -155,13 +151,10 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                                 <StatusBadge status={item.status} />
                                 <div className="hidden md:block h-4 w-px bg-slate-200 mx-1"></div>
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-blue-600 transition-colors" title="Editar" onClick={() => abrirEditar(item)}>
-                                    <BiSolidPencil size={18} />
-                                </button>
-                                <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Novo Orçamento" onClick={() => navigate(`/Pedidos/${item.id}/orcamento`)}>
-                                    <FileText size={17} />
+                                    <Pencil size={18} />
                                 </button>
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
-                                    <FaTrash size={16} />
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         </header>
@@ -217,12 +210,12 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                         Mostrando <span className="font-medium text-slate-800">{start + 1}</span> a <span className="font-medium text-slate-800">{Math.min(end, listaFiltrada.length)}</span> de {listaFiltrada.length}
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={anterior} disabled={page === 1} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <Button variant="ghost" size="sm" onClick={anterior} disabled={page === 1}>
                             Anterior
-                        </button>
-                        <button onClick={proxima} disabled={page === totalPages} className="px-4 py-2 text-sm font-medium text-white bg-[#007EA7] rounded-md cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={proxima} disabled={page === totalPages}>
                             Próximo
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -232,7 +225,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                     <div className="flex flex-col gap-4 w-full max-w-md bg-white rounded-xl shadow-2xl p-6 animate-scaleIn">
                         <div className="flex flex-col items-center text-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 text-xl">
-                                <FaExclamationTriangle />
+                                <AlertTriangle size={20} />
                             </div>
                             <h2 className="text-xl font-bold text-slate-800">Excluir Pedido?</h2>
                             <p className="text-slate-600">
@@ -240,8 +233,8 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">
-                            <button onClick={fecharTodos} className="flex-1 h-10 rounded-md border border-slate-300 bg-white text-slate-700 font-medium cursor-pointer hover:bg-slate-50">Cancelar</button>
-                            <button onClick={confirmarExclusao} className="flex-1 h-10 rounded-md bg-rose-600 text-white font-medium cursor-pointer hover:bg-rose-700 shadow-sm">Sim, Excluir</button>
+                            <Button variant="ghost" onClick={fecharTodos} fullWidth>Cancelar</Button>
+                            <Button variant="danger" onClick={confirmarExclusao} fullWidth>Sim, Excluir</Button>
                         </div>
                     </div>
                 </div>

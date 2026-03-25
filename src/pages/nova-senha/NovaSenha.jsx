@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Lock, Check, X, Eye, EyeOff } from "lucide-react";
-import {
-  TextField,
-  Button,
-  Paper,
-  IconButton,
-  InputAdornment,
-} from "@mui/material";
+import { Lock, Check, X } from "lucide-react";
+import { Paper } from "@mui/material";
+import UniversalInput from "../../components/ui/Input/UniversalInput";
+import Button from "../../components/ui/Button/Button.component";
 import Api from "../../api/client/Api";
 
 const PasswordRequirement = ({ text, isValid }) => (
@@ -50,7 +46,6 @@ export default function NovaSenha() {
 
   // --- Dados e Cores ---
   const primaryDarkColor = "#003d6b";
-  const inputBgColor = "#f5f8fa";
 
   // --- Lógica de Validação ---
   const is8Chars = novaSenha.length >= 8;
@@ -63,7 +58,6 @@ export default function NovaSenha() {
   const handleToggleShowPassword = () => {
     setShowPassword((prev) => !prev);
   };
-
   // --- Handler de Submissão ---
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -135,105 +129,31 @@ export default function NovaSenha() {
 
           <form onSubmit={handleSubmit} className="w-full max-w-sm">
             <div className="mb-8 text-left">
-              <label
-                htmlFor="novaSenha"
-                className="block text-gray-700 font-medium mb-3 text-base"
-              >
-                Nova senha:
-              </label>
-              <TextField
-                fullWidth
-                type={showPassword ? "text" : "password"}
+              <UniversalInput
+                label="Nova senha:"
+                type="password"
                 id="novaSenha"
                 placeholder="********"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
                 required
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px",
-                    backgroundColor: inputBgColor,
-                    paddingLeft: "12px",
-                    "& fieldset": { border: "none" },
-                    "&.Mui-focused": { boxShadow: "0 0 0 2px #007EA740" },
-                  },
-
-                  marginBottom: "20px",
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <Lock className="w-6 h-6 mr-3 text-gray-500" />
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        // ✅ Ambos chamam a mesma função sem parâmetro
-                        onClick={handleToggleShowPassword}
-                        edge="end"
-                      >
-                        {/* ✅ Ambos checam o mesmo estado 'showPassword' */}
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5 text-gray-500" />
-                        ) : (
-                          <Eye className="w-5 h-5 text-gray-500" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+                startIcon={<Lock className="w-5 h-5" />}
+                className="bg-[#f5f8fa] border-none"
               />
             </div>
 
             <div className="mb-10 text-left">
-              <label
-                htmlFor="confirmaSenha"
-                className="block text-gray-700 font-medium mb-3 text-base"
-              >
-                Digite a senha novamente:
-              </label>
-              <TextField
-                fullWidth
-                type={showPassword ? "text" : "password"}
+              <UniversalInput
+                label="Digite a senha novamente:"
+                type="password"
                 id="confirmaSenha"
                 placeholder="********"
                 value={confirmaSenha}
                 onChange={(e) => setConfirmaSenha(e.target.value)}
                 required
-                size="medium"
-                error={confirmaSenha.length > 0 && !passwordsMatch}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px",
-                    backgroundColor: inputBgColor,
-                    paddingLeft: "12px",
-                    "& fieldset": { border: "none" },
-                    "&.Mui-focused": { boxShadow: "0 0 0 2px #007EA740" },
-                  },
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <Lock className="w-6 h-6 mr-3 text-gray-500" />
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        // ✅ Ambos chamam a mesma função sem parâmetro
-                        onClick={handleToggleShowPassword}
-                        edge="end"
-                      >
-                        {/* ✅ Ambos checam o mesmo estado 'showPassword' */}
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5 text-gray-500" />
-                        ) : (
-                          <Eye className="w-5 h-5 text-gray-500" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+                error={confirmaSenha.length > 0 && !passwordsMatch ? "As senhas não coincidem" : null}
+                startIcon={<Lock className="w-5 h-5" />}
+                className="bg-[#f5f8fa] border-none"
               />
             </div>
 
@@ -270,24 +190,13 @@ export default function NovaSenha() {
 
             <Button
               type="submit"
-              variant="contained"
-              fullWidth
+              variant="primary"
+              size="lg"
               disabled={!isFormValid || isLoading}
-              sx={{
+              className="w-full mt-4 py-4 text-lg font-bold rounded-lg"
+              style={{
                 backgroundColor: primaryDarkColor,
-                "&:hover": { backgroundColor: "#002a4b" },
-                "&.Mui-disabled": {
-                  backgroundColor: "#002a4b",
-                  color: "#ffffff",
-                },
-                padding: "16px 0",
-                fontSize: "1.2rem",
-                fontWeight: "bold",
-                borderRadius: "8px",
-                transition: "all 0.3s",
-                fontFamily: "Inter",
               }}
-              className="mt-4"
             >
               {isLoading ? "Definindo Senha..." : "Definir senha"}
             </Button>

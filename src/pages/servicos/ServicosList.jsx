@@ -3,14 +3,13 @@ import PropTypes from "prop-types"; // Importação para validação de props
 import { useModal } from "../../hooks/useModal";
 import { usePagination } from "../../hooks/usePagination";
 import { useNavigate } from "react-router-dom";
-import { FaWrench, FaTrash, FaExclamationTriangle } from "react-icons/fa";
-import { BiSolidPencil } from "react-icons/bi";
-import { FileText } from "lucide-react";
+import { Wrench, Trash2, AlertTriangle, FileText, Pencil } from "lucide-react";
 import SkeletonLoader from "../../components/feedback/Skeleton/SkeletonLoader";
 import NovoPedidoServicoModal from "../pedidos/components/NovoPedidoServicoModal";
 import EditarServicoModal from "../pedidos/components/EditarServicoModal";
 import PedidosService from "../../api/services/pedidosService";
 import { formatDate } from "../../utils/formatters";
+import Button from "../../components/ui/Button/Button.component";
 
 function StatusPill({ status }) {
   const styles = {
@@ -218,12 +217,9 @@ export default function ServicosList({
           <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg border border-red-200">
             <p className="font-medium">Erro ao carregar serviços</p>
             <p className="text-sm mt-1">{error}</p>
-            <button
-              onClick={fetchData}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-            >
+            <Button variant="danger" size="sm" onClick={fetchData}>
               Tentar Novamente
-            </button>
+            </Button>
           </div>
         )}
 
@@ -248,7 +244,7 @@ export default function ServicosList({
                   <div
                     className={`p-2 rounded-md ${item.status === "Finalizado" ? "text-gray-400 bg-gray-200" : "text-slate-400 bg-slate-100"}`}
                   >
-                    <FaWrench />
+                    <Wrench size={16} />
                   </div>
                   <div>
                     <h3
@@ -273,7 +269,7 @@ export default function ServicosList({
                     title="Editar"
                     onClick={() => abrirEditar(item)}
                   >
-                    <BiSolidPencil size={18} />
+                    <Pencil size={18} />
                   </button>
                   <button
                     type="button"
@@ -289,7 +285,7 @@ export default function ServicosList({
                     title="Excluir"
                     onClick={() => abrirConfirmarExclusao(item.id)}
                   >
-                    <FaTrash size={16} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </header>
@@ -403,7 +399,7 @@ export default function ServicosList({
           <div className="flex flex-col gap-4 w-full max-w-md bg-white rounded-xl shadow-2xl p-6 animate-scaleIn">
             <div className="flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 text-xl">
-                <FaExclamationTriangle />
+                <AlertTriangle size={20} />
               </div>
               <h2 className="text-xl font-bold text-slate-800">
                 Excluir Serviço?
@@ -415,18 +411,12 @@ export default function ServicosList({
               </p>
             </div>
             <div className="mt-6 flex gap-3">
-              <button
-                onClick={fecharTodos}
-                className="flex-1 h-10 rounded-md border border-slate-300 bg-white text-slate-700 font-medium cursor-pointer hover:bg-slate-50"
-              >
+              <Button variant="ghost" onClick={fecharTodos} fullWidth>
                 Cancelar
-              </button>
-              <button
-                onClick={confirmarExclusao}
-                className="flex-1 h-10 rounded-md bg-rose-600 text-white font-medium cursor-pointer hover:bg-rose-700 shadow-sm"
-              >
+              </Button>
+              <Button variant="danger" onClick={confirmarExclusao} fullWidth>
                 Sim, Excluir
-              </button>
+              </Button>
             </div>
           </div>
         </div>

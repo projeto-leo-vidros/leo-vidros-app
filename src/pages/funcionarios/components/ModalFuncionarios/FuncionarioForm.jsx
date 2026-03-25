@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
-import {
-  User,
-  Phone,
-  Briefcase,
-  Calendar,
-  FileText,
-  X,
-  Save,
-} from "lucide-react";
+import { User, X, Save } from "lucide-react";
 import { IMaskInput } from "react-imask";
+import Button from "../../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../../components/ui/Input/UniversalInput";
 
 const getFuncionarioInicial = () => ({
   nome: "",
@@ -116,27 +110,17 @@ export default function FuncionarioForm({
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-start text-sm font-medium text-gray-700">
-                    Nome: <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    name="nome"
-                    placeholder="Ex: João Silva"
-                    value={novoFuncionario.nome}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
-                  />
-                </div>
+                <UniversalInput
+                  label="Nome"
+                  required
+                  name="nome"
+                  placeholder="Ex: João Silva"
+                  value={novoFuncionario.nome}
+                  onChange={handleChange}
+                />
 
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-start text-sm font-medium text-gray-700">
-                    Telefone: <span className="text-red-500">*</span>
-                  </label>
+                <UniversalInput label="Telefone" required>
                   <IMaskInput
-                    required
                     mask="(00) 00000-0000"
                     name="telefone"
                     placeholder="Ex: (11) 91234-5678"
@@ -144,55 +128,40 @@ export default function FuncionarioForm({
                     onAccept={(value) =>
                       handleChange({ target: { name: "telefone", value } })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                   />
-                </div>
+                </UniversalInput>
 
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-start text-sm font-medium text-gray-700">
-                    Função: <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    name="funcao"
-                    placeholder="Ex: Cozinheiro"
-                    value={novoFuncionario.funcao}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
-                  />
-                </div>
+                <UniversalInput
+                  label="Função"
+                  required
+                  name="funcao"
+                  placeholder="Ex: Cozinheiro"
+                  value={novoFuncionario.funcao}
+                  onChange={handleChange}
+                />
 
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-start text-sm font-medium text-gray-700">
-                    Tipo de Contrato: <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    required
-                    name="contrato"
-                    value={novoFuncionario.contrato}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] cursor-pointer"
-                  >
-                    <option value="Registrado">Registrado</option>
-                    <option value="Fixo">Fixo</option>
-                    <option value="Temporário">Temporário</option>
-                  </select>
-                </div>
+                <UniversalInput
+                  as="select"
+                  label="Tipo de Contrato"
+                  required
+                  name="contrato"
+                  value={novoFuncionario.contrato}
+                  onChange={handleChange}
+                  options={[
+                    { value: "Registrado", label: "Registrado" },
+                    { value: "Fixo", label: "Fixo" },
+                    { value: "Temporário", label: "Temporário" },
+                  ]}
+                />
 
-                <div className="flex flex-col gap-2 col-span-2">
-                  <label className="flex items-start text-sm font-medium text-gray-700">
-                    Escala:
-                  </label>
-                  <input
-                    type="text"
-                    name="escala"
-                    placeholder="Ex: 6x1 - 08h00 às 17h00"
-                    value={novoFuncionario.escala}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
-                  />
-                </div>
+                <UniversalInput
+                  label="Escala"
+                  name="escala"
+                  placeholder="Ex: 6x1 - 08h00 às 17h00"
+                  value={novoFuncionario.escala}
+                  onChange={handleChange}
+                  wrapperClassName="col-span-2"
+                />
               </div>
             </div>
 
@@ -203,39 +172,28 @@ export default function FuncionarioForm({
               </h3>
 
               <div className="flex items-center gap-3">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={novoFuncionario.status}
-                    onChange={handleSwitchChange}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007EA7]"></div>
-                </label>
-                <span className="text-sm font-medium text-gray-700">
-                  Funcionário ativo (Status:{" "}
-                  {novoFuncionario.status ? "Ativo" : "Inativo"})
-                </span>
+                <UniversalInput
+                  as="toggle"
+                  label={`Funcionário ativo (Status: ${novoFuncionario.status ? "Ativo" : "Inativo"})`}
+                  checked={novoFuncionario.status}
+                  onChange={handleSwitchChange}
+                />
               </div>
             </div>
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-            >
+            <Button variant="ghost" onClick={handleClose}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
+              variant="primary"
+              startIcon={<Save className="w-4 h-4" />}
             >
-              <Save className="w-4 h-4" />
               {modoEdicao ? "Salvar Alterações" : "Criar Funcionário"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -11,6 +11,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import agendamentosService from "../../../api/services/agendamentosService";
+import Button from "../../../components/ui/Button/Button.component";
+import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 // Status disponíveis para agendamentos
 const STATUS_AGENDAMENTO = [
@@ -273,21 +275,15 @@ const EditarAgendamentoModal = ({
                 {!isOrcamento && (
                   <>
                     <div className="flex flex-col gap-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Status do Agendamento *
-                      </label>
-                      <select
+                      <UniversalInput
+                        as="select"
+                        label="Status do Agendamento"
+                        required
                         name="statusId"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        options={STATUS_AGENDAMENTO.map((s) => ({ value: s.id, label: s.label }))}
                         value={formData.statusId}
                         onChange={handleChange}
-                      >
-                        {STATUS_AGENDAMENTO.map((status) => (
-                          <option key={status.id} value={status.id}>
-                            {status.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
                       <p className="text-xs text-gray-500">
                         Status atual:{" "}
                         <span
@@ -310,69 +306,49 @@ const EditarAgendamentoModal = ({
                 )}
 
                 {/* Data do Agendamento */}
-                <div className="flex flex-col gap-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Data do Agendamento *
-                  </label>
-                  <input
-                    type="date"
-                    name="dataAgendamento"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={formData.dataAgendamento}
-                    onChange={handleChange}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
+                <UniversalInput
+                  label="Data do Agendamento"
+                  required
+                  type="date"
+                  name="dataAgendamento"
+                  value={formData.dataAgendamento}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split("T")[0]}
+                />
                 <br />
                 {/* Horário de Início */}
-                <div className="flex flex-col gap-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Horário de Início *
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="time"
-                      name="inicioAgendamento"
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={formData.inicioAgendamento}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                <UniversalInput
+                  label="Horário de Início"
+                  required
+                  type="time"
+                  name="inicioAgendamento"
+                  startIcon={<Clock className="w-5 h-5" />}
+                  value={formData.inicioAgendamento}
+                  onChange={handleChange}
+                />
                 <br />
                 {/* Horário de Fim */}
-                <div className="flex flex-col gap-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Horário de Término *
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="time"
-                      name="fimAgendamento"
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={formData.fimAgendamento}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                <UniversalInput
+                  label="Horário de Término"
+                  required
+                  type="time"
+                  name="fimAgendamento"
+                  startIcon={<Clock className="w-5 h-5" />}
+                  value={formData.fimAgendamento}
+                  onChange={handleChange}
+                />
                 <br />
                 {/* Observações - Desabilitado para Orçamentos */}
                 {!isOrcamento && (
-                  <div className="flex flex-col gap-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Observações
-                    </label>
-                    <textarea
-                      name="observacao"
-                      rows={4}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Adicione informações adicionais sobre o agendamento..."
-                      value={formData.observacao}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <UniversalInput
+                    as="textarea"
+                    label="Observações"
+                    name="observacao"
+                    rows={4}
+                    placeholder="Adicione informações adicionais sobre o agendamento..."
+                    value={formData.observacao}
+                    onChange={handleChange}
+                  />
                 )}
 
                 {/* Visualização somente leitura para Orçamentos */}
@@ -490,30 +466,31 @@ const EditarAgendamentoModal = ({
 
           {/* Footer */}
           <div className="border-t bg-gray-50 px-6 py-4 flex justify-between items-center">
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading}
-              className="px-4 py-2.5 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
+              startIcon={<Trash2 className="w-4 h-4" />}
             >
-              <Trash2 className="w-4 h-4" />
               Cancelar Agendamento
-            </button>
+            </Button>
 
             <div className="flex gap-3">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handleCancel}
                 disabled={loading}
-                className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
               >
                 Fechar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleSave}
                 disabled={loading}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold disabled:opacity-50"
+                startIcon={!loading ? <Save className="w-4 h-4" /> : undefined}
               >
                 {loading ? (
                   <>
@@ -521,12 +498,9 @@ const EditarAgendamentoModal = ({
                     Salvando...
                   </>
                 ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Salvar Alterações
-                  </>
+                  "Salvar Alterações"
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -559,20 +533,22 @@ const EditarAgendamentoModal = ({
             </p>
 
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
+                fullWidth
               >
                 Voltar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50"
+                fullWidth
               >
                 {loading ? "Cancelando..." : "Sim, Cancelar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

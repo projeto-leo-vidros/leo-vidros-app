@@ -46,6 +46,7 @@ import {
   ErrorMessage,
 } from "./EventModalComponents";
 import EditarAgendamentoSimples from "../../pedidos/components/EditarAgendamentoSimples";
+import Button from "../../../components/ui/Button/Button.component";
 
 // --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ---
 const DeleteConfirmationModal = ({
@@ -88,27 +89,27 @@ const DeleteConfirmationModal = ({
                 permanentemente.
               </p>
               <div className="flex justify-end gap-3">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                 >
                   Voltar
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={onConfirm}
                   disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 flex items-center gap-2 disabled:opacity-70 transition-colors"
-                >
-                  {isDeleting ? (
-                    <>
+                  startIcon={
+                    isDeleting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Cancelando...
-                    </>
-                  ) : (
-                    "Sim, cancelar"
-                  )}
-                </button>
+                    ) : null
+                  }
+                >
+                  {isDeleting ? "Cancelando..." : "Sim, cancelar"}
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -891,14 +892,13 @@ const CalendarView = ({
           </div>
         </div>
         <div className="flex items-center gap-7 bg-white p-1">
-          <button
+          <Button
+            variant="primary"
             onClick={handleCreateClick}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold text-white transition-colors bg-[#007EA7] rounded-md shadow-sm cursor-pointer hover:bg-[#046b8d] shrink-0 whitespace-nowrap"
-            title="Nova Tarefa"
+            startIcon={<Plus size={18} className="shrink-0" />}
           >
-            <Plus size={18} className="shrink-0" />
             <span className="hidden md:inline">Nova Tarefa</span>
-          </button>
+          </Button>
           <div className="w-px h-6 bg-gray-300 mx-2 sm:mx-4"></div>
 
           <div className="flex items-center gap-0 bg-white p-1 rounded-lg border border-gray-300 shadow-sm">
