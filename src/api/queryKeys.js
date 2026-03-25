@@ -50,4 +50,11 @@ export const queryKeys = {
       fim,
     ],
   },
+
+  orcamentos: {
+    all: () => ["orcamentos"],
+    list: () => ["orcamentos", "lista"],
+    detail: (id) => ["orcamentos", "detalhe", id],
+    porPedido: (pedidoId) => ["orcamentos", "pedido", pedidoId],
+  },
 };

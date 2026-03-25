@@ -1,7 +1,11 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PropTypes from "prop-types"; // Adicionado para manter o padrão
+import PropTypes from "prop-types";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../api/queryKeys";
 import Api from "../../api/client/Api";
+import OrcamentosService from "../../api/services/orcamentosService";
+import { useOrcamentoProgress } from "../../context/OrcamentoProgressContext.jsx";
 import {
   Trash2,
   Plus,
@@ -10,13 +14,14 @@ import {
   AlertCircle,
   CheckCircle,
   Download,
+  Loader2,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
+import { OrcamentoStatusOptions } from "../../types/enums";
 
-// Gera o número do orçamento no formato ORC-ANO-P{id}
 const gerarNumeroOrcamento = (pedidoId) => {
   const ano = new Date().getFullYear();
   if (!pedidoId) return "";
@@ -57,60 +62,30 @@ const criarItemVazio = (ordem = 1) => ({
   ordem,
 });
 
-const STATUS_OPTIONS = [
-  { value: "RASCUNHO", label: "Rascunho", color: "#64748b" },
-  { value: "ENVIADO", label: "Enviado", color: "#3b82f6" },
-  { value: "EM_ANALISE", label: "Em Análise", color: "#f59e0b" },
-  { value: "APROVADO", label: "Aprovado", color: "#10b981" },
-  { value: "RECUSADO", label: "Recusado", color: "#ef4444" },
-  { value: "EXPIRADO", label: "Expirado", color: "#6b7280" },
-];
-
 const tw = {
   card: "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden",
   cardHeader:
     "px-8 py-5 border-b border-slate-100 flex items-center gap-3 bg-slate-50",
   cardBody: "p-8",
-  fieldGroup: "flex flex-col gap-1",
   label:
     "text-[11px] font-semibold text-gray-700 mb-1 block uppercase tracking-[0.05em]",
-  errorText: "text-[11px] text-red-500 mt-1.5",
   input:
     "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none transition-colors box-border font-[inherit]",
   inputReadOnly: "!bg-slate-50 !text-slate-500 cursor-default",
-  select:
-    "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none cursor-pointer font-[inherit]",
-  btnPrimary:
-    "px-5 py-2 rounded-md text-white font-semibold text-sm cursor-pointer transition-opacity shadow-sm bg-[var(--button-color)] hover:opacity-90",
-  btnOutline:
-    "px-5 py-2 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold text-sm cursor-pointer hover:bg-slate-50 transition-colors",
-  btnSecondary:
-    "px-5 py-2 rounded-md border border-[#007EA7] bg-white text-[#007EA7] font-semibold text-sm cursor-pointer hover:bg-violet-50 transition-colors",
 };
 
-const Field = ({ label, required, error, children }) => (
-  <div className={tw.fieldGroup}>
-    <label className={tw.label}>
-      {label}
-      {required && <span className="ml-0.5 text-red-500">*</span>}
-    </label>
-    {children}
-    {error && <span className={tw.errorText}>{error}</span>}
-  </div>
-);
-
-const OrcamentoHeader = () => (
+const OrcamentoHeader = ({ isEdicao = false }) => (
   <div className="mb-10 text-center">
     <h1 className="pb-6 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
-      Gerar Novo Orçamento
+      {isEdicao ? "Editar Orçamento" : "Gerar Novo Orçamento"}
     </h1>
   </div>
 );
 
 const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
   const statusAtual =
-    STATUS_OPTIONS.find((s) => s.value === dados.status_id) ||
-    STATUS_OPTIONS[0];
+    OrcamentoStatusOptions.find((s) => s.value === dados.status_id) ||
+    OrcamentoStatusOptions[0];
   const clienteNome = dados.cliente_nome;
 
   return (
@@ -167,13 +142,13 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
               wrapperClassName="flex-1"
               value={dados.status_id}
               onChange={(e) => onChange("status_id", e.target.value)}
-              options={STATUS_OPTIONS.map((s) => ({
+              options={OrcamentoStatusOptions.map((s) => ({
                 value: s.value,
                 label: s.label,
               }))}
             />
             <div
-              className="mb-2.5 h-2.5 w-2.5 shrink-0 rounded-full"
+              className="mt-6 h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: statusAtual.color }}
             />
           </div>
@@ -257,12 +232,14 @@ const OrcamentoItemRow = ({
           </div>
           <span className="text-sm font-semibold text-slate-600">Item</span>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => onRemove(item.id)}
-          className="flex cursor-pointer items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+          className="!bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100"
         >
-          <Trash2 size={12} /> Remover
-        </button>
+          Remover
+        </Button>
       </div>
 
       <div className="p-7">
@@ -310,13 +287,14 @@ const OrcamentoItemRow = ({
             value={item.desconto}
             onChange={(e) => onChange(item.id, "desconto", e.target.value)}
           />
-          <Field label="Subtotal">
+          <div className="flex flex-col gap-1">
+            <label className={tw.label}>Subtotal</label>
             <div
               className={`${tw.input} ${tw.inputReadOnly} flex items-center font-bold text-[var(--button-color)]`}
             >
               {formatCurrencyBR(subtotal)}
             </div>
-          </Field>
+          </div>
         </div>
       </div>
     </div>
@@ -341,7 +319,7 @@ const OrcamentoItens = ({
         </h2>
       </div>
       <Button
-        variant="secondary"
+        variant="primary"
         onClick={onAdd}
         startIcon={<Plus size={15} />}
       >
@@ -354,7 +332,7 @@ const OrcamentoItens = ({
         <div className="rounded-xl border-2 border-dashed border-slate-200 py-10 text-center text-slate-400">
           <Package size={32} className="mx-auto mb-2.5 opacity-40" />
           <p className="m-0 text-sm">Nenhum item adicionado.</p>
-          {/* CORREÇÃO DO ERRO AQUI: Clique em &quot;Adicionar Item&quot; */}
+        
           <p className="mt-1 text-xs">
             Clique em &quot;Adicionar Item&quot; para começar.
           </p>
@@ -390,25 +368,22 @@ const OrcamentoResumo = ({
         Resumo Financeiro
       </h2>
     </div>
-    <div className="flex flex-col gap-10 p-10">
-      <div className="flex flex-col gap-3">
-        <span className={tw.label}>Subtotal Geral</span>
-        <div className="rounded-lg border-[1.5px] border-slate-200 bg-slate-50 px-5 py-4 text-right text-base font-bold text-slate-700">
-          {formatCurrencyBR(subtotalGeral)}
-        </div>
-      </div>
+    <div className="flex flex-col gap-8 p-8">
       <UniversalInput
         label="Desconto Geral (R$)"
         type="number"
-        className="border-yellow-300 bg-amber-50"
+        className="!border-yellow-400 !bg-amber-50"
         value={descontoGeral}
         onChange={(e) => onDescontoChange(e.target.value)}
+        placeholder="0"
       />
-      <div className="flex flex-col gap-2">
-        <span className={tw.label}>Total Final</span>
-        <div className="rounded-lg bg-[var(--button-color)] px-5 py-3 text-right text-xl font-extrabold text-white">
-          {formatCurrencyBR(totalFinal)}
-        </div>
+      <div className="flex items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-5 py-4">
+        <span className={tw.label}>Subtotal Geral</span>
+        <span className="text-base font-bold text-slate-700">{formatCurrencyBR(subtotalGeral)}</span>
+      </div>
+      <div className="flex items-center justify-between rounded-lg bg-[var(--button-color)] px-5 py-5">
+        <span className="text-sm font-bold uppercase tracking-wide text-white">Total Final</span>
+        <span className="text-2xl font-extrabold text-white">{formatCurrencyBR(totalFinal)}</span>
       </div>
     </div>
   </div>
@@ -431,7 +406,7 @@ const Toast = ({ message, type, onClose }) => {
   const c = map[type] || map.success;
   return (
     <div
-      className={`fixed top-6 right-6 z-[9999] flex items-center gap-2.5 rounded-xl border px-4 py-3.5 shadow-2xl ${c.cls}`}
+      className={`fixed bottom-6 right-6 z-[9999] flex items-center gap-2.5 rounded-xl border px-4 py-3.5 shadow-2xl ${c.cls}`}
     >
       {c.icon}
       <span className="text-sm font-semibold">{message}</span>
@@ -447,8 +422,10 @@ const Toast = ({ message, type, onClose }) => {
 
 export default function OrcamentoPage() {
   const navigate = useNavigate();
-  const { pedidoId } = useParams();
+  const { pedidoId, orcamentoId } = useParams();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoadingOrcamento, setIsLoadingOrcamento] = useState(!!orcamentoId);
 
   const [dadosGerais, setDadosGerais] = useState({
     numero_orcamento: gerarNumeroOrcamento(pedidoId || ""),
@@ -463,12 +440,17 @@ export default function OrcamentoPage() {
     observacoes: "",
   });
 
-  const [itens, setItens] = useState([criarItemVazio(1)]);
+  const [itens, setItens] = useState([]);
   const [descontoGeral, setDescontoGeral] = useState("");
   const [errors, setErrors] = useState({});
   const [itemErrors, setItemErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [lastSaved, setLastSaved] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { startProgress } = useOrcamentoProgress();
+
+  const [savedOrcamentoId, setSavedOrcamentoId] = useState(orcamentoId || null);
 
   const [pedidos, setPedidos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -507,6 +489,58 @@ export default function OrcamentoPage() {
       .catch(() => setProdutos([]));
   }, []);
 
+  useEffect(() => {
+    if (!orcamentoId) {
+      setIsLoadingOrcamento(false);
+      return;
+    }
+
+    OrcamentosService.buscarPorId(orcamentoId)
+      .then((result) => {
+        if (result.success && result.data) {
+          const orc = result.data;
+          setDadosGerais({
+            numero_orcamento: orc.numeroOrcamento || "",
+            cliente_id: String(orc.clienteId || ""),
+            cliente_nome: orc.clienteNome || "",
+            pedido_id: String(orc.pedidoId || ""),
+            status_id: orc.statusId || "RASCUNHO",
+            data_orcamento: orc.dataOrcamento?.split("T")[0] || "",
+            prazo_instalacao: orc.prazoInstalacao?.split("T")[0] || "",
+            garantia: orc.garantia || "",
+            forma_pagamento: orc.formaPagamento || "",
+            observacoes: orc.observacoes || "",
+          });
+
+          if (orc.itens && Array.isArray(orc.itens)) {
+            setItens(
+              orc.itens.map((item) => ({
+                id: item.id || Date.now() + Math.random(),
+                produto_id: item.produtoId || "",
+                descricao: item.descricao || "",
+                quantidade: String(item.quantidade || ""),
+                preco_unitario: String(item.precoUnitario || ""),
+                desconto: String(item.desconto || ""),
+                observacao: item.observacao || "",
+                ordem: item.ordem || 1,
+              })),
+            );
+          }
+
+          setDescontoGeral(String(orc.descontoGeral || ""));
+          setLastSaved(new Date());
+        }
+      })
+      .catch(() => {
+        setToast({
+          message: "Erro ao carregar orçamento.",
+          type: "error",
+        });
+        setTimeout(() => setToast(null), 3000);
+      })
+      .finally(() => setIsLoadingOrcamento(false));
+  }, [orcamentoId]);
+
   const subtotalGeral = useMemo(() => calcularSubtotalGeral(itens), [itens]);
   const totalFinal = useMemo(
     () => calcularTotalFinal(subtotalGeral, descontoGeral),
@@ -526,7 +560,7 @@ export default function OrcamentoPage() {
         numero_orcamento: gerarNumeroOrcamento(pedido.id),
       }));
     }
-  }, [pedidos]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pedidos]); 
 
   const handleDadosChange = useCallback(
     (field, value) => {
@@ -610,26 +644,112 @@ export default function OrcamentoPage() {
     );
   }, [dadosGerais, itens]);
 
-  const handleSaveDraft = () => {
-    setLastSaved(new Date());
-    setToast({ message: "Rascunho salvo!", type: "success" });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleSaveAndDownload = () => {
+  const handleSaveDraft = async () => {
     if (!validar()) {
-      setToast({
-        message: "Corrija os erros antes de gerar a planilha.",
-        type: "error",
-      });
+      setToast({ message: "Corrija os erros antes de salvar.", type: "error" });
+      setTimeout(() => setToast(null), 3000);
       return;
     }
-    setLastSaved(new Date());
-    setToast({ message: "Planilha gerada com sucesso!", type: "success" });
-    setTimeout(() => {
-      setToast(null);
-      navigate("/Pedidos");
-    }, 2000);
+
+    setIsSaving(true);
+    try {
+      const payload = OrcamentosService.mapearParaBackend(
+        { ...dadosGerais, status_id: "RASCUNHO" },
+        itens,
+        subtotalGeral,
+        descontoGeral,
+        totalFinal,
+      );
+
+      const result = savedOrcamentoId
+        ? await OrcamentosService.atualizarOrcamento(savedOrcamentoId, payload)
+        : await OrcamentosService.criarOrcamento(payload);
+
+      if (result.success) {
+        if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
+        setLastSaved(new Date());
+        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+        setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
+        setTimeout(() => {
+          setToast(null);
+          navigate("/pedidos?tab=servico");
+        }, 2000);
+      } else {
+        setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
+        setTimeout(() => setToast(null), 3000);
+      }
+    } catch (e) {
+      setToast({ message: "Erro ao salvar rascunho.", type: "error" });
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveAndDownload = async () => {
+    if (!validar()) {
+      setToast({
+        message: "Corrija os erros antes de gerar o orçamento.",
+        type: "error",
+      });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = OrcamentosService.mapearParaBackend(
+        dadosGerais,
+        itens,
+        subtotalGeral,
+        descontoGeral,
+        totalFinal,
+      );
+
+      const tempId = `temp_${Date.now()}`;
+      
+      let sseConnection = null;
+      const ssePromise = new Promise((resolve) => {
+        sseConnection = OrcamentosService.monitorarProgresso(tempId, (eventData) => {
+          resolve(eventData);
+        });
+      });
+
+      const result = await OrcamentosService.criarOrcamento(payload);
+
+      if (result.success && result.data) {
+        const orcId = result.data.id;
+        setSavedOrcamentoId(orcId);
+        setLastSaved(new Date());
+        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
+        
+        if (sseConnection) {
+          sseConnection.close();
+        }
+        
+        startProgress(
+          orcId,
+          result.data.numeroOrcamento || dadosGerais.numero_orcamento
+        );
+        setToast({ message: "Orçamento enviado para geração!", type: "success" });
+        setTimeout(() => setToast(null), 3000);
+      } else {
+        setToast({
+          message: result.error || "Erro ao gerar orçamento.",
+          type: "error",
+        });
+        if (sseConnection) {
+          sseConnection.close();
+        }
+        setTimeout(() => setToast(null), 4000);
+      }
+    } catch (e) {
+      setToast({ message: "Erro ao gerar orçamento.", type: "error" });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -642,63 +762,86 @@ export default function OrcamentoPage() {
             sidebarOpen={sidebarOpen}
           />
           <div className="flex w-full max-w-[1400px] flex-col gap-3 px-6 py-20">
-            <button
-              onClick={() => navigate(-1)}
-              className="mb-8 flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-            >
-              <ArrowLeft size={20} /> Voltar para Pedidos
-            </button>
-            <OrcamentoHeader />
-            <div
-              className="grid items-start gap-8"
-              style={{ gridTemplateColumns: "1fr 320px" }}
-            >
-              <div className="flex flex-col gap-8">
-                <OrcamentoInformacoes
-                  dados={dadosGerais}
-                  onChange={handleDadosChange}
-                  errors={errors}
-                  pedidos={pedidos}
-                />
-                <OrcamentoItens
-                  itens={itens}
-                  onAdd={handleAddItem}
-                  onRemove={handleRemoveItem}
-                  onChange={handleItemChange}
-                  onProductSelect={handleItemProductSelect}
-                  errors={itemErrors}
-                  produtos={produtos}
-                />
+            {isLoadingOrcamento ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-20">
+                <Loader2 size={48} className="animate-spin text-slate-400" />
+                <p className="text-slate-500">Carregando orçamento...</p>
               </div>
-              <OrcamentoResumo
-                subtotalGeral={subtotalGeral}
-                descontoGeral={descontoGeral}
-                totalFinal={totalFinal}
-                onDescontoChange={setDescontoGeral}
-              />
-            </div>
-            <div className="mt-15 flex items-center justify-between rounded-2xl border bg-white p-6 shadow-sm">
-              <span className="text-xs text-slate-400">
-                {lastSaved
-                  ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
-                  : "Nenhuma alteração salva ainda"}
-              </span>
-              <div className="flex gap-4">
-                <Button variant="ghost" onClick={() => navigate(-1)}>
-                  Cancelar
-                </Button>
-                <Button variant="secondary" onClick={handleSaveDraft}>
-                  Salvar Rascunho
-                </Button>
+            ) : (
+              <>
                 <Button
-                  variant="primary"
-                  onClick={handleSaveAndDownload}
-                  startIcon={<Download size={15} />}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(-1)}
+                  className="mt-6 mb-4 self-start"
+                  startIcon={<ArrowLeft size={16} />}
                 >
-                  Salvar e Baixar
+                  Voltar
                 </Button>
-              </div>
-            </div>
+                <OrcamentoHeader isEdicao={!!orcamentoId} />
+                <div
+                  className="grid items-start gap-8"
+                  style={{ gridTemplateColumns: "1fr 320px" }}
+                >
+                  <div className="flex flex-col gap-8">
+                    <OrcamentoInformacoes
+                      dados={dadosGerais}
+                      onChange={handleDadosChange}
+                      errors={errors}
+                      pedidos={pedidos}
+                    />
+                    <OrcamentoItens
+                      itens={itens}
+                      onAdd={handleAddItem}
+                      onRemove={handleRemoveItem}
+                      onChange={handleItemChange}
+                      onProductSelect={handleItemProductSelect}
+                      errors={itemErrors}
+                      produtos={produtos}
+                    />
+                  </div>
+                  <OrcamentoResumo
+                    subtotalGeral={subtotalGeral}
+                    descontoGeral={descontoGeral}
+                    totalFinal={totalFinal}
+                    onDescontoChange={setDescontoGeral}
+                  />
+                </div>
+                <div className="mt-15 flex items-center justify-between rounded-2xl border bg-white p-6 shadow-sm">
+                  <span className="text-xs text-slate-400">
+                    {lastSaved
+                      ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
+                      : "Nenhuma alteração salva ainda"}
+                  </span>
+                  <div className="flex gap-4">
+                    <Button variant="ghost" onClick={() => navigate(-1)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleSaveDraft}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? "Salvando..." : "Salvar Rascunho"}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={handleSaveAndDownload}
+                      disabled={isSaving}
+                      startIcon={
+                        isSaving ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Download size={15} />
+                        )
+                      }
+                    >
+                      {isSaving ? "Gerando..." : "Gerar PDF"}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

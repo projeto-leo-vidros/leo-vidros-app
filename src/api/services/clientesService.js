@@ -26,14 +26,9 @@ class ClientesService extends BaseService {
     return super.delete(`/clientes/${id}`);
   }
 
-  /**
-   * Realiza a importação de clientes via arquivo Excel.
-   * @param {File} arquivo - O arquivo selecionado no input (e.target.files[0])
-   */
+
   importarPlanilha(arquivo) {
     const formData = new FormData();
-    // 'file' é o nome padrão esperado pelo Spring Boot para MultipartFile,
-    // verifique se o backend espera outro nome (ex: 'arquivo')
     formData.append("file", arquivo);
 
     return this._handle(

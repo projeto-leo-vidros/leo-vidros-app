@@ -78,6 +78,14 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
+    path: "/orcamentos/:orcamentoId/editar",
+    element: (
+      <ProtectedRoute>
+        <OrcamentoERP />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/acesso",
     element: (
       <ProtectedRoute>
