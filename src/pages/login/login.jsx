@@ -7,6 +7,8 @@ import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
 import { useUser } from "../../context/UserContext";
+import Logo from "../../assets/logo-sidebar.png";
+import BgImage from "../../assets/GlazierAdobeStock_576236137.jpeg";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -62,7 +64,7 @@ function Login() {
     <div className="min-h-screen w-full flex items-center justify-center bg-[#f7f9fa] p-4">
       <div className="absolute top-5 right-10">
         <img
-          src="/src/assets/logo/logo-sidebar.png"
+          src={Logo}
           alt="Logo"
           className="h-12 w-auto"
         />
@@ -72,8 +74,7 @@ function Login() {
         <div
           className="hidden lg:flex flex-1 h-[600px] rounded-xl bg-cover bg-center shadow-lg/20"
           style={{
-            backgroundImage:
-              'url("src/assets/images/GlazierAdobeStock_576236137.jpeg")',
+            backgroundImage: `url(${BgImage})`,
           }}
         />
 
@@ -174,7 +175,7 @@ function Login() {
                 Ainda não tem uma conta?{" "}
                 <button
                   type="button"
-                  onClick={() => (window.location.href = "/Cadastro")}
+                  onClick={() => navigate("/cadastro")}
                   className="text-[#007EA7] hover:text-[#005f73] font-medium transition-colors cursor-pointer"
                 >
                   Cadastre-se

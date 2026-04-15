@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { UserCircle, Mail, BadgeCheck, Phone } from "lucide-react";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
+import Logo from "../../assets/logo-sidebar.png";
+import BgImage from "../../assets/GlazierAdobeStock_576236137.jpeg";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
@@ -110,7 +112,7 @@ function Cadastro() {
     <div className="min-h-screen w-full flex items-center justify-center bg-[#f7f9fa] p-4">
       <div className="absolute top-5 right-10">
         <img
-          src="/src/assets/logo/logo-sidebar.png"
+          src={Logo}
           alt="Logo"
           className="h-12 w-auto"
         />
@@ -119,8 +121,7 @@ function Cadastro() {
         <div
           className="hidden lg:flex flex-1 h-[600px] rounded-xl bg-cover bg-center shadow-lg"
           style={{
-            backgroundImage:
-              'url("/src/assets/images/GlazierAdobeStock_576236137.jpeg")',
+            backgroundImage: `url(${BgImage})`,
           }}
         />
 

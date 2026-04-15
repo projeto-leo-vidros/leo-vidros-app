@@ -7,6 +7,8 @@ import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
 import Swal from "sweetalert2";
+import Logo from "../../assets/logo-sidebar.png";
+import BgImage from "../../assets/GlaserAdobeStock_741312364.jpeg";
 
 const EsqueceuSenha = () => {
   const [email, setEmail] = useState("");
@@ -83,7 +85,7 @@ const EsqueceuSenha = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-[#f7f9fa] p-4">
       <div className="absolute top-5 right-10">
         <img
-          src="/src/assets/logo/logo-sidebar.png"
+          src={Logo}
           alt="Logo"
           className="h-12 w-auto"
         />
@@ -93,8 +95,7 @@ const EsqueceuSenha = () => {
         <div
           className="hidden lg:flex flex-1 h-[600px] rounded-xl bg-cover bg-center shadow-lg"
           style={{
-            backgroundImage:
-              'url("/src/assets/images/GlaserAdobeStock_741312364.jpeg")',
+            backgroundImage: `url(${BgImage})`,
           }}
         />
 

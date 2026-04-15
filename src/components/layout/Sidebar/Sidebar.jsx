@@ -11,7 +11,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Logo from "../../../assets/logo/logo-sidebar.png";
+import Logo from "../../../assets/logo-sidebar.png";
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();

@@ -5,6 +5,7 @@ import { Paper } from "@mui/material";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import Button from "../../components/ui/Button/Button.component";
 import Api from "../../api/client/Api";
+import Logo from "../../assets/logo-sidebar.png";
 
 const PasswordRequirement = ({ text, isValid }) => (
   <div
@@ -111,7 +112,7 @@ export default function NovaSenha() {
       >
         <div className="flex flex-col items-center text-center">
           <img
-            src="/src/assets/logo/logo-sidebar.png"
+            src={Logo}
             alt="Logo Léo Vidros"
             className="w-32 mb-6"
           />
