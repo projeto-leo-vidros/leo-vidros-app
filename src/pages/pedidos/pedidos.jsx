@@ -15,9 +15,9 @@ export default function Pedidos() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const location = useLocation();
-  const initialTab = location.pathname.includes("/servicos")
+  const initialTab = location.state?.initialTab || (location.pathname.includes("/servicos")
     ? "servicos"
-    : "pedidos";
+    : "pedidos");
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const [busca, setBusca] = useState("");

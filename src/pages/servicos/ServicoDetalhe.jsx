@@ -415,7 +415,7 @@ export default function PedidoDetalhe() {
           },
           status: {
             tipo: pedido.statusOriginal?.tipo || "PEDIDO",
-            nome: formData.etapaServico || pedido.statusOriginal?.nome || "ATIVO",
+            nome: pedido.statusOriginal?.nome || "ATIVO",
           },
         },
         servico: rawPedido?.servico
