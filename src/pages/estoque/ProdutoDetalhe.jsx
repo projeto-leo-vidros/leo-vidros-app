@@ -31,6 +31,13 @@ import { formatCurrency } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 
+const formatObservacao = (observacao) => {
+  if (!observacao) return "N/A";
+  return observacao.replace(/(\d+\.\d{3,})/g, (match) => {
+    return parseFloat(match).toFixed(2);
+  });
+};
+
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,7 +49,6 @@ export default function ProductDetailPage() {
   const [chartData, setChartData] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Estados para o modal de detalhes da movimentação
   const [isMovimentacaoModalOpen, setIsMovimentacaoModalOpen] = useState(false);
   const [selectedMovimento, setSelectedMovimento] = useState(null);
 
@@ -338,7 +344,6 @@ export default function ProductDetailPage() {
     navigate("/estoque");
   };
 
-  // Funções para controlar o modal de detalhes da movimentação
   const handleOpenMovimentacaoModal = (movimento) => {
     setSelectedMovimento(movimento);
     setIsMovimentacaoModalOpen(true);
@@ -886,7 +891,7 @@ export default function ProductDetailPage() {
                               {produto.unidademedida}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-800 text-center">
-                              {movimento.observacao || "N/A"}
+                              {formatObservacao(movimento.observacao)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
                               {movimento.usuario?.nome || "N/A"}
