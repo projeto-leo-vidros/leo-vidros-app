@@ -23,11 +23,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       icon: <LayoutDashboard size={22} />,
       path: "/pagina-inicial",
     },
-    { text: "Controle de Estoque", icon: <Package size={22} />, path: "/Estoque" },
-    { text: "Pedidos", icon: <ClipboardList size={22} />, path: "/Pedidos" },
-    { text: "Agendamentos", icon: <CalendarDays size={22} />, path: "/Agendamentos" },
-    { text: "Clientes", icon: <Users size={22} />, path: "/Clientes" },
-    { text: "Controle de Funcionários", icon: <Briefcase size={22} />, path: "/Funcionarios" },
+    { text: "Controle de Estoque", icon: <Package size={22} />, path: "/estoque" },
+    { text: "Pedidos", icon: <ClipboardList size={22} />, path: "/pedidos" },
+    { text: "Agendamentos", icon: <CalendarDays size={22} />, path: "/agendamentos" },
+    { text: "Clientes", icon: <Users size={22} />, path: "/clientes" },
+    { text: "Controle de Funcionários", icon: <Briefcase size={22} />, path: "/funcionarios" },
     { text: "Controle de Acesso", icon: <Lock size={22} />, path: "/acesso" },
   ];
 

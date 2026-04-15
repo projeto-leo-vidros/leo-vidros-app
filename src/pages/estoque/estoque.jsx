@@ -13,6 +13,7 @@ import {
   Download,
   ChevronDown,
   ArrowRightLeft,
+  Plus
 } from "lucide-react";
 import NovoProdutoModal from "./components/ModalEstoque/NovoProdutoModal";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
@@ -283,7 +284,7 @@ export default function Estoque() {
         console.error("Erro: ID do estoque é undefined!");
         return;
       }
-      navigate(`/Estoque/${estoqueId}`);
+      navigate(`/estoque/${estoqueId}`);
     },
     [navigate],
   );
@@ -475,6 +476,7 @@ export default function Estoque() {
                 <div className="flex gap-2 w-full md:w-auto">
                   <Button
                     onClick={openNewItemModal}
+                    startIcon={<Plus size={24} />}
                     className="bg-[#007EA7] text-white font-semibold py-2 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
                   >
                     Novo Item
