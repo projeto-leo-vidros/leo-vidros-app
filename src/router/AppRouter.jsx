@@ -10,6 +10,7 @@ const Clientes = lazy(() => import("../pages/clientes/clientes.jsx"));
 const Estoque = lazy(() => import("../pages/estoque/estoque.jsx"));
 const ProdutoDetalhe = lazy(() => import("../pages/estoque/ProdutoDetalhe.jsx"));
 const Pedidos = lazy(() => import("../pages/pedidos/pedidos.jsx"));
+const ServicoDetalhe = lazy(() => import("../pages/servicos/ServicoDetalhe.jsx"));
 const Solicitacoes = lazy(() => import("../pages/solicitacoes/Solicitacoes.jsx"));
 const Agendamentos = lazy(() => import("../pages/agendamentos/agendamentos.jsx"));
 const Perfil = lazy(() => import("../pages/perfil/perfil.jsx"));
@@ -93,9 +94,17 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: "/orcamentos/:orcamentoId/editar",
-    element: (
+    element: withSuspense(
       <ProtectedRoute>
         <OrcamentoERP />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/Servicos/:id",
+    element: withSuspense(
+      <ProtectedRoute>
+        <ServicoDetalhe />
       </ProtectedRoute>
     ),
   },
