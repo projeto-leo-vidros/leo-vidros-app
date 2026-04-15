@@ -12,11 +12,6 @@ import {
 import Kpis from "../../components/kpis/Kpis";
 import { useDashboardKpis } from "../../hooks/queries/useDashboard";
 
-/**
- * Verifica se uma data corresponde ao dia de hoje.
- * @param {Date|null} date
- * @returns {boolean}
- */
 const isToday = (date) => {
   if (!date) return false;
   const today = new Date();
@@ -27,11 +22,6 @@ const isToday = (date) => {
   );
 };
 
-/**
- * Verifica se uma data é hoje ou está no futuro (desconsiderando hora).
- * @param {Date|null} date
- * @returns {boolean}
- */
 const isFuture = (date) => {
   if (!date) return false;
   const today = new Date();
@@ -39,12 +29,6 @@ const isFuture = (date) => {
   return date >= today;
 };
 
-/**
- * Converte uma string de data nos formatos 'dd/MM/yyyy' ou 'yyyy-MM-dd' em um objeto Date.
- * Retorna null para entradas inválidas ou em caso de erro de parsing.
- * @param {string|null|undefined} dateString
- * @returns {Date|null}
- */
 const parseDate = (dateString) => {
   if (!dateString) return null;
   try {
@@ -72,7 +56,6 @@ export default function PaginaInicial() {
   const navigate = useNavigate();
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // ─── Dados do dashboard via TanStack Query ────────────────────────────────
   const {
     qtdAgendamentosHoje,
     qtdAgendamentosFuturos,

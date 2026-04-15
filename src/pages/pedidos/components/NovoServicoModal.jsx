@@ -1,5 +1,5 @@
-import { useState, useEffect, Fragment } from "react"; // <-- Importado o Fragment
-import PropTypes from "prop-types"; // <-- Importado o PropTypes
+import { useState, useEffect, Fragment } from "react";
+import PropTypes from "prop-types";
 import {
   Wrench,
   Plus,
@@ -60,6 +60,7 @@ const useServicoAPI = () => {
         clienteId: servicoData.clienteId,
         clienteNome: servicoData.clienteNome,
         descricao: servicoData.descricao,
+        observacoes: servicoData.observacoes,
         data: servicoData.data,
         status: "Ativo",
         etapa: "Aguardando orçamento",
@@ -103,7 +104,7 @@ const useServicoAPI = () => {
 };
 
 const DEFAULT_FORM_DATA = {
-  tipoCliente: "existente", 
+  tipoCliente: "",
   clienteId: "",
   clienteNome: "",
   clienteCpf: "",
@@ -256,6 +257,11 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
     setError(null);
 
     if (currentStep === 0) {
+      if (!formData.tipoCliente) {
+        setError("Selecione o tipo de cliente: existente ou novo");
+        return false;
+      }
+
       if (formData.tipoCliente === "existente") {
         if (!formData.clienteId) {
           setError("Selecione um cliente");
@@ -497,7 +503,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 </button>
               </div>
 
-              {formData.tipoCliente === "existente" ? (
+              {formData.tipoCliente === "existente" && (
                 <UniversalInput
                   as="select"
                   label="Selecionar Cliente"
@@ -510,7 +516,9 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                     label: cliente.nome,
                   }))}
                 />
-              ) : (
+              )}
+
+              {formData.tipoCliente === "novo" && (
                 <div className="flex flex-col gap-4">
                   <UniversalInput
                     label="Nome Completo"
@@ -706,6 +714,16 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 required
               />
 
+              <UniversalInput
+                as="textarea"
+                label="O que será feito neste serviço"
+                name="observacoes"
+                placeholder="Informe de forma objetiva o que será executado neste serviço..."
+                rows={4}
+                value={formData.observacoes}
+                onChange={handleChange}
+              />
+
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <div className="flex items-center justify-center gap-3">
                   <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
@@ -750,6 +768,14 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                       {formData.clienteNome || "N/A"}
                     </span>
                   </div>
+                  {formData.clienteCpf && (
+                    <div className="flex flex-row justify-start gap-1">
+                      <span className="text-gray-600 font-medium">CPF:</span>
+                      <span className="font-medium text-gray-900">
+                        {formData.clienteCpf}
+                      </span>
+                    </div>
+                  )}
                   {formData.clienteTelefone && (
                     <div className="flex flex-row justify-start gap-1">
                       <span className="text-gray-600 font-medium">
@@ -816,6 +842,14 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                       {formData.descricao}
                     </p>
                   </div>
+                  {formData.observacoes && (
+                    <div className="flex gap-1 mt-2">
+                      <p className="text-gray-600 mb-1">Execução:</p>
+                      <p className="font-semibold text-gray-900">
+                        {formData.observacoes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

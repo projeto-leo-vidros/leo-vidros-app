@@ -58,7 +58,7 @@ const usePedidoServicoAPI = () => {
 };
 
 const DEFAULT_FORM_DATA = {
-  tipoCliente: "nenhum",
+  tipoCliente: "",
   clienteId: "",
   clienteNome: "",
   clienteCpf: "",
@@ -194,6 +194,36 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
   const validateStep = () => {
     setError(null);
+
+    if (currentStep === 0) {
+      if (!formData.tipoCliente) {
+        setError("Selecione o tipo de cliente: existente ou novo");
+        return false;
+      }
+
+      if (formData.tipoCliente === "nenhum") {
+        setError("Selecione o tipo de cliente");
+        return false;
+      }
+
+      if (formData.tipoCliente === "existente") {
+        if (!formData.clienteId) {
+          setError("Selecione um cliente");
+          return false;
+        }
+      } else {
+        if (!formData.clienteNome.trim()) {
+          setError("Nome do cliente é obrigatório");
+          return false;
+        }
+        if (!formData.clienteTelefone.trim()) {
+          setError("Telefone do cliente é obrigatório");
+          return false;
+        }
+      }
+      return true;
+    }
+
     const schemas = [pedidoServicoEtapa0Schema, pedidoServicoEtapa1Schema, pedidoServicoEtapa2Schema];
     const schema = schemas[currentStep];
     if (!schema) return true;
@@ -302,7 +332,15 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 </button>
               </div>
 
-              {formData.tipoCliente === "existente" ? (
+              {!formData.tipoCliente && (
+                <div className="rounded-md border border-dashed border-gray-300 p-4 bg-gray-50">
+                  <p className="text-sm text-gray-600">
+                    Escolha uma opção acima para preencher os dados do cliente.
+                  </p>
+                </div>
+              )}
+
+              {formData.tipoCliente === "existente" && (
                 <UniversalInput
                   as="select"
                   placeholder="Selecione um cliente..."
@@ -310,7 +348,9 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                   value={formData.clienteId}
                   onChange={handleClienteExistenteChange}
                 />
-              ) : (
+              )}
+
+              {formData.tipoCliente === "novo" && (
                 <div className="grid gap-4">
                   <UniversalInput name="clienteNome" label="Nome Completo" placeholder="Nome Completo" value={formData.clienteNome} onChange={handleChange} />
                   <div className="grid grid-cols-2 gap-4">
@@ -334,20 +374,68 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
           {currentStep === 2 && (
             <div className="space-y-4">
-              <Button variant="primary" size="sm" onClick={handleAddServico} startIcon={<Plus size={16}/>}>Add Serviço</Button>
-              {formData.servicos.map((s, i) => (
-                <div key={i} className="p-4 border rounded-lg bg-gray-50 space-y-3">
-                  <UniversalInput label="Nome do serviço" placeholder="Nome do serviço" value={s.nome} onChange={e => handleServicoChange(i, "nome", e.target.value)} />
-                  <UniversalInput type="number" label="Preço" placeholder="Preço" value={s.precoEstimado} onChange={e => handleServicoChange(i, "precoEstimado", parseFloat(e.target.value))} />
+              <div className="p-4 border rounded-lg bg-gray-50 space-y-4 flex flex-col">
+                <h4 className="font-semibold text-gray-900">Informações do Serviço</h4>
+                <div className="w-full">
+                  <UniversalInput label="Nome do serviço" placeholder="Nome do serviço" value={formData.servicos[0]?.nome || ""} onChange={e => handleServicoChange(0, "nome", e.target.value)} />
                 </div>
-              ))}
+                <div className="w-full">
+                  <UniversalInput type="number" label="Preço" placeholder="Preço" value={formData.servicos[0]?.precoEstimado || 0} onChange={e => handleServicoChange(0, "precoEstimado", parseFloat(e.target.value))} />
+                </div>
+              </div>
+              <UniversalInput
+                as="textarea"
+                label="O que será feito neste serviço"
+                name="observacoes"
+                placeholder="Informe de forma objetiva o que será executado neste serviço..."
+                rows={4}
+                value={formData.observacoes}
+                onChange={handleChange}
+              />
             </div>
           )}
 
           {currentStep === 3 && (
-            <div className="bg-gray-50 p-4 border rounded-lg space-y-2">
-              <p><strong>Cliente:</strong> {formData.clienteNome}</p>
-              <p><strong>Total:</strong> R$ {calcularValorTotal().toFixed(2)}</p>
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 border rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-3">Cliente</h4>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Nome:</strong> {formData.clienteNome}</p>
+                  {formData.clienteCpf && <p><strong>CPF:</strong> {formData.clienteCpf}</p>}
+                  {formData.clienteTelefone && <p><strong>Telefone:</strong> {formData.clienteTelefone}</p>}
+                  {formData.clienteEmail && <p><strong>E-mail:</strong> {formData.clienteEmail}</p>}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 border rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-3">Endereço</h4>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Rua:</strong> {formData.endereco.rua}, {formData.endereco.numero}</p>
+                  {formData.endereco.complemento && <p><strong>Complemento:</strong> {formData.endereco.complemento}</p>}
+                  <p><strong>Bairro:</strong> {formData.endereco.bairro}</p>
+                  <p><strong>Cidade/UF:</strong> {formData.endereco.cidade}/{formData.endereco.uf}</p>
+                  <p><strong>CEP:</strong> {formData.endereco.cep}</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 border rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-3">Serviços</h4>
+                <div className="space-y-2 text-sm">
+                  {formData.servicos.map((s, i) => (
+                    <div key={i} className="p-2 border border-gray-200 rounded">
+                      <p><strong>{s.nome}</strong> - R$ {s.precoEstimado?.toFixed(2) || '0.00'}</p>
+                    </div>
+                  ))}
+                  <p className="font-semibold mt-3 pt-3 border-t"><strong>Total:</strong> R$ {calcularValorTotal().toFixed(2)}</p>
+                </div>
+              </div>
+
+              {formData.observacoes && (
+                <div className="bg-gray-50 p-4 border rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3">Observações</h4>
+                  <p className="text-sm text-gray-700">{formData.observacoes}</p>
+                </div>
+              )}
             </div>
           )}
         </div>

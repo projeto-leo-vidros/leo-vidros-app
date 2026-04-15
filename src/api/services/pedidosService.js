@@ -1,53 +1,33 @@
 import Api from "../client/Api";
 import BaseService from "../client/BaseService";
 
-/**
- * Service de Pedidos (produtos e serviços) — estende BaseService.
- *
- * Além das operações CRUD padrão, fornece:
- *  - `mapearParaBackend(dados)` → converte o modelo do frontend para o PedidoRequestDto.
- *  - `mapearParaFrontend(dados)` → normaliza a resposta do backend, calculando
- *    etapa atual e progresso com base nos agendamentos ativos do serviço.
- *  - `filtrarPedidos` / `filtrarServicos` → filtragem local (status, etapa, busca textual).
- */
 class PedidosService extends BaseService {
   constructor() {
     super(Api);
   }
 
-  /** Retorna todos os pedidos (produtos e serviços). */
   async buscarTodos() {
     const result = await this.get("/pedidos");
     if (result.success) result.data = result.data || [];
     return result;
   }
 
-  /** Retorna apenas os pedidos do tipo serviço. */
   async buscarPedidosDeServico() {
     const result = await this.get("/pedidos/servicos");
     if (result.success) result.data = result.data || [];
     return result;
   }
 
-  /** Retorna apenas os pedidos do tipo produto. */
   async buscarPedidosDeProduto() {
     const result = await this.get("/pedidos/produtos");
     if (result.success) result.data = result.data || [];
     return result;
   }
 
-  /**
-   * Retorna um pedido pelo ID.
-   * @param {number|string} id
-   */
   buscarPorId(id) {
     return this.get(`/pedidos/${id}`);
   }
 
-  /**
-   * Retorna pedidos filtrados por etapa.
-   * @param {string} nomeEtapa - Nome da etapa (ex.: 'PENDENTE', 'CONCLUÍDO')
-   */
   async buscarPorTipoAndEtapa(nomeEtapa) {
     const result = await this.get("/pedidos/findAllBy", {
       params: { nome: nomeEtapa },
@@ -56,10 +36,6 @@ class PedidosService extends BaseService {
     return result;
   }
 
-  /**
-   * Cria um novo pedido.
-   * @param {{ pedido: object, servico?: object, produtos?: object[] }} pedidoData - Payload no formato PedidoRequestDto
-   */
   async criarPedido(pedidoData) {
     if (!pedidoData.pedido) {
       return {
@@ -74,49 +50,24 @@ class PedidosService extends BaseService {
     return result;
   }
 
-  /**
-   * Atualiza um pedido existente pelo ID.
-   * @param {number|string} id
-   * @param {object} pedidoData - Campos a atualizar
-   */
   async atualizarPedido(id, pedidoData) {
     const result = await this.put(`/pedidos/${id}`, pedidoData);
     if (!result.success) result.validationErrors = {};
     return result;
   }
 
-  /**
-   * Alias de `atualizarPedido` — exposto para uso semântico em contextos de serviço.
-   * @param {number|string} id
-   * @param {object} pedidoData
-   */
   async atualizarServico(id, pedidoData) {
     return this.atualizarPedido(id, pedidoData);
   }
 
-  /**
-   * Remove um pedido pelo ID.
-   * @param {number|string} id
-   */
   deletarPedido(id) {
     return this.delete(`/pedidos/${id}`);
   }
 
-  /**
-   * Alias de `deletarPedido` — exposto para uso semântico em contextos de serviço.
-   * @param {number|string} id
-   */
   async deletarServico(id) {
     return this.deletarPedido(id);
   }
 
-  /**
-   * Converte os dados do frontend para o formato PedidoRequestDto esperado pelo backend.
-   * Determina automaticamente se o payload deve incluir `servico` ou `produtos`
-   * com base em `dadosFrontend.tipo` / `dadosFrontend.tipoPedido`.
-   * @param {object} dadosFrontend
-   * @returns {{ pedido: object, servico: object|null, produtos: object[]|null }}
-   */
   mapearParaBackend(dadosFrontend) {
     const pedidoBase = {
       valorTotal: dadosFrontend.valorTotal || 0,
@@ -167,16 +118,6 @@ class PedidosService extends BaseService {
     return pedidoRequest;
   }
 
-  /**
-   * Normaliza a resposta do backend para o modelo utilizado no frontend.
-   *
-   * Para pedidos do tipo serviço, calcula a `etapa` atual comparando os
-   * agendamentos ativos (excluindo CANCELADO/INATIVO) e aplica a lógica
-   * de progressão de etapas (PENDENTE → CONCLUÍDO).
-   *
-   * @param {object} dadosBackend - Objeto bruto retornado pela API
-   * @returns {object} Pedido normalizado com campos `etapa`, `progresso`, `servico`, etc.
-   */
   mapearParaFrontend(dadosBackend) {
     const isProduto =
       dadosBackend.tipoPedido === "produto" &&
@@ -208,17 +149,13 @@ class PedidosService extends BaseService {
     let progressoValor = 1;
     let progressoTotal = 7;
 
-    // CORREÇÃO: Declarar etapaCalculada FORA do if para ser acessível no return
     let etapaCalculada = "PENDENTE";
 
     if (isServico && dadosBackend.servico) {
-      // Etapa original do backend
       const etapaNome = dadosBackend.servico.etapa?.nome || "PENDENTE";
 
-      // Inicia com o valor do backend
       etapaCalculada = etapaNome;
 
-      // Filtra apenas agendamentos VÁLIDOS (não cancelados/deletados)
       const agendamentosTodos = dadosBackend.servico.agendamentos || [];
       const agendamentosAtivos = agendamentosTodos.filter(
         (ag) =>
@@ -227,7 +164,6 @@ class PedidosService extends BaseService {
           ag.statusAgendamento.nome !== "INATIVO",
       );
 
-      // Se tiver agendamentos ATIVOS, calculamos a etapa baseada neles
       if (agendamentosAtivos.length > 0) {
         const agendamentoOrcamento = agendamentosAtivos.find(
           (ag) => ag.tipoAgendamento === "ORCAMENTO",
@@ -236,22 +172,18 @@ class PedidosService extends BaseService {
           (ag) => ag.tipoAgendamento === "SERVICO",
         );
 
-        // 1. Prioridade: Serviço (tem agendamento de serviço)
         if (agendamentoServico) {
           const statusServico = agendamentoServico.statusAgendamento?.nome;
           if (statusServico === "CONCLUÍDO") etapaCalculada = "CONCLUÍDO";
           else if (statusServico === "EM ANDAMENTO")
             etapaCalculada = "SERVIÇO EM EXECUÇÃO";
-          else etapaCalculada = "SERVIÇO AGENDADO"; // PENDENTE
+          else etapaCalculada = "SERVIÇO AGENDADO"; 
         }
-        // 2. Prioridade: Orçamento (tem agendamento de orçamento, mas NÃO tem serviço)
+
         else if (agendamentoOrcamento) {
           const statusOrcamento = agendamentoOrcamento.statusAgendamento?.nome;
 
-          // Se orçamento está CONCLUÍDO → ANÁLISE DO ORÇAMENTO (etapa 3)
-          // A etapa 4 (ORÇAMENTO APROVADO) só vem manualmente pelo usuário
           if (statusOrcamento === "CONCLUÍDO") {
-            // Verifica se o backend já tem ORÇAMENTO APROVADO (mudança manual)
             if (etapaNome === "ORÇAMENTO APROVADO") {
               etapaCalculada = "ORÇAMENTO APROVADO";
             } else {
@@ -265,7 +197,7 @@ class PedidosService extends BaseService {
           }
         }
       } else {
-        // SEM AGENDAMENTOS ATIVOS → FORÇA PENDENTE
+ 
         etapaCalculada = "PENDENTE";
       }
 
@@ -276,14 +208,13 @@ class PedidosService extends BaseService {
         descricao: dadosBackend.servico.descricao || "",
         precoBase: dadosBackend.servico.precoBase || 0,
         ativo: dadosBackend.servico.ativo,
-        etapa: etapaCalculada, // Usa a etapa calculada
-        agendamentos: agendamentosTodos, // Mantém todos no histórico
+        etapa: etapaCalculada, 
+        agendamentos: agendamentosTodos, 
       };
 
       produtosDesc = servicoInfo.nome;
       itensCount = 1;
 
-      // Mapear para texto amigável e valor da barra de progresso
       switch (etapaCalculada.toUpperCase()) {
         case "PENDENTE":
           etapaAtual = "Pendente";
@@ -382,9 +313,7 @@ class PedidosService extends BaseService {
       tipoPedido:
         dadosBackend.tipoPedido || (isProduto ? "produto" : "servico"),
 
-      // Dados calculados para o modal e barra de progresso
       etapa: etapaAtual,
-      // Agora etapaOriginal vai receber etapaCalculada, que está no escopo correto
       etapaOriginal: isServico ? etapaCalculada : null,
       progresso: [progressoValor, progressoTotal],
       servicoNome: servicoInfo?.nome || null,
@@ -397,13 +326,6 @@ class PedidosService extends BaseService {
     };
   }
 
-  /**
-   * Filtra uma lista de pedidos pelo status, forma de pagamento, etapa e busca textual.
-   * Recebe os pedidos já mapeados por `mapearParaFrontend`.
-   * @param {object[]} pedidos
-   * @param {{ status?: string|string[], pagamento?: string|string[], etapa?: string|string[], busca?: string }} filtros
-   * @returns {object[]}
-   */
   filtrarPedidos(pedidos, filtros = {}) {
     let pedidosFiltrados = [...pedidos];
 
@@ -472,12 +394,6 @@ class PedidosService extends BaseService {
     return pedidosFiltrados;
   }
 
-  /**
-   * Filtra uma lista de serviços pelo status, etapa e busca textual.
-   * @param {object[]} servicos
-   * @param {{ status?: string|string[], etapa?: string|string[], busca?: string }} filtros
-   * @returns {object[]}
-   */
   filtrarServicos(servicos, filtros = {}) {
     let servicosFiltrados = [...servicos];
 

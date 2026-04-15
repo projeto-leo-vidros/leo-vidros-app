@@ -32,7 +32,6 @@ function Login() {
       const data = response.data;
       const { id, firstLogin, nome, email: userEmail } = data;
 
-      // Popula o UserContext (que persiste no sessionStorage internamente)
       login({ id, nome, email: userEmail, firstLogin });
 
       setModalOpen(true);
