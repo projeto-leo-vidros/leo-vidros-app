@@ -73,7 +73,7 @@ const Header = () => {
 
   const handleLogout = () => {
     // Redirecionar para login (implementar lógica de logout conforme necessário)
-    navigate("/Login");
+    navigate("/login");
   };
 
   const urgentNotifications = notifications?.filter((n) => n?.urgent)?.length;

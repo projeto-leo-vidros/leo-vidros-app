@@ -67,7 +67,7 @@ export default function PaginaInicial() {
   } = useDashboardKpis();
 
   const handleEstoqueItemClick = (itemId) => {
-    navigate(`/Estoque/${itemId}`);
+    navigate(`/estoque/${itemId}`);
   };
 
   const handleAgendamentoItemClick = (agendamentoId) => {

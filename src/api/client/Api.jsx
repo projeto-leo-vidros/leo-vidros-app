@@ -41,7 +41,7 @@ const configureInterceptors = (instance) => {
         // Limpar apenas dados do usuário, não tokens (removidos dos cookies pelo servidor)
         sessionStorage.clear();
 
-        setTimeout(() => (window.location.href = "/Login"), 2500);
+        setTimeout(() => (window.location.href = "/login"), 2500);
       }
 
       return Promise.reject(error);

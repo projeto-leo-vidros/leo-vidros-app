@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   format,
   startOfMonth,
@@ -15,7 +15,18 @@ import Icon from "../../../components/ui/misc/AppIcon";
 import Button from "../../../components/ui/Button/Button.component";
 
 const MiniCalendar = ({ selectedDate, onDateSelect }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
+
+  useEffect(() => {
+    if (selectedDate) {
+      setCurrentMonth((prevMonth) => {
+        if (!isSameMonth(selectedDate, prevMonth)) {
+          return selectedDate;
+        }
+        return prevMonth;
+      });
+    }
+  }, [selectedDate]);
 
   const fixedHolidays = [
     "01/01",
@@ -59,11 +70,11 @@ const MiniCalendar = ({ selectedDate, onDateSelect }) => {
       } else if (isDateToday) {
         // HOJE: Azul forte (bg-blue-500)
         dayClasses +=
-          "bg-blue-500 text-white font-bold rounded-full hover:bg-blue-600";
+          "bg-[#134074ff] text-white font-bold rounded-full hover:bg-blue-600";
       } else if (isSelected) {
         // Selecionado
         dayClasses +=
-          "bg-primary text-primary-foreground rounded-modern hover:bg-primary/90";
+          "bg-[#134074ff] text-white rounded-modern hover:bg-primary/90";
       } else if (isHoliday) {
         // Feriado: Hover azul claro
         dayClasses +=
@@ -105,7 +116,7 @@ const MiniCalendar = ({ selectedDate, onDateSelect }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 bg-card border border-hairline rounded-modern p-4">
+    <div className="flex flex-col gap-3 bg-card rounded-modern p-4">
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-2">
         <Button

@@ -4,7 +4,7 @@ export default function ProtectedRoute({ children }) {
   const isAuthenticated = sessionStorage.getItem("isAuthenticated");
 
   if (!isAuthenticated) {
-    return <Navigate to="/Login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;

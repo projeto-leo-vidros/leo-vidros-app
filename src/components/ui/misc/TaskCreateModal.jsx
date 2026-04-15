@@ -3,82 +3,18 @@ import { X, Check, Trash2, CheckCircle, Package } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { cepMask } from "../../../utils/masks";
 import UniversalInput from "../Input/UniversalInput";
+import Button from "../Button/Button.component";
 
-const Button = ({
-  children,
-  variant = "primary",
-  size = "md",
-  className = "",
-  onClick,
-  disabled,
-  type = "button",
-}) => {
-  const baseClass =
-    "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
-  const variants = {
-    primary:
-      "bg-blue-600 text-white hover:bg-blue-700 border border-transparent shadow-sm hover:shadow-md",
-    "btn-primary":
-      "bg-blue-600 text-white hover:bg-blue-700 border border-transparent shadow-sm hover:shadow-md",
-    outline:
-      "border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow-sm",
-    ghost: "hover:bg-gray-100 text-gray-500 hover:text-gray-700",
-    success: "bg-green-600 text-white hover:bg-green-700 shadow-sm",
-  };
-  const sizes = {
-    icon: "h-10 w-10 p-2",
-    sm: "h-8 px-3 text-xs",
-    md: "h-10 px-4 py-2 text-sm",
-    lg: "h-12 px-6 text-base",
-  };
-
-  return (
-    <button
-      type={type}
-      className={`${baseClass} ${variants[variant] || variants.primary} ${sizes[size]} ${className}`}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
-  );
+const getInitials = (label) => {
+  if (!label || typeof label !== "string") return "";
+  return label
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 };
-
-const Select = ({ value, onChange, options, placeholder, disabled }) => {
-  const handleChange = (e) => {
-    const selectedVal = e.target.value;
-    if (!selectedVal) return;
-    const option = options.find((o) => String(o.value) === selectedVal);
-    onChange(option);
-  };
-  const currentValue = value?.value || value || "";
-
-  return (
-    <div className="relative w-full">
-      <select
-        value={currentValue}
-        onChange={handleChange}
-        disabled={disabled}
-        className="flex h-10 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 transition-all shadow-sm"
-      >
-        <option value="" disabled>
-          {placeholder || "Selecione..."}
-        </option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-        <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-          <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-        </svg>
-      </div>
-    </div>
-  );
-};
-
 const MultipleSelectCheckmarks = ({
   options,
   value = [],
@@ -95,31 +31,37 @@ const MultipleSelectCheckmarks = ({
 
   return (
     <div
-      className={`border border-gray-300 rounded-md p-2 max-h-32 overflow-y-auto bg-white w-full shadow-sm ${className}`}
+      className={`max-h-32 w-full overflow-y-auto rounded-md border border-gray-300 bg-white p-2 shadow-sm ${className}`}
     >
       {options.length === 0 ? (
-        <span className="text-sm text-gray-400 p-1 block italic">
+        <span className="block p-1 text-sm text-gray-400 italic">
           {placeholder || "Sem opções"}
         </span>
       ) : (
         options.map((opt) => (
           <div
             key={opt.value}
-            className="flex items-center space-x-2 py-1.5 px-2 hover:bg-gray-50 rounded cursor-pointer transition-colors group"
+            className="group flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-gray-50"
             onClick={() => toggleOption(opt.value)}
           >
             <div
-              className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${value.includes(opt.value) ? "bg-blue-600 border-blue-600" : "border-gray-300 group-hover:border-blue-400"}`}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${value.includes(opt.value) ? "border-blue-600 bg-blue-600" : "border-gray-800 group-hover:border-blue-400"}`}
             >
               {value.includes(opt.value) && (
                 <Check size={12} className="text-white" />
               )}
             </div>
-            <span
-              className={`text-sm ${value.includes(opt.value) ? "text-gray-900 font-medium" : "text-gray-700"}`}
-            >
-              {opt.label}
-            </span>
+
+            <div className="flex items-center gap-2.5 overflow-hidden py-1">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#134074ff] text-xs font-bold tracking-wider text-white uppercase shadow-sm">
+                {getInitials(opt.label)}
+              </div>
+              <span
+                className={`truncate text-sm ${value.includes(opt.value) ? "font-bold text-gray-900" : "font-medium text-gray-700"}`}
+              >
+                {opt.label}
+              </span>
+            </div>
           </div>
         ))
       )}
@@ -569,7 +511,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       ),
     }));
   };
-
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -595,7 +536,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setSelectedFuncionarios(initialData?.funcionarios || []);
       setStep(1);
       setIsSuccess(false);
-
+      setClienteInfo(null);
+      setSavedAddress(null);
+      setUseExistingAddress(true);
       if (initialData?.tipoAgendamento) {
         const typeValue =
           initialData.tipoAgendamento.value || initialData.tipoAgendamento;
@@ -619,9 +562,48 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       const tipoValue =
         formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
       if (!tipoValue) newErrors.tipoAgendamento = "* Obrigatório";
-      if (!formData?.eventDate?.trim()) newErrors.eventDate = "* Obrigatória";
-      if (!formData?.startTime?.trim()) newErrors.startTime = "* Obrigatório";
+      if (!formData?.eventDate?.trim()) {
+        newErrors.eventDate = "* Obrigatória";
+      } else {
+        const now = new Date();
+      const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const hasDateOrTimeChanged = formData?.eventDate !== initialData?.eventDate || formData?.startTime !== initialData?.startTime;
+
+      if (!formData?.id || hasDateOrTimeChanged) {
+        if (formData?.eventDate < todayYMD) {
+          newErrors.eventDate = "* Não é permitido agendar no passado";
+        } else if (
+          formData?.eventDate === todayYMD &&
+          formData?.startTime
+        ) {
+          const [hours, minutes] = formData.startTime.split(":");
+          if (
+            parseInt(hours) < now.getHours() ||
+            (parseInt(hours) === now.getHours() &&
+              parseInt(minutes) < now.getMinutes())
+          ) {
+            newErrors.startTime = "* O horário escolhido já passou";
+          }
+        }
+      }
+      }
+
+      if (!formData?.startTime?.trim() && !newErrors.startTime)
+        newErrors.startTime = "* Obrigatório";
       if (!formData?.endTime?.trim()) newErrors.endTime = "* Obrigatório";
+      
+      // Validar que startTime é menor que endTime
+      if (formData?.startTime && formData?.endTime) {
+        const [startHour, startMinute] = formData.startTime.split(":").map(Number);
+        const [endHour, endMinute] = formData.endTime.split(":").map(Number);
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
+        
+        if (startTotalMinutes >= endTotalMinutes) {
+          newErrors.endTime = "* A hora final deve ser maior que a hora inicial";
+        }
+      }
+      
       if (!selectedFuncionarios || selectedFuncionarios.length === 0)
         newErrors.funcionarios = "* Selecione pelo menos um funcionário";
     }
@@ -825,25 +807,25 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   if (isSuccess) {
     return (
       <div
-        className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-[9999] backdrop-blur-sm"
+        className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       >
         <div
-          className="bg-white border border-gray-200 rounded-xl p-10 m-3 w-full max-w-md shadow-2xl flex flex-col items-center justify-center text-center transform transition-all scale-100"
+          className="flex w-full max-w-md scale-100 transform flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-3 p-10 text-center shadow-2xl transition-all"
           onClick={(e) => e?.stopPropagation()}
         >
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+          <div className="flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-green-100 pb-6">
+            <CheckCircle className="h-12 w-12 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="pb-2 text-2xl font-bold text-gray-900">
             Agendamento {formData.id ? "Atualizado" : "Criado"}!
           </h2>
-          <p className="text-gray-500 mb-8">
+          <p className="pb-8 text-gray-500">
             O agendamento foi salvo com sucesso.
           </p>
           <div className="w-full">
             <Button
-              variant="success"
+              variant="primary"
               size="lg"
               className="w-full justify-center"
               onClick={onClose}
@@ -858,11 +840,11 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4"
+      className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="flex flex-col gap-3 bg-white border border-gray-200 rounded-xl p-5 w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden"
+        className="flex max-h-[90vh] w-full max-w-4xl flex-col gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-2xl"
         onClick={(e) => e?.stopPropagation()}
       >
         <div className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
@@ -883,7 +865,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         <div className="flex items-center justify-center gap-4">
           <div className="flex flex-col items-center gap-2">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${step >= 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}
             >
               1
             </div>
@@ -898,7 +880,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           ></div>
           <div className="flex flex-col items-center gap-2">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}
             >
               2
             </div>
@@ -916,7 +898,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               ></div>
               <div className="flex flex-col items-center gap-2">
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${step >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}
                 >
                   3
                 </div>
@@ -932,10 +914,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
         <form
           onSubmit={handleSubmit}
-          className="flex-1 flex flex-col gap-6 overflow-y-auto px-2 pb-6"
+          className="flex flex-1 flex-col gap-6 overflow-y-auto px-2 pb-6"
         >
           {errors?.submit && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm flex items-center">
+            <div className="flex items-center rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               <X size={16} className="mr-2" />
               {errors.submit}
             </div>
@@ -946,45 +928,69 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             <>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Tipo de agendamento <span className="text-red-500">*</span>
                   </label>
-                  <Select
-                    value={formData?.tipoAgendamento}
-                    onChange={handleTypeChange}
+                  <UniversalInput
+                    as="select"
+                    value={
+                      formData?.tipoAgendamento?.value ||
+                      formData?.tipoAgendamento ||
+                      ""
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const opt = categoryOptions.find(
+                        (o) => String(o.value) === val,
+                      );
+                      handleTypeChange(opt);
+                    }}
                     options={categoryOptions}
                     placeholder="Selecione o tipo"
                   />
                   {errors?.tipoAgendamento && (
-                    <span className="text-red-500 text-xs mt-1">
+                    <span className="mt-1 text-xs text-red-500">
                       {errors.tipoAgendamento}
                     </span>
                   )}
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 flex justify-between">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     <span>
                       Pedido Vinculado <span className="text-red-500">*</span>
                     </span>
                     {loadingOptions && (
-                      <span className="text-xs text-blue-600 animate-pulse">
+                      <span className="animate-pulse text-xs text-blue-600">
                         Carregando...
                       </span>
                     )}
                   </label>
-                  <Select
-                    value={formData?.pedido}
-                    onChange={handlePedidoChange}
+                  <UniversalInput
+                    as="select"
+                    value={formData?.pedido?.value || formData?.pedido || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const opt = pedidoOptions.find(
+                        (o) => String(o.value) === val,
+                      );
+                      handlePedidoChange(opt);
+                    }}
                     options={pedidoOptions}
                     placeholder={
                       loadingOptions
                         ? "Buscando pedidos..."
                         : "Selecione o pedido"
                     }
-                    disabled={!formData?.tipoAgendamento || loadingOptions}
+                    disabled={
+                      !formData?.tipoAgendamento ||
+                      loadingOptions ||
+                      ((formData?.tipoAgendamento?.value === "SERVICO" ||
+                        formData?.tipoAgendamento === "SERVICO") &&
+                        pedidoOptions.length === 0)
+                    }
                   />
                   {errors?.pedido && (
-                    <span className="text-red-500 text-xs mt-1">
+                    <span className="mt-1 text-xs text-red-500">
                       {errors.pedido}
                     </span>
                   )}
@@ -993,15 +999,15 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
               {/* Informações do Cliente */}
               {clienteInfo && (
-                <div className="flex flex-col gap-4 bg-white border border-gray-200 rounded-lg p-4 shadow-md">
+                <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-md">
                   {/* Cabeçalho: Nome + Status */}
-                  <div className="flex items-center justify-center gap-2 justify-between">
+                  <div className="flex items-center justify-between justify-center gap-2">
                     <h3 className="text-lg font-bold text-gray-900">
                       {clienteInfo.nome}
                     </h3>
 
                     <span
-                      className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
                         clienteInfo.status === "Ativo"
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-200 text-gray-600"
@@ -1014,19 +1020,19 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   {/* Informações */}
                   <div className="flex flex-col items-start justify-start gap-4 text-sm">
                     <div>
-                      <p className="text-gray-900 font-semibold">
+                      <p className="font-semibold text-gray-900">
                         CPF: {clienteInfo.cpf || "-"}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-gray-900 font-semibold">
+                      <p className="font-semibold text-gray-900">
                         Telefone: {clienteInfo.telefone || "-"}
                       </p>
                     </div>
 
                     <div className="col-span-2">
-                      <p className="text-gray-900 font-semibold break-all">
+                      <p className="font-semibold break-all text-gray-900">
                         Email: {clienteInfo.email || "-"}
                       </p>
                     </div>
@@ -1034,27 +1040,32 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                <div className="flex flex-col items-center">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
+                    Data do evento <span className="text-red-500">*</span>
+                  </label>
                   <UniversalInput
-                    label="Data do evento"
                     required
                     type="date"
+                    min={
+                      !initialData
+                        ? new Date().toISOString().split("T")[0]
+                        : undefined
+                    }
                     value={formData?.eventDate}
                     onChange={(e) =>
                       handleInputChange("eventDate", e?.target?.value)
                     }
                     error={errors?.eventDate}
-                    wrapperClassName="!w-[160px]"
-                    className="text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
                   />
                 </div>
-                <div className="flex flex-col items-center">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div className="flex flex-col">
+                  <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Horário (Início e Fim){" "}
                     <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                     <UniversalInput
                       type="time"
                       value={formData?.startTime}
@@ -1062,10 +1073,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                         handleInputChange("startTime", e?.target?.value)
                       }
                       error={errors?.startTime}
-                      wrapperClassName="!w-[100px]"
-                      className="text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
+                      className="appearance-none text-center [&::-webkit-calendar-picker-indicator]:hidden"
                     />
-                    <span className="text-gray-500 font-medium pb-1">até</span>
+                    <span className="pb-1 font-medium text-gray-500">até</span>
                     <UniversalInput
                       type="time"
                       value={formData?.endTime}
@@ -1073,30 +1083,29 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                         handleInputChange("endTime", e?.target?.value)
                       }
                       error={errors?.endTime}
-                      wrapperClassName="!w-[100px]"
-                      className="text-center [&::-webkit-calendar-picker-indicator]:hidden appearance-none"
+                      className="appearance-none text-center [&::-webkit-calendar-picker-indicator]:hidden"
                     />
                   </div>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
                   Funcionários disponíveis{" "}
                   <span className="text-red-500">*</span>
                 </label>
                 {!formData?.eventDate ||
                 !formData?.startTime ||
                 !formData?.endTime ? (
-                  <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center gap-2">
+                  <p className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-600">
                     <span>⚠️</span> Preencha a data e o horário acima para ver
                     os funcionários disponíveis.
                   </p>
                 ) : loadingFuncionarios ? (
-                  <p className="text-sm text-blue-600 animate-pulse p-3">
+                  <p className="animate-pulse p-3 text-sm text-blue-600">
                     Buscando funcionários disponíveis...
                   </p>
                 ) : funcionariosOptions.length === 0 ? (
-                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                     Nenhum funcionário disponível neste horário.
                   </p>
                 ) : (
@@ -1108,7 +1117,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   />
                 )}
                 {errors?.funcionarios && (
-                  <span className="text-xs text-red-500 mt-1 block font-medium">
+                  <span className="mt-1 block text-xs font-medium text-red-500">
                     {errors.funcionarios}
                   </span>
                 )}
@@ -1120,10 +1129,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           {step === 2 && (
             <>
               {savedAddress && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-blue-900 mb-1">
+                      <p className="mb-1 text-sm font-semibold text-blue-900">
                         {useExistingAddress
                           ? "📍 Usando endereço cadastrado"
                           : "🆕 Cadastrando novo endereço"}
@@ -1140,7 +1149,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                       variant="outline"
                       size="sm"
                       onClick={handleToggleAddressMode}
-                      className="ml-3 border-blue-300 text-blue-700 hover:bg-blue-100 cursor-pointer"
+                      className="ml-3 cursor-pointer border-blue-300 text-blue-700 hover:bg-blue-100"
                     >
                       {useExistingAddress
                         ? "Usar novo endereço"
@@ -1151,12 +1160,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="flex text-sm font-semibold text-gray-700 mb-2 justify-between">
+                  <div className="mb-2 flex justify-between text-sm font-semibold text-gray-700">
                     <span>
                       CEP <span className="text-red-500">*</span>
                     </span>
                     {loadingCep && (
-                      <span className="text-xs text-blue-600 animate-pulse">
+                      <span className="animate-pulse text-xs text-blue-600">
                         Buscando...
                       </span>
                     )}
@@ -1224,9 +1233,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 <UniversalInput
                   label="País"
                   value={formData?.pais}
-                  onChange={(e) =>
-                    handleInputChange("pais", e?.target?.value)
-                  }
+                  onChange={(e) => handleInputChange("pais", e?.target?.value)}
                   placeholder="Brasil"
                 />
               </div>
@@ -1243,13 +1250,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
           {/* STEP 3 */}
           {step === 3 && (
-            <div className="flex flex-col gap-4 h-full">
+            <div className="flex h-full flex-col gap-4">
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="mb-2 flex items-center justify-between">
                   <label className="block text-sm font-semibold text-gray-700">
                     Adicionar Produtos (Opcional)
                   </label>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">
                     {formData.produtos.length} itens selecionados
                   </span>
                 </div>
@@ -1261,20 +1268,20 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   className="mb-4"
                 />
               </div>
-              <div className="flex-1 border border-gray-200 rounded-md overflow-hidden flex flex-col">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 grid grid-cols-12 gap-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <div className="col-span-7 text-left flex items-center gap-2">
+              <div className="flex flex-1 flex-col overflow-hidden rounded-md border border-gray-200">
+                <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  <div className="col-span-7 flex items-center gap-2 text-left">
                     <Package size={14} /> Produto
                   </div>
                   <div className="col-span-4 text-center">Qtd. Reserva</div>
                   <div className="col-span-1 text-center">Ação</div>
                 </div>
-                <div className="overflow-y-auto flex-1 bg-gray-50/30">
+                <div className="flex-1 overflow-y-auto bg-gray-50/30">
                   {formData.produtos.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8">
+                    <div className="flex h-full flex-col items-center justify-center p-8 text-gray-400">
                       <Package size={40} className="mb-2 opacity-20" />
                       <p className="text-sm">Nenhum produto selecionado.</p>
-                      <p className="text-xs mt-1">
+                      <p className="mt-1 text-xs">
                         Clique em "Finalizar" para pular esta etapa.
                       </p>
                     </div>
@@ -1283,10 +1290,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                       {formData.produtos.map((prod) => (
                         <div
                           key={prod.id}
-                          className="grid grid-cols-12 gap-4 items-center px-4 py-3 hover:bg-white transition-colors bg-white"
+                          className="grid grid-cols-12 items-center gap-4 bg-white px-4 py-3 transition-colors hover:bg-white"
                         >
                           <div
-                            className="col-span-7 text-sm font-medium text-gray-900 text-left truncate"
+                            className="col-span-7 truncate text-left text-sm font-medium text-gray-900"
                             title={prod.nome}
                           >
                             {prod.nome}
@@ -1308,7 +1315,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                           <div className="col-span-1 text-center">
                             <button
                               type="button"
-                              className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-full transition-colors"
+                              className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                               onClick={() => handleRemoveProduto(prod.id)}
                             >
                               <Trash2 size={16} />
@@ -1324,7 +1331,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           )}
 
           {/* FOOTER */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between border-t border-gray-100 pt-4">
             <div>
               {step > 1 && (
                 <Button variant="outline" onClick={handleBack}>
@@ -1337,6 +1344,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 Cancelar
               </Button>
               <Button
+                type="submit"
                 variant="primary"
                 className="w-full md:w-auto"
                 disabled={loading}

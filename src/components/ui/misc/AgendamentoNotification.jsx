@@ -169,7 +169,7 @@ const AgendamentoNotification = ({
                     disabled={loading}
                     startIcon={<XCircle className="w-4 h-4" />}
                   >
-                    Cancelar
+                    Cancelar Agendamento
                   </Button>
                 </div>
               </div>

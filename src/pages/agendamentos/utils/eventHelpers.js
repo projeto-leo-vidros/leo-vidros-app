@@ -158,3 +158,14 @@ export const hasEventsOnDate = (eventsByDate, dateKey) => {
 export const getEventCountForDate = (eventsByDate, dateKey) => {
   return eventsByDate[dateKey]?.length || 0;
 };
+
+/**
+ * Normaliza o status para comparações seguras sem acentuação e uppercase
+ * @param {string|Object} status - Objeto do status ou string
+ * @returns {string} - Status normalizado em CAIXA ALTA (ex: "CONCLUIDO")
+ */
+export const normalizeStatus = (status) => {
+  if (!status) return "PENDENTE";
+  const str = typeof status === "object" ? status.nome || status.tipo || "" : String(status);
+  return str.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+};
