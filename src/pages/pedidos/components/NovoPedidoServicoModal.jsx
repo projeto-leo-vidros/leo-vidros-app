@@ -48,7 +48,8 @@ const usePedidoServicoAPI = () => {
   const buscarClientes = async () => {
     try {
       const response = await Api.get(`/clientes`);
-      return response.data;
+      const data = response.data;
+      return Array.isArray(data) ? data : (data?.content ?? []);
     } catch (error) {
       throw new Error(error.response?.data?.message || "Erro ao buscar clientes");
     }
@@ -264,15 +265,15 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         pedido: {
           valorTotal: total,
           ativo: true,
-          cliente: clienteData,
+          clienteId: clienteData.id,
           status: { tipo: "PEDIDO", nome: "ATIVO" },
         },
         servico: {
           nome: formData.servicos[0]?.nome || "Serviço personalizado",
-          descricao: formData.servicos.map((s) => s.descricao || s.nome).join("; "),
+          descricao: formData.observacoes || formData.servicos.map((s) => s.descricao || s.nome).join("; "),
           precoBase: total,
           ativo: true,
-          etapa: { tipo: "PEDIDO", nome: formData.etapa },
+          etapaNome: formData.etapa,
         },
       };
 
