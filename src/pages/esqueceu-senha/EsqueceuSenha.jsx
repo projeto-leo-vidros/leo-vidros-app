@@ -38,7 +38,7 @@ const EsqueceuSenha = () => {
           });
 
           setTimeout(() => {
-            navigate("/Login");
+            navigate("/login");
           }, 3500);
         }, 2000);
       }
@@ -110,7 +110,7 @@ const EsqueceuSenha = () => {
             <div className="flex justify-start">
               <button
                 type="button"
-                onClick={() => navigate("/Login")}
+                onClick={() => navigate("/login")}
                 className="flex items-center gap-2 text-[#007EA7] hover:text-[#005f73] transition-colors"
               >
                 <ArrowLeft size={20} className="cursor-pointer" />
@@ -181,7 +181,7 @@ const EsqueceuSenha = () => {
                 Ainda não tem uma conta?{" "}
                 <button
                   type="button"
-                  onClick={() => navigate("/Cadastro")}
+                  onClick={() => navigate("/cadastro")}
                   className="text-[#007EA7] hover:text-[#005f73] font-medium transition-colors cursor-pointer"
                 >
                   Cadastre-se

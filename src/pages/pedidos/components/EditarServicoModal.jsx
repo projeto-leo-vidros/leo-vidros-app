@@ -293,7 +293,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   };
 
   const handleAgendarOrcamento = () => {
-    navigate("/Agendamentos", {
+    navigate("/agendamentos", {
       state: {
         tipo: "orcamento",
         servicoId: servico.id,
@@ -305,7 +305,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   };
 
   const handleAgendarServico = () => {
-    navigate("/Agendamentos", {
+    navigate("/agendamentos", {
       state: {
         tipo: "servico",
         servicoId: servico.id,

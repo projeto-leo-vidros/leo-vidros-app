@@ -121,6 +121,13 @@ export default function PedidoDetalhe() {
   const handleSave = async () => {
     setSaving(true);
     setError(null);
+
+    if (!formData.formaPagamento.trim()) {
+      setError("⚠️ Selecione uma forma de pagamento");
+      setSaving(false);
+      return;
+    }
+
     try {
       const valorTotal = calcularValorTotal();
       const requestBody = {
@@ -167,22 +174,29 @@ export default function PedidoDetalhe() {
         })),
       };
 
-      await Api.put(`/pedidos/${id}`, requestBody);
-
-      setPedido((prev) => ({
-        ...prev,
-        clienteNome: formData.clienteNome,
-        formaPagamento: formData.formaPagamento,
-        observacoes: formData.observacoes,
-        produtos: formData.produtos,
-        valorTotal,
-        itensCount: formData.produtos.length,
-      }));
+      const response = await Api.put(`/pedidos/${id}`, requestBody);
+      console.log("🔄 Resposta do servidor:", response.data);
+      
+      const mapped = PedidosService.mapearParaFrontend(response.data);
+      console.log("📋 Dados mapeados:", mapped);
+      
+      setRawPedido(response.data);
+      setPedido(mapped);
+      
+      // Sincronizar formData com resposta do servidor
+      const newFormData = {
+        clienteNome: mapped.clienteNome || "",
+        formaPagamento: mapped.formaPagamento || "",
+        observacoes: mapped.observacoes || "",
+        produtos: mapped.produtos || [],
+      };
+      console.log("💾 Atualizando formData:", newFormData);
+      setFormData(newFormData);
 
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 2500);
     } catch (err) {
-      console.error("Erro ao salvar pedido:", err);
+      console.error("❌ Erro:", err);
       setError(
         err.response?.data?.message || err.message || "Erro ao salvar",
       );
@@ -441,12 +455,15 @@ export default function PedidoDetalhe() {
                         onChange={(e) =>
                           handleFieldChange("formaPagamento", e.target.value)
                         }
-                        className="w-full px-3 py-2 border border-gray-700 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white"
+                        className={`w-full px-3 py-2 border rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white ${
+                          !formData.formaPagamento
+                            ? "border-red-500"
+                            : "border-gray-700"
+                        }`}
                       >
                         <option value="">Selecione...</option>
                         <option value="Dinheiro">Dinheiro</option>
                         <option value="Pix">Pix</option>
-                        <option value="PIX">PIX</option>
                         <option value="Cartão de crédito">
                           Cartão de crédito
                         </option>

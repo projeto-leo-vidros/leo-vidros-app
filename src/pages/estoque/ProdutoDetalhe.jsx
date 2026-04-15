@@ -93,7 +93,7 @@ export default function ProductDetailPage() {
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
         alert("Erro ao carregar produto");
-        navigate("/Estoque");
+        navigate("/estoque");
       } finally {
         setLoading(false);
       }
@@ -335,7 +335,7 @@ export default function ProductDetailPage() {
   };
 
   const handleBack = () => {
-    navigate("/Estoque");
+    navigate("/estoque");
   };
 
   // Funções para controlar o modal de detalhes da movimentação

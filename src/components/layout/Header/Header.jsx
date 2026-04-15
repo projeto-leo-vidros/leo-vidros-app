@@ -167,7 +167,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             <MenuItem
               onClick={() => {
                 handleProfileClose();
-                navigate("/Perfil");
+                navigate("/perfil");
               }}
               sx={menuItemStyle}
             >

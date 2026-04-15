@@ -1,18 +1,11 @@
 import Api from "../client/Api";
 import BaseService from "../client/BaseService";
 
-/**
- * Serviço para integração com API de Serviços do backend Spring
- * Utiliza o mesmo endpoint de pedidos, mas filtra por serviços
- */
 class ServicosService extends BaseService {
   constructor() {
     super(Api);
   }
 
-  /**
-   * Buscar todos os serviços (pedidos do tipo serviço)
-   */
   async buscarTodos() {
     const result = await this.get("/Pedidos");
     if (result.success) {
@@ -21,9 +14,6 @@ class ServicosService extends BaseService {
     return result;
   }
 
-  /**
-   * Buscar serviço por ID
-   */
   async buscarPorId(id) {
     const result = await this.get(`/Pedidos/${id}`);
     if (result.success && !result.data?.servico) {
@@ -37,9 +27,6 @@ class ServicosService extends BaseService {
     return result;
   }
 
-  /**
-   * Buscar serviços por etapa
-   */
   async buscarPorEtapa(nomeEtapa) {
     const result = await this.get("/Pedidos/findAllBy", {
       params: { nome: nomeEtapa },
@@ -50,9 +37,7 @@ class ServicosService extends BaseService {
     return result;
   }
 
-  /**
-   * Criar novo serviço
-   */
+
   async criarServico(servicoData) {
     if (!servicoData.servico) {
       return {
@@ -67,27 +52,17 @@ class ServicosService extends BaseService {
     return result;
   }
 
-  /**
-   * Atualizar serviço existente
-   */
   async atualizarServico(id, servicoData) {
     const result = await this.put(`/Pedidos/${id}`, servicoData);
     if (!result.success) result.validationErrors = {};
     return result;
   }
 
-  /**
-   * Deletar serviço
-   */
   deletarServico(id) {
     return this.delete(`/Pedidos/${id}`);
   }
 
-  /**
-   * Mapear dados do frontend para o formato esperado pelo backend
-   */
   mapearParaBackend(dadosFrontend) {
-    // Para serviços, usamos o mesmo formato do PedidoRequestDto
     const servicoRequest = {
       pedido: {
         dataCompra:
@@ -115,17 +90,13 @@ class ServicosService extends BaseService {
             }
           : null,
       },
-      produtos: [], // Serviços geralmente não têm produtos
+      produtos: [],
     };
 
     return servicoRequest;
   }
 
-  /**
-   * Mapear dados do backend para o formato usado no frontend
-   */
   mapearParaFrontend(dadosBackend) {
-    // Calcular progresso baseado na etapa
     const progressoInfo = this.calcularProgresso(
       dadosBackend.servico?.etapa?.nome,
     );
@@ -152,9 +123,6 @@ class ServicosService extends BaseService {
     };
   }
 
-  /**
-   * Calcular progresso baseado na etapa do serviço
-   */
   calcularProgresso(nomeEtapa) {
     const etapas = {
       "Aguardando orçamento": { atual: 1, total: 6 },
@@ -169,13 +137,9 @@ class ServicosService extends BaseService {
     return etapas[nomeEtapa] || { atual: 1, total: 6 };
   }
 
-  /**
-   * Filtrar serviços por múltiplos critérios
-   */
   filtrarServicos(servicos, filtros = {}) {
     let servicosFiltrados = [...servicos];
 
-    // Filtro por status
     if (
       filtros.status &&
       filtros.status !== "Todos" &&
@@ -191,7 +155,6 @@ class ServicosService extends BaseService {
       }
     }
 
-    // Filtro por etapa
     if (
       filtros.etapa &&
       filtros.etapa !== "Todos" &&
@@ -207,7 +170,6 @@ class ServicosService extends BaseService {
       }
     }
 
-    // Filtro por busca textual
     if (filtros.busca && filtros.busca.trim()) {
       const termoBusca = filtros.busca.toLowerCase().trim();
       servicosFiltrados = servicosFiltrados.filter((servico) =>
@@ -227,9 +189,6 @@ class ServicosService extends BaseService {
     return servicosFiltrados;
   }
 
-  /**
-   * Obter lista de etapas disponíveis
-   */
   getEtapasDisponiveis() {
     return [
       "Aguardando orçamento",
@@ -241,9 +200,6 @@ class ServicosService extends BaseService {
     ];
   }
 
-  /**
-   * Obter lista de status disponíveis
-   */
   getStatusDisponiveis() {
     return ["Ativo", "Finalizado", "Cancelado"];
   }

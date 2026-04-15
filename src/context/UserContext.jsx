@@ -5,14 +5,12 @@ const UserContext = createContext(null);
 
 function readInitialState() {
   const id =
-    sessionStorage.getItem("userId") ?? localStorage.getItem("userId") ?? null;
+    sessionStorage.getItem("userId") ?? null;
   const name =
     sessionStorage.getItem("userName") ??
-    localStorage.getItem("userName") ??
     "";
   const email =
     sessionStorage.getItem("userEmail") ??
-    localStorage.getItem("userEmail") ??
     "";
   const isAuthenticated = sessionStorage.getItem("isAuthenticated") === "true";
   const photo = id
@@ -31,7 +29,6 @@ export function UserProvider({ children }) {
     sessionStorage.setItem("userName", nome);
     sessionStorage.setItem("userEmail", email);
     sessionStorage.setItem("userFirstLogin", String(firstLogin));
-    localStorage.setItem("userName", nome);
     localStorage.setItem("userFirstLogin", String(firstLogin));
 
     const photo = localStorage.getItem(`leoVidros_userPhoto_${id}`) ?? null;
@@ -46,6 +43,7 @@ export function UserProvider({ children }) {
 
   const logout = useCallback(() => {
     sessionStorage.clear();
+    // Token removido automaticamente pelo servidor via cookie
     setUser({
       id: null,
       name: "",

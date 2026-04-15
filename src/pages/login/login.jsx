@@ -6,7 +6,7 @@ import UniversalInput from "../../components/ui/Input/UniversalInput";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import { useNavigate } from "react-router-dom";
 import Api from "../../api/client/Api";
-import { useUser } from "../../context/UserContext.jsx";
+import { useUser } from "../../context/UserContext";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -32,7 +32,6 @@ function Login() {
       const data = response.data;
       const { id, firstLogin, nome, email: userEmail } = data;
 
-      // Popula o UserContext (que persiste no sessionStorage internamente)
       login({ id, nome, email: userEmail, firstLogin });
 
       setModalOpen(true);

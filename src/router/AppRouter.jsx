@@ -1,78 +1,100 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "../context/ProtectedRoute.jsx";
-import Login from "../pages/login/login.jsx";
-import Cadastro from "../pages/cadastro/cadastro.jsx";
-import PaginaInicial from "../pages/pagina-inicial/PaginaInicial.jsx";
-import Funcionarios from "../pages/funcionarios/funcionarios.jsx";
-import Clientes from "../pages/clientes/clientes.jsx";
-import Estoque from "../pages/estoque/estoque.jsx";
-import ProdutoDetalhe from "../pages/estoque/ProdutoDetalhe.jsx";
-import Pedidos from "../pages/pedidos/pedidos.jsx";
-import ServicoDetalhe from "../pages/servicos/ServicoDetalhe.jsx";
-import Solicitacoes from "../pages/solicitacoes/Solicitacoes.jsx";
-import Agendamentos from "../pages/agendamentos/agendamentos.jsx";
-import CalendarDashboard from "../pages/calendar-dashboard/index.jsx";
-import Perfil from "../pages/perfil/perfil.jsx";
-import MapContainer from "../pages/geo-localizacao/MapContainer.jsx";
-import NovaSenha from "../pages/nova-senha/NovaSenha.jsx";
-import EsqueceuSenha from "../pages/esqueceu-senha/EsqueceuSenha.jsx";
-import OrcamentoERP from "../pages/orcamento/Orcamento.jsx";
+
+const Login = lazy(() => import("../pages/login/login.jsx"));
+const Cadastro = lazy(() => import("../pages/cadastro/cadastro.jsx"));
+const PaginaInicial = lazy(() => import("../pages/pagina-inicial/PaginaInicial.jsx"));
+const Funcionarios = lazy(() => import("../pages/funcionarios/funcionarios.jsx"));
+const Clientes = lazy(() => import("../pages/clientes/clientes.jsx"));
+const Estoque = lazy(() => import("../pages/estoque/estoque.jsx"));
+const ProdutoDetalhe = lazy(() => import("../pages/estoque/ProdutoDetalhe.jsx"));
+const Pedidos = lazy(() => import("../pages/pedidos/pedidos.jsx"));
+const ServicoDetalhe = lazy(() => import("../pages/servicos/ServicoDetalhe.jsx"));
+const Solicitacoes = lazy(() => import("../pages/solicitacoes/Solicitacoes.jsx"));
+const Agendamentos = lazy(() => import("../pages/agendamentos/agendamentos.jsx"));
+const Perfil = lazy(() => import("../pages/perfil/perfil.jsx"));
+const MapContainer = lazy(() => import("../pages/geo-localizacao/MapContainer.jsx"));
+const NovaSenha = lazy(() => import("../pages/nova-senha/NovaSenha.jsx"));
+const EsqueceuSenha = lazy(() => import("../pages/esqueceu-senha/EsqueceuSenha.jsx"));
+const OrcamentoERP = lazy(() => import("../pages/orcamento/Orcamento.jsx"));
+
+// Loader simples para o Suspense
+const LoadingFallback = () => (
+  <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#134074ff] border-t-transparent"></div>
+  </div>
+);
+
+const withSuspense = (Node) => (
+  <Suspense fallback={<LoadingFallback />}>
+    {Node}
+  </Suspense>
+);
 
 export const appRouter = createBrowserRouter([
-  { path: "/", element: <Login /> },
-  { path: "/Login", element: <Login /> },
-  { path: "/Cadastro", element: <Cadastro /> },
+  { path: "/", element: withSuspense(<Login />) },
+  { path: "/login", element: withSuspense(<Login />) },
+  { path: "/cadastro", element: withSuspense(<Cadastro />) },
   {
     path: "/pagina-inicial",
-    element: (
+    element: withSuspense(
       <ProtectedRoute>
         <PaginaInicial />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Funcionarios",
-    element: (
+    path: "/funcionarios",
+    element: withSuspense(
       <ProtectedRoute>
         <Funcionarios />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Clientes",
-    element: (
+    path: "/clientes",
+    element: withSuspense(
       <ProtectedRoute>
         <Clientes />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Estoque",
-    element: (
+    path: "/estoque",
+    element: withSuspense(
       <ProtectedRoute>
         <Estoque />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Estoque/:id",
-    element: (
+    path: "/estoque/:id",
+    element: withSuspense(
       <ProtectedRoute>
         <ProdutoDetalhe />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Pedidos",
-    element: (
+    path: "/pedidos",
+    element: withSuspense(
       <ProtectedRoute>
         <Pedidos />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Pedidos/:pedidoId/orcamento",
-    element: (
+    path: "/pedidos/:pedidoId/orcamento",
+    element: withSuspense(
+      <ProtectedRoute>
+        <OrcamentoERP />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/orcamentos/:orcamentoId/editar",
+    element: withSuspense(
       <ProtectedRoute>
         <OrcamentoERP />
       </ProtectedRoute>
@@ -80,7 +102,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: "/Servicos/:id",
-    element: (
+    element: withSuspense(
       <ProtectedRoute>
         <ServicoDetalhe />
       </ProtectedRoute>
@@ -88,39 +110,31 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: "/acesso",
-    element: (
+    element: withSuspense(
       <ProtectedRoute>
         <Solicitacoes />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Agendamentos",
-    element: (
+    path: "/agendamentos",
+    element: withSuspense(
       <ProtectedRoute>
         <Agendamentos />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Agenda",
-    element: (
-      <ProtectedRoute>
-        <CalendarDashboard />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: "/primeiroAcesso/:idUsuario",
-    element: (
+    element: withSuspense(
       <ProtectedRoute>
         <NovaSenha />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/Perfil",
-    element: (
+    path: "/perfil",
+    element: withSuspense(
       <ProtectedRoute>
         <Perfil />
       </ProtectedRoute>
@@ -128,11 +142,11 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: "/geo-localizacao",
-    element: (
+    element: withSuspense(
       <ProtectedRoute>
         <MapContainer />
       </ProtectedRoute>
     ),
   },
-  { path: "/esqueceu-senha", element: <EsqueceuSenha /> },
+  { path: "/esqueceu-senha", element: withSuspense(<EsqueceuSenha />) },
 ]);

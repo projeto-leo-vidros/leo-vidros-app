@@ -15,7 +15,7 @@ export const useEventDetails = (initialEvent) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await Api.get(`/Agendamentos/${initialEvent.id}`);
+        const response = await Api.get(`/agendamentos/${initialEvent.id}`);
         const apiData = response.data;
 
         // Mesclar dados da API com dados processados do initialEvent
@@ -59,7 +59,7 @@ export const useDeleteAgendamento = (onSuccess) => {
 
     setDeleting(true);
     try {
-      const response = await Api.delete(`/Agendamentos/${id}`);
+      const response = await Api.delete(`/agendamentos/${id}`);
 
       if (onSuccess) {
         onSuccess(id);
