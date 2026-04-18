@@ -66,7 +66,7 @@ function Login() {
         <img
           src={Logo}
           alt="Logo"
-          className="h-12 w-auto"
+          className="h-22 w-auto"
         />
       </div>
       <div className="w-full max-w-6xl flex items-center justify-center gap-12">
