@@ -6,10 +6,11 @@ class ServicosService extends BaseService {
     super(Api);
   }
 
-  async buscarTodos() {
-    const result = await this.get("/Pedidos");
+  async buscarTodos({ page = 0, size = 20 } = {}) {
+    const result = await this.get("/Pedidos", { params: { page, size } });
     if (result.success) {
-      result.data = result.data?.filter((pedido) => pedido.servico) || [];
+      const items = result.data?.content ?? result.data ?? [];
+      result.data = items.filter((pedido) => pedido.servico);
     }
     return result;
   }
@@ -27,12 +28,13 @@ class ServicosService extends BaseService {
     return result;
   }
 
-  async buscarPorEtapa(nomeEtapa) {
+  async buscarPorEtapa(nomeEtapa, { page = 0, size = 20 } = {}) {
     const result = await this.get("/Pedidos/findAllBy", {
-      params: { nome: nomeEtapa },
+      params: { nome: nomeEtapa, page, size },
     });
     if (result.success) {
-      result.data = result.data?.filter((pedido) => pedido.servico) || [];
+      const items = result.data?.content ?? result.data ?? [];
+      result.data = items.filter((pedido) => pedido.servico);
     }
     return result;
   }

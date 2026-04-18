@@ -6,8 +6,8 @@ class AgendamentosService extends BaseService {
     super(Api);
   }
 
-  getAll() {
-    return this.get("/agendamentos");
+  getAll({ page = 0, size = 20 } = {}) {
+    return this.get("/agendamentos", { params: { page, size } });
   }
 
   getById(id) {

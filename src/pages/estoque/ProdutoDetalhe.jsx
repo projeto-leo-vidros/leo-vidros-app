@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
 
         const historicoResponse = await Api.get(`/historicos-estoques/${id}`);
         if (historicoResponse.status === 200) {
-          const historicoData = historicoResponse.data;
+          const historicoData = historicoResponse.data?.content ?? historicoResponse.data;
 
           const historicoOrdenado = historicoData.sort(
             (a, b) => new Date(b.dataHora) - new Date(a.dataHora),
