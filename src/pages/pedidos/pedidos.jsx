@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import PedidosList from "./PedidosList";
-import ServicosList from "../servicos/ServicosList";
+import ServicosList from "./servicos/ServicosList";
 import FilterDropdown from "./components/FilterDropdown";
 import { PackageOpen, Wrench, Filter, Search, ChevronDown, Plus } from "lucide-react";
 import Button from "../../components/ui/Button/Button.component";
@@ -15,9 +15,11 @@ export default function Pedidos() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const location = useLocation();
-  const initialTab = location.state?.initialTab || (location.pathname.includes("/servicos")
-    ? "servicos"
-    : "pedidos");
+  const searchParams = new URLSearchParams(location.search);
+  const tabParam = searchParams.get("tab");
+  const initialTab = location.state?.initialTab
+    || (tabParam === "servico" || tabParam === "servicos" ? "servicos" : null)
+    || (location.pathname.includes("/servicos") ? "servicos" : "pedidos");
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const [busca, setBusca] = useState("");
