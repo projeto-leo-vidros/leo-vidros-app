@@ -70,7 +70,6 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           flex justify-between items-center
           min-h-65px sm:min-h-75px md:min-h-80px
           px-3 sm:px-6 md:px-10
-          transition-all duration-300
         "
       >
         {/* Menu + Logo */}
@@ -108,7 +107,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
           <ChevronDown
-            className={`text-white transition-transform duration-300 group-hover:text-gray-300 ${
+            className={`text-white transition-transform duration-300 group-hover:text-gray-300 cursor-pointer ${
               open ? "rotate-180" : "rotate-0"
             } hidden sm:block`}
             size={20}

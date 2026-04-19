@@ -23,24 +23,18 @@ function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const response = await Api.post(
         "/auth/login",
         { email, senha },
         { skipAuthRedirect: true },
       );
-
       const data = response.data;
       const { id, firstLogin, nome, email: userEmail } = data;
-
       login({ id, nome, email: userEmail, firstLogin });
-
       setModalOpen(true);
-
       setTimeout(() => {
         setModalOpen(false);
-
         if (data.firstLogin === true || data.firstLogin === "true") {
           navigate(`/primeiroAcesso/${data.id}`);
         } else {
@@ -61,42 +55,38 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f7f9fa] p-4">
-      <div className="absolute top-5 right-10">
-        <img
-          src={Logo}
-          alt="Logo"
-          className="h-22 w-auto"
-        />
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-t from-[#dff0f5] via-[#edf6f9] to-white p-4">
       <div className="w-full max-w-6xl flex items-center justify-center gap-12">
-        {/* Imagem lateral */}
-        <div
-          className="hidden lg:flex flex-1 h-[600px] rounded-xl bg-cover bg-center shadow-lg/20"
-          style={{
-            backgroundImage: `url(${BgImage})`,
-          }}
-        />
+        {/* Imagem lateral com overlay */}
+        <div className="hidden lg:flex flex-1 h-[620px] rounded-2xl overflow-hidden shadow-2xl relative">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${BgImage})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#003d5b]/70 via-[#007EA7]/20 to-transparent" />
+        </div>
 
         {/* Formulário */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md backdrop-blur-sm p-8 rounded-xl relative"
+          className="w-full max-w-md bg-white border border-gray-100 shadow-xl px-10 py-10 rounded-2xl"
         >
-          <div className="flex flex-col gap-6">
-            <div className="mb-10 text-center flex flex-col gap-2">
-              <h1 className="text-4xl font-bold text-[#111827] mb-2">
-                Entre na sua conta
-              </h1>
-              <p className="text-[#6b7280] text-sm">
-                Faça login para continuar
-              </p>
+          <div className="flex flex-col gap-8">
+            <div className="text-center flex flex-col items-center gap-3">
+              <img src={Logo} alt="Logo" className="h-12 w-auto" />
+              <div className="flex flex-col gap-1 mt-2">
+                <h1 className="text-3xl font-bold text-[#111827]">
+                  Entre na sua conta
+                </h1>
+                <p className="text-[#6b7280] text-sm">
+                  Faça login para continuar
+                </p>
+              </div>
             </div>
 
-            {/* Formulário */}
-            <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <form onSubmit={handleLogin} className="flex flex-col gap-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key="login"
@@ -115,10 +105,8 @@ function Login() {
                     placeholder="Digite seu email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    startIcon={<UserCircle size={30} />}
+                    startIcon={<UserCircle size={20} />}
                   />
-
-                  {/* Senha */}
                   <UniversalInput
                     variant="underline"
                     label="Senha"
@@ -127,64 +115,64 @@ function Login() {
                     placeholder="Digite sua senha"
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
-                    startIcon={<Lock size={30} />}
+                    startIcon={<Lock size={20} />}
                   />
                 </motion.div>
               </AnimatePresence>
 
-              {/* Mensagem de erro */}
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+                  className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
                 >
                   {error}
                 </motion.div>
               )}
 
-              {/* Esqueceu senha */}
               <div className="flex justify-end">
                 <button
                   type="button"
-                  className="text-sm text-[#007EA7] hover:text-[#005f73] transition cursor-pointer"
+                  className="text-sm text-[#007EA7] hover:text-[#005f73] transition font-medium cursor-pointer"
                   onClick={() => navigate("/esqueceu-senha")}
                 >
                   Esqueceu sua senha?
                 </button>
               </div>
 
-              {/* Botão */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
                   disabled={loading}
-                  className="w-full bg-[#007EA7] hover:bg-[#005f73] text-white font-medium py-4 rounded-lg transition-colors cursor-pointer"
+                  className="w-full bg-gradient-to-r from-[#007EA7] to-[#005f73] hover:from-[#006d93] hover:to-[#004d5e] text-white font-semibold py-4 rounded-xl transition-all shadow-md cursor-pointer"
                 >
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </div>
             </form>
 
-
-            {/* Cadastro link */}
-            <div className="text-center">
-              <p className="text-sm text-[#6b7280]">
-                Ainda não tem uma conta?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/cadastro")}
-                  className="text-[#007EA7] hover:text-[#005f73] font-medium transition-colors cursor-pointer"
-                >
-                  Cadastre-se
-                </button>
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="h-px bg-gray-200 flex-1" />
+              <span className="text-xs text-gray-400 font-medium">ou</span>
+              <div className="h-px bg-gray-200 flex-1" />
             </div>
+
+            <p className="text-sm text-[#6b7280] text-center">
+              Ainda não tem uma conta?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/cadastro")}
+                className="text-[#007EA7] hover:text-[#005f73] font-semibold transition-colors cursor-pointer"
+              >
+                Cadastre-se
+              </button>
+            </p>
           </div>
         </motion.div>
       </div>
+
       <FeedbackModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
