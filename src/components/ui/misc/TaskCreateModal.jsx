@@ -313,7 +313,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       formData?.startTime &&
       formData?.endTime
     ) {
-      setSelectedFuncionarios([]);
+      // Só reseta a seleção de funcionários quando não está editando um agendamento existente
+      if (!formData?.id) {
+        setSelectedFuncionarios([]);
+      }
       fetchFuncionariosDisponiveis(
         formData.eventDate,
         formData.startTime,
@@ -327,6 +330,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     formData?.eventDate,
     formData?.startTime,
     formData?.endTime,
+    formData?.id,
     fetchFuncionariosDisponiveis,
   ]);
 
@@ -514,7 +518,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        id: initialData?.id || null,
+        id: initialData?.agendamentoId || initialData?.id || null,
         tipoAgendamento: initialData?.tipoAgendamento || "",
         pedido: initialData?.pedido || null,
         funcionarios: initialData?.funcionarios || [],

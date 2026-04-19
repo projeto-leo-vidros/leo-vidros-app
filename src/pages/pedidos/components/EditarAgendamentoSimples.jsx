@@ -12,6 +12,7 @@ import agendamentosService from "../../../api/services/agendamentosService";
 import Button from "../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import { StatusAgendamento } from "../../../types/enums";
+import { normalizeStatus } from "../../../utils/agendamentoStatus";
 
 const EditarAgendamentoSimples = ({
   isOpen,
@@ -88,7 +89,7 @@ const EditarAgendamentoSimples = ({
         inicioAgendamento: formatTimeToHHmmss(formData.inicioAgendamento),
         fimAgendamento: formatTimeToHHmmss(formData.fimAgendamento),
         statusAgendamento: {
-          tipo: "StatusAgendamento",
+          tipo: "AGENDAMENTO",
           nome: formData.statusAgendamento,
         },
         observacao:
@@ -134,6 +135,8 @@ const EditarAgendamentoSimples = ({
   };
 
   if (!isOpen || !agendamento) return null;
+
+  const statusKey = normalizeStatus(agendamento?.statusAgendamento?.nome);
 
   return (
     <div
@@ -240,7 +243,15 @@ const EditarAgendamentoSimples = ({
                         onChange={handleChange}
                         className="block w-full rounded-md border border-gray-300 bg-white py-2.5 pr-3 pl-9 text-sm font-medium text-gray-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
-                        {Object.values(StatusAgendamento).map((status) => (
+                        {statusKey === "EM ANDAMENTO" && (
+                          <option value={agendamento.statusAgendamento.nome} disabled>
+                            {agendamento.statusAgendamento.nome}
+                          </option>
+                        )}
+                        {(statusKey === "EM ANDAMENTO"
+                          ? ["CONCLUIDO", "CANCELADO"]
+                          : Object.values(StatusAgendamento)
+                        ).map((status) => (
                           <option key={status} value={status}>
                             {status}
                           </option>
