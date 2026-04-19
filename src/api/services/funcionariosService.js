@@ -6,8 +6,8 @@ class FuncionariosService extends BaseService {
     super(Api);
   }
 
-  getAll() {
-    return this.get("/funcionarios");
+  getAll({ page = 0, size = 20 } = {}) {
+    return this.get("/funcionarios", { params: { page, size } });
   }
 
   getById(id) {

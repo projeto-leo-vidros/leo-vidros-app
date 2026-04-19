@@ -6,8 +6,8 @@ class ClientesService extends BaseService {
     super(Api);
   }
 
-  getAll() {
-    return this.get("/clientes");
+  getAll({ page = 0, size = 20 } = {}) {
+    return this.get("/clientes", { params: { page, size } });
   }
 
   getById(id) {

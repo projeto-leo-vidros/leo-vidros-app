@@ -100,7 +100,7 @@ export default function Estoque() {
       setError(null);
 
       const response = await Api.get("/estoques");
-      const data = response.data;
+      const data = response.data?.content ?? response.data;
 
       if (!data || data.length === 0) {
         setEstoque([]);

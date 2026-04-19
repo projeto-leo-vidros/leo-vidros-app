@@ -93,8 +93,8 @@ export default function Clientes() {
   const fetchClientes = async () => {
     try {
       const response = await Api.get("/clientes");
-      const data = Array.isArray(response.data) ? response.data : [];
-      setClientes(data);
+      const data = response.data?.content ?? response.data;
+      setClientes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       setClientes([]);
@@ -104,8 +104,8 @@ export default function Clientes() {
   const fetchPedidos = async () => {
     try {
       const response = await Api.get("/pedidos");
-      const data = Array.isArray(response.data) ? response.data : [];
-      setPedidos(data);
+      const data = response.data?.content ?? response.data;
+      setPedidos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
       setPedidos([]);

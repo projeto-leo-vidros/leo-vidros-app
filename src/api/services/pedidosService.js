@@ -6,21 +6,30 @@ class PedidosService extends BaseService {
     super(Api);
   }
 
-  async buscarTodos() {
-    const result = await this.get("/pedidos");
-    if (result.success) result.data = result.data || [];
+  async buscarTodos({ page = 0, size = 20 } = {}) {
+    const result = await this.get("/pedidos", { params: { page, size } });
+    if (result.success) {
+      const raw = result.data?.content ?? result.data;
+      result.data = Array.isArray(raw) ? raw : [];
+    }
     return result;
   }
 
-  async buscarPedidosDeServico() {
-    const result = await this.get("/pedidos/servicos");
-    if (result.success) result.data = result.data || [];
+  async buscarPedidosDeServico({ page = 0, size = 20 } = {}) {
+    const result = await this.get("/pedidos/servicos", { params: { page, size } });
+    if (result.success) {
+      const raw = result.data?.content ?? result.data;
+      result.data = Array.isArray(raw) ? raw : [];
+    }
     return result;
   }
 
-  async buscarPedidosDeProduto() {
-    const result = await this.get("/pedidos/produtos");
-    if (result.success) result.data = result.data || [];
+  async buscarPedidosDeProduto({ page = 0, size = 20 } = {}) {
+    const result = await this.get("/pedidos/produtos", { params: { page, size } });
+    if (result.success) {
+      const raw = result.data?.content ?? result.data;
+      result.data = Array.isArray(raw) ? raw : [];
+    }
     return result;
   }
 
@@ -28,11 +37,14 @@ class PedidosService extends BaseService {
     return this.get(`/pedidos/${id}`);
   }
 
-  async buscarPorTipoAndEtapa(nomeEtapa) {
+  async buscarPorTipoAndEtapa(nomeEtapa, { page = 0, size = 20 } = {}) {
     const result = await this.get("/pedidos/findAllBy", {
-      params: { nome: nomeEtapa },
+      params: { nome: nomeEtapa, page, size },
     });
-    if (result.success) result.data = result.data || [];
+    if (result.success) {
+      const raw = result.data?.content ?? result.data;
+      result.data = Array.isArray(raw) ? raw : [];
+    }
     return result;
   }
 

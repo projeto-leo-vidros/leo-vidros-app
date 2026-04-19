@@ -6,8 +6,8 @@ class EstoqueService extends BaseService {
     super(Api);
   }
 
-  getAll() {
-    return this.get("/estoques");
+  getAll({ page = 0, size = 20 } = {}) {
+    return this.get("/estoques", { params: { page, size } });
   }
 
   
@@ -36,8 +36,8 @@ class EstoqueService extends BaseService {
   }
 
 
-  getHistorico(produtoId) {
-    return this.get(`/estoques/${produtoId}/historico`);
+  getHistorico(produtoId, { page = 0, size = 20 } = {}) {
+    return this.get(`/estoques/${produtoId}/historico`, { params: { page, size } });
   }
 
 

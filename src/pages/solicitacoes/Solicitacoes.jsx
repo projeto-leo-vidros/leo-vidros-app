@@ -50,9 +50,8 @@ export default function Acesso() {
       }
 
       const response = await Api.get(url);
-      // Garantindo que sempre seja um array
-      const data = Array.isArray(response.data) ? response.data : [];
-      setSolicitacoes(data);
+      const data = response.data?.content ?? response.data;
+      setSolicitacoes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao buscar solicitações:", error);
       setSolicitacoes([]);

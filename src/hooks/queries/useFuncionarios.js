@@ -6,7 +6,8 @@ const unwrapList = async (promise) => {
   const res = await promise;
   if (!res.success)
     throw new Error(res.error ?? "Erro ao carregar funcionários");
-  return Array.isArray(res.data) ? res.data : [];
+  const items = res.data?.content ?? res.data;
+  return Array.isArray(items) ? items : [];
 };
 
 const unwrapOne = async (promise) => {

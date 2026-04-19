@@ -34,9 +34,8 @@ export default function Funcionarios() {
   const fetchFuncionarios = async () => {
     try {
       const response = await Api.get("/funcionarios");
-      // Garantindo que sempre seja um array
-      const data = Array.isArray(response.data) ? response.data : [];
-      setFuncionarios(data);
+      const data = response.data?.content ?? response.data;
+      setFuncionarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao buscar funcionários:", error);
       setFuncionarios([]);
