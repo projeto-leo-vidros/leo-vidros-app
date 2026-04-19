@@ -966,7 +966,7 @@ export default function PedidoDetalhe() {
             </button>
 
             <button
-              onClick={() => navigate(`/Pedidos/${id}/orcamento`)}
+              onClick={() => navigate(`/pedidos/${id}/orcamento`, { state: { returnTo: `/Servicos/${id}` } })}
               className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
             >
               <FileText className="w-4 h-4" />

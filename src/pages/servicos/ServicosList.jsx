@@ -275,7 +275,7 @@ export default function ServicosList({
                     type="button"
                     className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                     title="Novo Orçamento"
-                    onClick={() => navigate(`/pedidos/${item.id}/orcamento`)}
+                    onClick={() => navigate(`/pedidos/${item.id}/orcamento`, { state: { returnTo: "/pedidos?tab=servico" } })}
                   >
                     <FileText size={17} />
                   </button>

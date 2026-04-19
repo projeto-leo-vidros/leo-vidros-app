@@ -9,7 +9,8 @@ class ServicosService extends BaseService {
   async buscarTodos({ page = 0, size = 20 } = {}) {
     const result = await this.get("/Pedidos", { params: { page, size } });
     if (result.success) {
-      const items = result.data?.content ?? result.data ?? [];
+      const raw = result.data?.content ?? result.data;
+      const items = Array.isArray(raw) ? raw : [];
       result.data = items.filter((pedido) => pedido.servico);
     }
     return result;
@@ -33,7 +34,8 @@ class ServicosService extends BaseService {
       params: { nome: nomeEtapa, page, size },
     });
     if (result.success) {
-      const items = result.data?.content ?? result.data ?? [];
+      const raw = result.data?.content ?? result.data;
+      const items = Array.isArray(raw) ? raw : [];
       result.data = items.filter((pedido) => pedido.servico);
     }
     return result;
