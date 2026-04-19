@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoute from "../context/ProtectedRoute.jsx";
 
 const Login = lazy(() => import("../pages/login/login.jsx"));
@@ -33,7 +33,7 @@ const withSuspense = (Node) => (
 );
 
 export const appRouter = createBrowserRouter([
-  { path: "/", element: withSuspense(<Login />) },
+  { path: "/", element: <Navigate to="/login" replace /> },
   { path: "/login", element: withSuspense(<Login />) },
   { path: "/cadastro", element: withSuspense(<Cadastro />) },
   {

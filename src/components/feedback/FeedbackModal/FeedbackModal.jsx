@@ -114,19 +114,19 @@ export default function FeedbackModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/25 backdrop-blur-[3px] p-4 cursor-pointer"
           onClick={onClose}
           role="presentation"
         >
           <motion.div
             ref={modalRef}
             tabIndex={-1}
-            initial={{ opacity: 0, scale: 0.92, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 12 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="relative w-full max-w-[380px] bg-white rounded-2xl shadow-2xl outline-none overflow-hidden"
+            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-full max-w-[380px] bg-white rounded-2xl shadow-xl outline-none overflow-hidden cursor-default"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
