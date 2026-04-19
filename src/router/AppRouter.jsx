@@ -10,7 +10,7 @@ const Clientes = lazy(() => import("../pages/clientes/clientes.jsx"));
 const Estoque = lazy(() => import("../pages/estoque/estoque.jsx"));
 const ProdutoDetalhe = lazy(() => import("../pages/estoque/ProdutoDetalhe.jsx"));
 const Pedidos = lazy(() => import("../pages/pedidos/pedidos.jsx"));
-const ServicoDetalhe = lazy(() => import("../pages/servicos/ServicoDetalhe.jsx"));
+const ServicoDetalhe = lazy(() => import("../pages/pedidos/servicos/ServicoDetalhe.jsx"));
 const Solicitacoes = lazy(() => import("../pages/solicitacoes/Solicitacoes.jsx"));
 const Agendamentos = lazy(() => import("../pages/agendamentos/agendamentos.jsx"));
 const Perfil = lazy(() => import("../pages/perfil/perfil.jsx"));
@@ -18,6 +18,7 @@ const MapContainer = lazy(() => import("../pages/geo-localizacao/MapContainer.js
 const NovaSenha = lazy(() => import("../pages/nova-senha/NovaSenha.jsx"));
 const EsqueceuSenha = lazy(() => import("../pages/esqueceu-senha/EsqueceuSenha.jsx"));
 const OrcamentoERP = lazy(() => import("../pages/orcamento/Orcamento.jsx"));
+const OrcamentosServico = lazy(() => import("../pages/orcamento/OrcamentosServico.jsx"));
 
 // Loader simples para o Suspense
 const LoadingFallback = () => (
@@ -105,6 +106,14 @@ export const appRouter = createBrowserRouter([
     element: withSuspense(
       <ProtectedRoute>
         <ServicoDetalhe />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/Servicos/:pedidoId/orcamentos",
+    element: withSuspense(
+      <ProtectedRoute>
+        <OrcamentosServico />
       </ProtectedRoute>
     ),
   },

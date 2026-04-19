@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/queryKeys";
@@ -422,7 +422,9 @@ const Toast = ({ message, type, onClose }) => {
 
 export default function OrcamentoPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { pedidoId, orcamentoId } = useParams();
+
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoadingOrcamento, setIsLoadingOrcamento] = useState(!!orcamentoId);
@@ -672,7 +674,7 @@ export default function OrcamentoPage() {
         setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
         setTimeout(() => {
           setToast(null);
-          navigate("/pedidos?tab=servico");
+          navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
         }, 2000);
       } else {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
@@ -733,7 +735,10 @@ export default function OrcamentoPage() {
           result.data.numeroOrcamento || dadosGerais.numero_orcamento
         );
         setToast({ message: "Orçamento enviado para geração!", type: "success" });
-        setTimeout(() => setToast(null), 3000);
+        setTimeout(() => {
+          setToast(null);
+          navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
+        }, 2000);
       } else {
         setToast({
           message: result.error || "Erro ao gerar orçamento.",
