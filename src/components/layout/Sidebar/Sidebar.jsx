@@ -13,23 +13,23 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../../assets/logo-sidebar.png";
 
+const menuItems = [
+  {
+    text: "Painel de Controle",
+    icon: <LayoutDashboard size={22} />,
+    path: "/pagina-inicial",
+  },
+  { text: "Controle de Estoque", icon: <Package size={22} />, path: "/estoque" },
+  { text: "Pedidos", icon: <ClipboardList size={22} />, path: "/pedidos" },
+  { text: "Agendamentos", icon: <CalendarDays size={22} />, path: "/agendamentos" },
+  { text: "Clientes", icon: <Users size={22} />, path: "/clientes" },
+  { text: "Controle de Funcionários", icon: <Briefcase size={22} />, path: "/funcionarios" },
+  { text: "Controle de Acesso", icon: <Lock size={22} />, path: "/acesso" },
+];
+
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const menuItems = [
-    {
-      text: "Painel de Controle",
-      icon: <LayoutDashboard size={22} />,
-      path: "/pagina-inicial",
-    },
-    { text: "Controle de Estoque", icon: <Package size={22} />, path: "/estoque" },
-    { text: "Pedidos", icon: <ClipboardList size={22} />, path: "/pedidos" },
-    { text: "Agendamentos", icon: <CalendarDays size={22} />, path: "/agendamentos" },
-    { text: "Clientes", icon: <Users size={22} />, path: "/clientes" },
-    { text: "Controle de Funcionários", icon: <Briefcase size={22} />, path: "/funcionarios" },
-    { text: "Controle de Acesso", icon: <Lock size={22} />, path: "/acesso" },
-  ];
 
   return (
     <>
@@ -40,24 +40,20 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-1399 cursor-pointer"
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-            }}
+            className="fixed inset-0 bg-black/50 z-1399 cursor-pointer"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
       <motion.aside
+        initial={{ x: "-100%" }}
         animate={{ x: sidebarOpen ? 0 : "-100%" }}
-        transition={{ type: "spring", stiffness: 260, damping: 28 }}
+        transition={{ type: "tween", duration: 0.22, ease: "easeInOut" }}
         className="fixed top-0 left-0 h-full w-[270px] bg-white text-gray-700 shadow-2xl z-1400 flex flex-col border-r border-gray-200"
+        style={{ willChange: "transform" }}
       >
         {/* Logo e botão fechar */}
         <div className="relative flex flex-col items-center px-4 pt-6 pb-8">

@@ -424,7 +424,7 @@ export default function OrcamentoPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { pedidoId, orcamentoId } = useParams();
-  const returnTo = location.state?.returnTo ?? "/pedidos?tab=servico";
+  const returnTo = location.state?.returnTo;
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoadingOrcamento, setIsLoadingOrcamento] = useState(!!orcamentoId);
@@ -674,7 +674,7 @@ export default function OrcamentoPage() {
         setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
         setTimeout(() => {
           setToast(null);
-          navigate(returnTo);
+          navigate(returnTo ?? `/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
         }, 2000);
       } else {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
@@ -735,7 +735,10 @@ export default function OrcamentoPage() {
           result.data.numeroOrcamento || dadosGerais.numero_orcamento
         );
         setToast({ message: "Orçamento enviado para geração!", type: "success" });
-        setTimeout(() => setToast(null), 3000);
+        setTimeout(() => {
+          setToast(null);
+          navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
+        }, 2000);
       } else {
         setToast({
           message: result.error || "Erro ao gerar orçamento.",

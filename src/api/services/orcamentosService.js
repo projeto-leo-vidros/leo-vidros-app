@@ -30,7 +30,7 @@ class OrcamentosService extends BaseService {
   }
 
   async atualizarOrcamento(id, dados) {
-    const result = await this._handle(this.api.put(`/orcamentos/${id}`, dados));
+    const result = await this._handle(this.api.patch(`/orcamentos/${id}`, dados));
     if (!result.success) result.validationErrors = {};
     return result;
   }

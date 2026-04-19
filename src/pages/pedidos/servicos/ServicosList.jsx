@@ -1,15 +1,15 @@
 import { useMemo, useState, useEffect } from "react"; // Removido o React default
 import PropTypes from "prop-types"; // Importação para validação de props
-import { useModal } from "../../hooks/useModal";
-import { usePagination } from "../../hooks/usePagination";
+import { useModal } from "../../../hooks/useModal";
+import { usePagination } from "../../../hooks/usePagination";
 import { useNavigate } from "react-router-dom";
 import { Wrench, Trash2, AlertTriangle, FileText, Pencil } from "lucide-react";
-import SkeletonLoader from "../../components/feedback/Skeleton/SkeletonLoader";
-import NovoPedidoServicoModal from "../pedidos/components/NovoPedidoServicoModal";
-import EditarServicoModal from "../pedidos/components/EditarServicoModal";
-import PedidosService from "../../api/services/pedidosService";
-import { formatDate } from "../../utils/formatters";
-import Button from "../../components/ui/Button/Button.component";
+import SkeletonLoader from "../../../components/feedback/Skeleton/SkeletonLoader";
+import NovoPedidoServicoModal from "../components/NovoPedidoServicoModal";
+import EditarServicoModal from "../components/EditarServicoModal";
+import PedidosService from "../../../api/services/pedidosService";
+import { formatDate } from "../../../utils/formatters";
+import Button from "../../../components/ui/Button/Button.component";
 
 function StatusPill({ status }) {
   const styles = {
@@ -274,8 +274,8 @@ export default function ServicosList({
                   <button
                     type="button"
                     className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                    title="Novo Orçamento"
-                    onClick={() => navigate(`/pedidos/${item.id}/orcamento`, { state: { returnTo: "/pedidos?tab=servico" } })}
+                    title="Ver Orçamentos"
+                    onClick={() => navigate(`/Servicos/${item.id}/orcamentos`)}
                   >
                     <FileText size={17} />
                   </button>
