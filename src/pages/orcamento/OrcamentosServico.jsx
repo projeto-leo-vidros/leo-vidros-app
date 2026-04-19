@@ -42,7 +42,7 @@ function StatusBadge({ status }) {
 }
 
 export default function OrcamentosServico() {
-  const { id } = useParams();
+  const { pedidoId } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
@@ -53,7 +53,7 @@ export default function OrcamentosServico() {
     isLoading,
     isError,
     refetch,
-  } = useOrcamentosPorPedido(id);
+  } = useOrcamentosPorPedido(pedidoId);
 
   const handleDownload = async (orcamento) => {
     setDownloadingId(orcamento.id);
@@ -108,7 +108,7 @@ export default function OrcamentosServico() {
                   <span className="inline-flex items-center justify-center bg-[#e0f2fa] p-1.5 rounded-md shadow-sm">
                     <ClipboardList className="w-[18px] h-[18px] text-[#007EA7]" />
                   </span>
-                  Orçamentos do Pedido #{String(id).padStart(3, "0")}
+                  Orçamentos do Pedido #{String(pedidoId).padStart(3, "0")}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
                   {isLoading
@@ -118,7 +118,7 @@ export default function OrcamentosServico() {
               </div>
 
               <button
-                onClick={() => navigate(`/Pedidos/${id}/orcamento`, { state: { fromApp: true } })}
+                onClick={() => navigate(`/Pedidos/${pedidoId}/orcamento`, { state: { fromApp: true } })}
                 className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2.5 bg-[#007EA7] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -199,7 +199,7 @@ export default function OrcamentosServico() {
                     <p className="text-xs text-gray-400 mt-1">Crie o primeiro orçamento para este pedido</p>
                   </div>
                   <button
-                    onClick={() => navigate(`/Pedidos/${id}/orcamento`, { state: { fromApp: true } })}
+                    onClick={() => navigate(`/Pedidos/${pedidoId}/orcamento`, { state: { fromApp: true } })}
                     className="flex items-center gap-2 px-5 py-2.5 bg-[#007EA7] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />

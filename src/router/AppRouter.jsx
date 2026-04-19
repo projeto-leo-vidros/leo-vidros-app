@@ -110,7 +110,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: "/Servicos/:id/orcamentos",
+    path: "/Servicos/:pedidoId/orcamentos",
     element: withSuspense(
       <ProtectedRoute>
         <OrcamentosServico />

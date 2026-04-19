@@ -425,11 +425,6 @@ export default function OrcamentoPage() {
   const location = useLocation();
   const { pedidoId, orcamentoId } = useParams();
 
-  useEffect(() => {
-    if (!orcamentoId && !location.state?.fromApp) {
-      navigate(`/Servicos/${pedidoId}/orcamentos`, { replace: true });
-    }
-  }, []);
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoadingOrcamento, setIsLoadingOrcamento] = useState(!!orcamentoId);
@@ -782,7 +777,7 @@ export default function OrcamentoPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate("/pedidos?tab=servico")}
+                  onClick={() => navigate(-1)}
                   className="mt-6 mb-4 self-start"
                   startIcon={<ArrowLeft size={16} />}
                 >
@@ -824,7 +819,7 @@ export default function OrcamentoPage() {
                       : "Nenhuma alteração salva ainda"}
                   </span>
                   <div className="flex gap-4">
-                    <Button variant="ghost" onClick={() => navigate("/pedidos?tab=servico")}>
+                    <Button variant="ghost" onClick={() => navigate(-1)}>
                       Cancelar
                     </Button>
                     <Button
