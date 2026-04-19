@@ -6,6 +6,7 @@ export const TipoAgendamento = Object.freeze({
 export const StatusAgendamento = Object.freeze({
   PENDENTE: "PENDENTE",
   CONFIRMADO: "CONFIRMADO",
+  EM_ANDAMENTO: "EM ANDAMENTO",
   CANCELADO: "CANCELADO",
   CONCLUIDO: "CONCLUIDO",
 });

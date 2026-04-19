@@ -354,6 +354,9 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
                       );
                       const isCancelado = normalizedSt === "CANCELADO";
                       const isConcluido = normalizedSt === "CONCLUIDO";
+                      const isUnicoNoServico =
+                        item.tipoAgendamento === "SERVICO" &&
+                        (item.quantidadeFuncionarios ?? 1) <= 1;
 
                       return (
                         <tr
@@ -423,9 +426,18 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
                           <td className="py-3 px-3 text-center">
                             {!isCancelado && !isConcluido ? (
                               <button
-                                onClick={() => handleRemover(item)}
-                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                title="Remover funcionário deste agendamento"
+                                onClick={() => !isUnicoNoServico && handleRemover(item)}
+                                disabled={isUnicoNoServico}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  isUnicoNoServico
+                                    ? "text-gray-300 cursor-not-allowed"
+                                    : "text-gray-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                }`}
+                                title={
+                                  isUnicoNoServico
+                                    ? "Não é possível remover o único funcionário de um serviço"
+                                    : "Remover funcionário deste agendamento"
+                                }
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -528,8 +540,8 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
             </div>
 
             <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2 mb-4">
-              ⚠️ Se este for o único funcionário alocado em um agendamento de
-              serviço, a remoção será impedida pelo sistema.
+              ⚠️ Esta ação removerá o funcionário do agendamento. Se necessário,
+              outro funcionário deverá ser alocado manualmente.
             </p>
 
             <div className="flex justify-end gap-3">

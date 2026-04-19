@@ -102,6 +102,9 @@ function ActionsDropdown({
 }) {
   const [open, setOpen] = useState(false);
 
+  const statusNome = agendamento?.statusAgendamento?.nome || "";
+  const isFinalizado = statusNome === "CONCLUIDO" || statusNome === "CANCELADO";
+
   const hasEndereco = (() => {
     if (!agendamento?.endereco) return false;
     const e = agendamento.endereco;
@@ -147,47 +150,55 @@ function ActionsDropdown({
               </button>
             )}
             <div className="my-1 border-t border-gray-100" />
-            <button
-              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit?.(agendamento);
-                setOpen(false);
-              }}
-            >
-              <Edit3 className="h-4 w-4 text-gray-400" /> Editar
-            </button>
-            <button
-              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-green-600 transition-colors hover:bg-gray-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange(agendamento, "CONFIRMADO");
-                setOpen(false);
-              }}
-            >
-              <Check className="h-4 w-4" /> Confirmar
-            </button>
-            <button
-              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange(agendamento, "CONCLUIDO");
-                setOpen(false);
-              }}
-            >
-              <Check className="h-4 w-4" /> Concluir
-            </button>
-            <div className="my-1 border-t border-gray-100" />
-            <button
-              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete?.(agendamento);
-                setOpen(false);
-              }}
-            >
-              <Trash2 className="h-4 w-4" /> Excluir
-            </button>
+            {!isFinalizado && (
+              <button
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit?.(agendamento);
+                  setOpen(false);
+                }}
+              >
+                <Edit3 className="h-4 w-4 text-gray-400" /> Editar
+              </button>
+            )}
+            {statusNome !== "CONFIRMADO" && !isFinalizado && (
+              <button
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-green-600 transition-colors hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(agendamento, "CONFIRMADO");
+                  setOpen(false);
+                }}
+              >
+                <Check className="h-4 w-4" /> Confirmar
+              </button>
+            )}
+            {statusNome !== "CONCLUIDO" && !isFinalizado && (
+              <button
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(agendamento, "CONCLUIDO");
+                  setOpen(false);
+                }}
+              >
+                <Check className="h-4 w-4" /> Concluir
+              </button>
+            )}
+            {!isFinalizado && <div className="my-1 border-t border-gray-100" />}
+            {statusNome !== "CONCLUIDO" && (
+              <button
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(agendamento);
+                  setOpen(false);
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Excluir
+              </button>
+            )}
           </div>
         </>
       )}
@@ -310,6 +321,14 @@ export default function Agendamentos() {
     return tasks;
   }, [tasks, activeKpiFilter]);
 
+  const calendarActiveTasks = useMemo(() => {
+    if (calendarViewType === 'list') return filteredTasks;
+    return filteredTasks.filter((t) => {
+      const s = t.statusAgendamento?.nome;
+      return s !== "CANCELADO" && s !== "CONCLUIDO";
+    });
+  }, [filteredTasks, calendarViewType]);
+
   const handleKpiClick = useCallback((filterType) => {
     if (activeKpiFilter === filterType) {
       setActiveKpiFilter(null);
@@ -370,10 +389,14 @@ export default function Agendamentos() {
     return {
       today: agendamentos.filter((a) => a.dataAgendamento === todayKey).length,
       confirmed: agendamentos.filter(
-        (a) => a.statusAgendamento?.nome === "CONFIRMADO",
+        (a) =>
+          a.statusAgendamento?.nome === "CONFIRMADO" &&
+          a.dataAgendamento >= todayKey,
       ).length,
       pending: agendamentos.filter(
-        (a) => a.statusAgendamento?.nome === "PENDENTE",
+        (a) =>
+          a.statusAgendamento?.nome === "PENDENTE" &&
+          a.dataAgendamento >= todayKey,
       ).length,
     };
   }, [agendamentos]);
@@ -661,8 +684,8 @@ export default function Agendamentos() {
                     }}
                   />
                   <div className="my-4" />
-                  <UpcomingEvents 
-                    events={filteredTasks} 
+                  <UpcomingEvents
+                    events={calendarActiveTasks}
                     onViewEvent={setCalendarSelectedEvent}
                     onEditEvent={handleEdit}
                     onViewCalendar={() => setCalendarViewType("list")}
@@ -679,7 +702,7 @@ export default function Agendamentos() {
                   selectedEvent={calendarSelectedEvent}
                   onEventSelect={setCalendarSelectedEvent}
                   onEventCreate={handleNewAgendamento}
-                  events={filteredTasks}
+                  events={calendarActiveTasks}
                   onEventDeleted={handleEventDeleted}
                 />
               </div>
