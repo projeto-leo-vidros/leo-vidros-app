@@ -322,51 +322,51 @@ export default function PedidoDetalhe() {
 
   const toggleSidebar = () => setSidebarOpen((p) => !p);
 
-  useEffect(() => {
-    const fetchPedido = async () => {
-      setLoading(true);
-      try {
-        const response = await Api.get(`/pedidos/${id}`);
-        if (response.status !== 200) throw new Error("Pedido não encontrado");
-        const raw    = response.data;
-        setRawPedido(raw);
-        const mapped = PedidosService.mapearParaFrontend(raw);
-        setPedido(mapped);
-        
-        // Normaliza etapa para sempre ser uma string
-        let etapa = "PENDENTE";
-        if (mapped.servico?.etapa) {
-          etapa = typeof mapped.servico.etapa === "string" 
-            ? mapped.servico.etapa 
-            : mapped.servico.etapa.nome || "PENDENTE";
-        } else if (mapped.status) {
-          etapa = typeof mapped.status === "string"
-            ? mapped.status
-            : mapped.status.nome || "PENDENTE";
-        }
-        
-        setEtapaOriginal(etapa);
-        setFormData({
-          clienteNome:         mapped.clienteNome           || "",
-          ...parseFormaPagamento(mapped.formaPagamento || ""),
-          observacoes:         mapped.observacoes           || "",
-          etapaServico:        etapa,
-          produtos:            mapped.produtos              || [],
-          servicoNome:         mapped.servico?.nome         || "",
-          servicoDescricao:    mapped.servico?.descricao    || "",
-          servicoPrecoBase:    mapped.servico?.precoBase    || 0,
-          servicoAtivo:        mapped.servico?.ativo        !== false,
-        });
-      } catch (err) {
-        console.error("Erro ao buscar pedido:", err);
-        alert("Erro ao carregar pedido");
-        navigate("/Pedidos");
-      } finally {
-        setLoading(false);
+  const fetchPedido = async () => {
+    setLoading(true);
+    try {
+      const response = await Api.get(`/pedidos/${id}`);
+      if (response.status !== 200) throw new Error("Pedido não encontrado");
+      const raw    = response.data;
+      setRawPedido(raw);
+      const mapped = PedidosService.mapearParaFrontend(raw);
+      setPedido(mapped);
+
+      let etapa = "PENDENTE";
+      if (mapped.servico?.etapa) {
+        etapa = typeof mapped.servico.etapa === "string"
+          ? mapped.servico.etapa
+          : mapped.servico.etapa.nome || "PENDENTE";
+      } else if (mapped.status) {
+        etapa = typeof mapped.status === "string"
+          ? mapped.status
+          : mapped.status.nome || "PENDENTE";
       }
-    };
+
+      setEtapaOriginal(etapa);
+      setFormData({
+        clienteNome:         mapped.clienteNome           || "",
+        ...parseFormaPagamento(mapped.formaPagamento || ""),
+        observacoes:         mapped.observacoes           || "",
+        etapaServico:        etapa,
+        produtos:            mapped.produtos              || [],
+        servicoNome:         mapped.servico?.nome         || "",
+        servicoDescricao:    mapped.servico?.descricao    || "",
+        servicoPrecoBase:    mapped.servico?.precoBase    || 0,
+        servicoAtivo:        mapped.servico?.ativo        !== false,
+      });
+    } catch (err) {
+      console.error("Erro ao buscar pedido:", err);
+      alert("Erro ao carregar pedido");
+      navigate("/Pedidos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPedido();
-  }, [id, navigate]);
+  }, [id]);
 
   useEffect(() => {
     Api.get("/estoques", { params: { size: 200 } })
@@ -462,28 +462,9 @@ export default function PedidoDetalhe() {
       
       console.log("✅ Resposta da API:", response);
 
-      const dataAtualizada = response?.data;
-      if (dataAtualizada) {
-        const mapped = PedidosService.mapearParaFrontend(dataAtualizada);
-        setRawPedido(dataAtualizada);
-        setPedido(mapped);
-
-        setFormData((prev) => ({
-          ...prev,
-          clienteNome: mapped.clienteNome || prev.clienteNome,
-          ...parseFormaPagamento(mapped.formaPagamento || ""),
-          observacoes: mapped.observacoes || "",
-          etapaServico: mapped.servico?.etapa || prev.etapaServico,
-          produtos: mapped.produtos || prev.produtos,
-          servicoNome: mapped.servico?.nome || prev.servicoNome,
-          servicoDescricao: mapped.servico?.descricao || prev.servicoDescricao,
-          servicoPrecoBase: mapped.servico?.precoBase ?? prev.servicoPrecoBase,
-          servicoAtivo: mapped.servico?.ativo !== false,
-        }));
-      }
+      await fetchPedido();
 
       setShowSuccessModal(true);
-      setEtapaOriginal(formData.etapaServico);
       setTimeout(() => setShowSuccessModal(false), 2500);
       const temAgendamentoOrcamentoAtivo = agendamentos.some(
         (ag) =>
@@ -975,7 +956,7 @@ export default function PedidoDetalhe() {
                                                   ...updated[index],
                                                   estoqueId: item.id,
                                                   nome,
-                                                  preco: item.produto?.precoUnitario || item.precoUnitario || item.preco || updated[index].preco,
+                                                  preco: item.produto?.preco ?? item.produto?.precoVenda ?? item.preco ?? updated[index].preco ?? 0,
                                                 };
                                                 setFormData((p) => ({ ...p, produtos: updated }));
                                                 setProdutoDropdownOpen((p) => ({ ...p, [index]: false }));
@@ -1166,6 +1147,7 @@ export default function PedidoDetalhe() {
         onClose={() => setShowTaskModal(false)}
         onSave={() => {
           setShowTaskModal(false);
+          fetchPedido();
         }}
         initialData={taskModalInitialData}
       />
