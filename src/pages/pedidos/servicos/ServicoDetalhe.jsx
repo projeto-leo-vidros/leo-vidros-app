@@ -353,7 +353,7 @@ export default function PedidoDetalhe() {
         servicoNome:         mapped.servico?.nome         || "",
         servicoDescricao:    mapped.servico?.descricao    || "",
         servicoPrecoBase:    mapped.servico?.precoBase    || 0,
-        servicoAtivo:        mapped.servico?.ativo        !== false,
+        servicoAtivo:        mapped.servico?.ativo === true,
       });
     } catch (err) {
       console.error("Erro ao buscar pedido:", err);

@@ -312,12 +312,13 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) 
         pedido: {
           valorTotal: total,
           ativo: true,
+          observacao: formData.observacoes || "",
           clienteId: clienteData.id,
           status: { tipo: "PEDIDO", nome: "ATIVO" },
         },
         servico: {
           nome: formData.servicos[0]?.nome || "Serviço personalizado",
-          descricao: formData.observacoes || formData.servicos.map((s) => s.descricao || s.nome).join("; "),
+          descricao: formData.servicos.map((s) => s.descricao || s.nome).join("; ") || formData.servicos[0]?.nome || "Serviço personalizado",
           precoBase: total,
           ativo: true,
           etapaNome: formData.etapa,
