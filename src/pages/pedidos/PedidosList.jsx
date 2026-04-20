@@ -15,16 +15,6 @@ const ITEMS_PER_PAGE = 5;
 
 // Removido NOVO_FORM_PEDIDO pois não estava sendo usado
 
-function StatusBadge({ status }) {
-    const styles = {
-        Ativo: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
-        Finalizado: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]",
-        "Em Andamento": "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]",
-        Cancelado: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fecaca] text-[#991b1b]",
-    };
-    return <span className={styles[status] || styles.Ativo}>{status}</span>;
-}
-
 const formatPedidoId = (id) => {
     if (!id) return '';
     const idString = String(id);
@@ -134,23 +124,21 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                 )}
 
                 {!loading && !isError && pagina.map((item) => (
-                    <article key={item.id} className={`flex flex-col gap-4 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${item.status === 'Finalizado' ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}>
+                    <article key={item.id} className="flex flex-col gap-4 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md bg-white border-slate-200">
                         <header className="flex items-center justify-between pb-2 border-b border-slate-100">
                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-md ${item.status === 'Finalizado' ? 'text-gray-400 bg-gray-200' : 'text-slate-400 bg-slate-100'}`}>
+                                <div className="p-2 rounded-md text-slate-400 bg-slate-100">
                                     <Package size={16} />
                                 </div>
                                 <div>
-                                    <h3 className={`font-semibold text-sm md:text-base ${item.status === 'Finalizado' ? 'text-gray-600' : 'text-slate-800'}`}>
+                                    <h3 className="font-semibold text-sm md:text-base text-slate-800">
                                         Pedido #{formatPedidoId(item.id)}
                                     </h3>
-                                    <span className={`text-xs block md:hidden ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>{formatDate(item.dataCompra)}</span>
+                                    <span className="text-xs block md:hidden text-slate-500">{formatDate(item.dataCompra)}</span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <StatusBadge status={item.status} />
-                                <div className="hidden md:block h-4 w-px bg-slate-200 mx-1"></div>
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-blue-600 transition-colors" title="Editar" onClick={() => abrirEditar(item)}>
                                     <Pencil size={18} />
                                 </button>
@@ -165,40 +153,40 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
 
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-2">
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>
+                                <span className="text-md font-bold text-slate-500">
                                     {item.itensCount} {item.itensCount === 1 ? 'item' : 'itens'}
                                 </span>
-                                <span className={`text-base font-bold ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-[#157A98]'}`}>
+                                <span className="text-base font-bold text-[#157A98]">
                                     {formatCurrency(item.valorTotal)}
                                 </span>
                             </div>
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Pagamento</span>
-                                <span className={`text-md font-medium text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`}>
+                                <span className="text-md font-bold text-slate-500">Pagamento</span>
+                                <span className="text-md font-medium text-left text-slate-700">
                                     {item.formaPagamento}
                                 </span>
                             </div>
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Produtos</span>
-                                <span className={`text-md font-medium truncate w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`} title={item.produtosDesc}>
+                                <span className="text-md font-bold text-slate-500">Produtos</span>
+                                <span className="text-md font-medium truncate w-full text-left text-slate-700" title={item.produtosDesc}>
                                     {item.produtosDesc}
                                 </span>
                             </div>
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Descrição</span>
-                                <p className={`text-md line-clamp-2 leading-snug w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-600'}`} title={item.descricao}>
+                                <span className="text-md font-bold text-slate-500">Descrição</span>
+                                <p className="text-md line-clamp-2 leading-snug w-full text-left text-slate-600" title={item.descricao}>
                                     {item.descricao || '-'}
                                 </p>
                             </div>
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Cliente</span>
-                                <span className={`text-md font-medium truncate w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`} title={item.clienteNome}>
+                                <span className="text-md font-bold text-slate-500">Cliente</span>
+                                <span className="text-md font-medium truncate w-full text-left text-slate-700" title={item.clienteNome}>
                                     {item.clienteNome}
                                 </span>
                             </div>
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Data da Compra</span>
-                                <span className={`text-md font-medium text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`}>
+                                <span className="text-md font-bold text-slate-500">Data da Compra</span>
+                                <span className="text-md font-medium text-left text-slate-700">
                                     {formatDate(item.dataCompra)}
                                 </span>
                             </div>
