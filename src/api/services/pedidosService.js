@@ -195,6 +195,7 @@ class PedidosService extends BaseService {
     let etapaAtual = "Aguardando orçamento";
     let progressoValor = 1;
     let progressoTotal = 7;
+    let temAgendamentoAtivo = false;
 
     let etapaCalculada = "PENDENTE";
 
@@ -210,6 +211,7 @@ class PedidosService extends BaseService {
           ag.statusAgendamento.nome !== "CANCELADO" &&
           ag.statusAgendamento.nome !== "INATIVO",
       );
+      temAgendamentoAtivo = agendamentosAtivos.length > 0;
 
       if (agendamentosAtivos.length > 0) {
         const agendamentoOrcamento = agendamentosAtivos.find(
@@ -253,7 +255,7 @@ class PedidosService extends BaseService {
         nome: dadosBackend.servico.nome || "Serviço sem nome",
         descricao: dadosBackend.servico.descricao || "",
         precoBase: dadosBackend.servico.precoBase || 0,
-        ativo: dadosBackend.servico.ativo,
+        ativo: temAgendamentoAtivo ? true : dadosBackend.servico.ativo,
         etapa: etapaCalculada, 
         agendamentos: agendamentosTodos, 
       };
@@ -320,6 +322,10 @@ class PedidosService extends BaseService {
         statusMapeado = statusNome;
     }
 
+    if (isServico && temAgendamentoAtivo) {
+      statusMapeado = "Ativo";
+    }
+
     let dataCompra = dadosBackend.dataCompra;
     if (!dataCompra && dadosBackend.servico?.createdAt) {
       const createdDate = new Date(dadosBackend.servico.createdAt);
@@ -355,7 +361,7 @@ class PedidosService extends BaseService {
       itensCount: itensCount,
       valorTotal: dadosBackend.valorTotal || 0,
       status: statusMapeado,
-      ativo: dadosBackend.ativo !== false,
+      ativo: isServico && temAgendamentoAtivo ? true : dadosBackend.ativo !== false,
       tipoPedido:
         dadosBackend.tipoPedido || (isProduto ? "produto" : "servico"),
 

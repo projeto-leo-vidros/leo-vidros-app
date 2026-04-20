@@ -23,8 +23,11 @@ const METODOS_COM_PARCELA = ["Cartão de crédito"];
 
 const parseFormaPagamento = (valor = "") => {
   const match = valor.match(/^(.+?) - (\d+)x$/);
-  if (match) return { formaPagamento: match[1], parcelas: parseInt(match[2]) };
-  return { formaPagamento: valor, parcelas: 1 };
+  if (match) {
+    const metodo = match[1] === "PIX" ? "Pix" : match[1];
+    return { formaPagamento: metodo, parcelas: parseInt(match[2]) };
+  }
+  return { formaPagamento: valor === "PIX" ? "Pix" : valor, parcelas: 1 };
 };
 
 const composeFormaPagamento = (metodo, parcelas) => {
@@ -32,6 +35,20 @@ const composeFormaPagamento = (metodo, parcelas) => {
     return `${metodo} - ${parcelas}x`;
   }
   return metodo;
+};
+
+const normalizeStatus = (status = "") =>
+  status
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/_/g, " ")
+    .trim()
+    .toUpperCase();
+
+const isAgendamentoBloqueante = (status = "") => {
+  const s = normalizeStatus(status);
+  return s === "PENDENTE" || s === "EM ANDAMENTO";
 };
 
 const STEPS = [
@@ -321,6 +338,22 @@ export default function PedidoDetalhe() {
   const [produtoDropdownPos, setProdutoDropdownPos] = useState({});
 
   const toggleSidebar = () => setSidebarOpen((p) => !p);
+  const mensagemBloqueioInativacao = "Nao e possivel inativar com agendamento pendente ou em andamento. Cancele/finalize o agendamento antes.";
+  const mensagemBloqueioEtapaAnalise = "Nao e possivel alterar para ANALISE DO ORCAMENTO enquanto houver agendamento de orcamento pendente ou em andamento. Essa mudanca so deve ocorrer apos o fim do agendamento.";
+
+  const possuiAgendamentoBloqueante = () => {
+    const ags = pedido?.servico?.agendamentos || [];
+    return ags.some((ag) => isAgendamentoBloqueante(ag?.statusAgendamento?.nome));
+  };
+
+  const possuiAgendamentoOrcamentoEmAberto = () => {
+    const ags = pedido?.servico?.agendamentos || [];
+    return ags.some((ag) => {
+      const tipo = (ag?.tipoAgendamento || "").toString().toUpperCase();
+      const ehOrcamento = tipo.includes("ORC") || tipo.includes("VISTORIA");
+      return ehOrcamento && isAgendamentoBloqueante(ag?.statusAgendamento?.nome);
+    });
+  };
 
   const fetchPedido = async () => {
     setLoading(true);
@@ -419,6 +452,22 @@ export default function PedidoDetalhe() {
 
   const executarSave = async (produtosObs = "") => {
     if (saving) return;
+
+    if (formData.servicoAtivo === false && possuiAgendamentoBloqueante()) {
+      setError(mensagemBloqueioInativacao);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (
+      normalizeStatus(formData.etapaServico) === "ANALISE DO ORCAMENTO" &&
+      possuiAgendamentoOrcamentoEmAberto()
+    ) {
+      setError(mensagemBloqueioEtapaAnalise);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setSaving(true);
     setError(null);
     let requestBody = null;
@@ -428,7 +477,10 @@ export default function PedidoDetalhe() {
       requestBody = {
         pedido: {
           valorTotal,
-          ativo:          rawPedido?.ativo !== undefined ? rawPedido.ativo : true,
+          ativo:
+            formData.servicoAtivo !== undefined
+              ? formData.servicoAtivo
+              : (rawPedido?.ativo !== undefined ? rawPedido.ativo : true),
           formaPagamento: composeFormaPagamento(formData.formaPagamento, formData.parcelas),
           observacao:     formData.observacoes + produtosObs,
           clienteId:      pedido.clienteId || pedido.clienteInfo?.id || null,
@@ -613,7 +665,6 @@ export default function PedidoDetalhe() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-red-800 mb-1">Erro ao Salvar</p>
                     <p className="text-sm text-red-700 whitespace-pre-wrap break-words">{error}</p>
-                    <p className="text-xs text-red-600 mt-2">🔍 Verifique o console do navegador (F12) para mais detalhes</p>
                   </div>
                 </div>
               </div>
@@ -779,7 +830,6 @@ export default function PedidoDetalhe() {
                           <option value="">Selecione...</option>
                           <option value="Dinheiro">Dinheiro</option>
                           <option value="Pix">Pix</option>
-                          <option value="PIX">PIX</option>
                           <option value="Cartão de crédito">Cartão de crédito</option>
                           <option value="Cartão de débito">Cartão de débito</option>
                           <option value="Boleto">Boleto</option>
@@ -831,7 +881,18 @@ export default function PedidoDetalhe() {
                         </div>
                         <select
                           value={formData.etapaServico}
-                          onChange={(e) => handleFieldChange("etapaServico", e.target.value)}
+                          onChange={(e) => {
+                            const novaEtapa = e.target.value;
+                            if (
+                              normalizeStatus(novaEtapa) === "ANALISE DO ORCAMENTO" &&
+                              possuiAgendamentoOrcamentoEmAberto()
+                            ) {
+                              setError(mensagemBloqueioEtapaAnalise);
+                              return;
+                            }
+                            setError(null);
+                            handleFieldChange("etapaServico", novaEtapa);
+                          }}
                           className={`w-full px-3 py-2 border-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
                             temMudancaEtapa
                               ? "border-amber-400 bg-amber-50"
@@ -849,7 +910,15 @@ export default function PedidoDetalhe() {
                         </label>
                         <select
                           value={formData.servicoAtivo !== undefined ? (formData.servicoAtivo ? "Ativo" : "Inativo") : (servicoInfo?.ativo ? "Ativo" : "Inativo")}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, servicoAtivo: e.target.value === "Ativo" }))}
+                          onChange={(e) => {
+                            const novoAtivo = e.target.value === "Ativo";
+                            if (!novoAtivo && possuiAgendamentoBloqueante()) {
+                              setError(mensagemBloqueioInativacao);
+                              return;
+                            }
+                            setError(null);
+                            setFormData((prev) => ({ ...prev, servicoAtivo: novoAtivo }));
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white outline-none shadow-sm"
                         >
                           <option value="Ativo">Ativo</option>
@@ -1068,10 +1137,8 @@ export default function PedidoDetalhe() {
 
         {/* ── Barra de ações FIXA na parte inferior ── */}
         <div className="shrink-0 border-t-2 bg-white px-6 py-3 flex items-center justify-between gap-4 shadow-[0_-2px_12px_rgba(0,0,0,0.1)]" style={{ borderColor: temMudancaEtapa ? "#f59e0b" : "#e5e7eb" }}>
-          {/* Mensagem de erro ou mudança de etapa */}
-          {error ? (
-            <p className="text-sm text-red-600 font-medium truncate">{error}</p>
-          ) : temMudancaEtapa ? (
+          {/* Mensagem de mudança de etapa */}
+          {temMudancaEtapa ? (
             <div className="flex items-center gap-2">
               <span className="inline-flex w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse" />
               <p className="text-sm font-semibold text-amber-700">
