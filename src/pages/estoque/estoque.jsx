@@ -130,8 +130,7 @@ export default function Estoque() {
       items = items.filter(
         (item) =>
           item.produto.nome.toLowerCase().includes(buscaLower) ||
-          item.produto.descricao.toLowerCase().includes(buscaLower) ||
-          item.localizacao.toLowerCase().includes(buscaLower),
+          item.produto.descricao.toLowerCase().includes(buscaLower),
       );
     }
 

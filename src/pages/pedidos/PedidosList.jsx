@@ -102,6 +102,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
 
     const handleNovoPedidoSuccess = () => {
         setPage(1);
+        refetch();
     };
 
     const handleEditarPedidoSuccess = () => {
@@ -153,7 +154,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-blue-600 transition-colors" title="Editar" onClick={() => abrirEditar(item)}>
                                     <Pencil size={18} />
                                 </button>
-                                <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Novo Orçamento" onClick={() => navigate(`/pedidos/${item.id}/orcamento`, { state: { returnTo: "/pedidos?tab=servico" } })}>
+                                <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Novo Orçamento" onClick={() => navigate(`/pedidos/${item.id}/orcamento`)}>
                                     <FileText size={17} />
                                 </button>
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>

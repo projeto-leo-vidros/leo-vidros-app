@@ -86,6 +86,17 @@ const useServicoAPI = () => {
     }
   };
 
+  const buscarClientePorId = async (id) => {
+    try {
+      const response = await Api.get(`/clientes/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Erro ao buscar dados do cliente",
+      );
+    }
+  };
+
   const buscarCep = async (cep) => {
     try {
       const response = await viaCepApi.get(`/${cep}/json/`);
@@ -100,7 +111,7 @@ const useServicoAPI = () => {
     }
   };
 
-  return { cadastrarCliente, salvarServico, buscarClientes, buscarCep };
+  return { cadastrarCliente, salvarServico, buscarClientes, buscarClientePorId, buscarCep };
 };
 
 const DEFAULT_FORM_DATA = {
@@ -130,7 +141,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
   const [clientesExistentes, setClientesExistentes] = useState([]);
   const [loadingCep, setLoadingCep] = useState(false);
 
-  const { cadastrarCliente, salvarServico, buscarClientes, buscarCep } =
+  const { cadastrarCliente, salvarServico, buscarClientes, buscarClientePorId, buscarCep } =
     useServicoAPI();
 
   const steps = [
@@ -193,22 +204,40 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
     setError(null);
   };
 
-  const handleClienteExistenteChange = (e) => {
+  const handleClienteExistenteChange = async (e) => {
     const clienteId = e.target.value;
 
-    const clienteSelecionado = clientesExistentes.find(
+    if (!clienteId) {
+      setFormData((prev) => ({ ...prev, clienteId: "", clienteNome: "" }));
+      setError(null);
+      return;
+    }
+
+    const clienteBasico = clientesExistentes.find(
       (c) => String(c.id) === String(clienteId),
     );
 
-    if (clienteSelecionado) {
-      const enderecoPrincipal = clienteSelecionado.enderecos?.[0] || {};
+    if (clienteBasico) {
       setFormData((prev) => ({
         ...prev,
-        clienteId: clienteSelecionado.id,
-        clienteNome: clienteSelecionado.nome,
-        clienteCpf: clienteSelecionado.cpf || "",
-        clienteEmail: clienteSelecionado.email || "",
-        clienteTelefone: clienteSelecionado.telefone || "",
+        clienteId: clienteBasico.id,
+        clienteNome: clienteBasico.nome,
+        clienteCpf: clienteBasico.cpf || "",
+        clienteEmail: clienteBasico.email || "",
+        clienteTelefone: clienteBasico.telefone || "",
+      }));
+    }
+
+    try {
+      const clienteCompleto = await buscarClientePorId(clienteId);
+      const enderecoPrincipal = clienteCompleto.enderecos?.[0] || {};
+      setFormData((prev) => ({
+        ...prev,
+        clienteId: clienteCompleto.id,
+        clienteNome: clienteCompleto.nome,
+        clienteCpf: clienteCompleto.cpf || "",
+        clienteEmail: clienteCompleto.email || "",
+        clienteTelefone: clienteCompleto.telefone || "",
         cep: enderecoPrincipal.cep || "",
         rua: enderecoPrincipal.rua || "",
         numero: enderecoPrincipal.numero || "",
@@ -217,13 +246,10 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         uf: enderecoPrincipal.uf || "",
         complemento: enderecoPrincipal.complemento || "",
       }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        clienteId: "",
-        clienteNome: "",
-      }));
+    } catch (err) {
+      console.error("Erro ao buscar endereço do cliente:", err);
     }
+
     setError(null);
   };
 

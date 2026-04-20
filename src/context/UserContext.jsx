@@ -13,8 +13,8 @@ function readInitialState() {
     sessionStorage.getItem("userEmail") ??
     "";
   const isAuthenticated = sessionStorage.getItem("isAuthenticated") === "true";
-  const photo = id
-    ? (localStorage.getItem(`leoVidros_userPhoto_${id}`) ?? null)
+  const photo = email
+    ? (localStorage.getItem(`leoVidros_userPhoto_${email}`) ?? null)
     : null;
 
   return { id, name, email, isAuthenticated, photo };
@@ -31,7 +31,7 @@ export function UserProvider({ children }) {
     sessionStorage.setItem("userFirstLogin", String(firstLogin));
     localStorage.setItem("userFirstLogin", String(firstLogin));
 
-    const photo = localStorage.getItem(`leoVidros_userPhoto_${id}`) ?? null;
+    const photo = localStorage.getItem(`leoVidros_userPhoto_${email}`) ?? null;
     setUser({
       id: String(id),
       name: nome,
@@ -55,8 +55,8 @@ export function UserProvider({ children }) {
 
   const updatePhoto = useCallback((base64) => {
     setUser((prev) => {
-      if (prev.id) {
-        localStorage.setItem(`leoVidros_userPhoto_${prev.id}`, base64);
+      if (prev.email) {
+        localStorage.setItem(`leoVidros_userPhoto_${prev.email}`, base64);
       }
       return { ...prev, photo: base64 };
     });
@@ -64,8 +64,8 @@ export function UserProvider({ children }) {
 
   const clearPhoto = useCallback(() => {
     setUser((prev) => {
-      if (prev.id) {
-        localStorage.removeItem(`leoVidros_userPhoto_${prev.id}`);
+      if (prev.email) {
+        localStorage.removeItem(`leoVidros_userPhoto_${prev.email}`);
       }
       return { ...prev, photo: null };
     });

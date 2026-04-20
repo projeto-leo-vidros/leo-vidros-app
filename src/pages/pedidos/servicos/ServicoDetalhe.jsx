@@ -14,6 +14,7 @@ import {
 import Header from "../../../components/layout/Header/Header";
 import Sidebar from "../../../components/layout/Sidebar/Sidebar";
 import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
+import TaskCreateModal from "../../../components/ui/misc/TaskCreateModal";
 import Api from "../../../api/client/Api";
 import PedidosService from "../../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
@@ -290,6 +291,17 @@ export default function PedidoDetalhe() {
   const [etapaOriginal, setEtapaOriginal] = useState("");
   const temMudancaEtapa = formData.etapaServico !== etapaOriginal;
 
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [produtosUsados, setProdutosUsados] = useState({});
+  const [produtosLivres, setProdutosLivres] = useState("");
+  const [estoqueItems, setEstoqueItems] = useState([]);
+  const [showAgendamentoSuggestion, setShowAgendamentoSuggestion] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskModalInitialData, setTaskModalInitialData] = useState({});
+  const [produtoBusca, setProdutoBusca] = useState({});
+  const [produtoDropdownOpen, setProdutoDropdownOpen] = useState({});
+  const [produtoDropdownPos, setProdutoDropdownPos] = useState({});
+
   const toggleSidebar = () => setSidebarOpen((p) => !p);
 
   useEffect(() => {
@@ -338,6 +350,16 @@ export default function PedidoDetalhe() {
     fetchPedido();
   }, [id, navigate]);
 
+  useEffect(() => {
+    Api.get("/estoques", { params: { size: 200 } })
+      .then((res) => {
+        const data = res.data;
+        const items = data?.content ?? (Array.isArray(data) ? data : []);
+        setEstoqueItems(items);
+      })
+      .catch(() => {});
+  }, []);
+
   const calcularValorTotal = () =>
     formData.produtos.reduce(
       (acc, p) => acc + (parseFloat(p.quantidade) || 0) * (parseFloat(p.preco) || 0),
@@ -377,7 +399,7 @@ export default function PedidoDetalhe() {
       produtos: p.produtos.filter((_, i) => i !== index),
     }));
 
-  const handleSave = async () => {
+  const executarSave = async (produtosObs = "") => {
     setSaving(true);
     setError(null);
     let requestBody = null;
@@ -389,30 +411,9 @@ export default function PedidoDetalhe() {
           valorTotal,
           ativo:          rawPedido?.ativo !== undefined ? rawPedido.ativo : true,
           formaPagamento: formData.formaPagamento,
-          observacao:     formData.observacoes,
-          cliente: {
-            id:       pedido.clienteId || pedido.clienteInfo?.id || 0,
-            nome:     formData.clienteNome,
-            cpf:      pedido.clienteInfo?.cpf      || "",
-            email:    pedido.clienteInfo?.email    || "",
-            telefone: pedido.clienteInfo?.telefone || "",
-            status:   "Ativo",
-            enderecos: pedido.clienteInfo?.endereco
-              ? [
-                  {
-                    id:          pedido.clienteInfo.endereco.id          || 0,
-                    rua:         pedido.clienteInfo.endereco.rua         || "",
-                    complemento: pedido.clienteInfo.endereco.complemento || "",
-                    cep:         pedido.clienteInfo.endereco.cep         || "",
-                    cidade:      pedido.clienteInfo.endereco.cidade      || "",
-                    bairro:      pedido.clienteInfo.endereco.bairro      || "",
-                    uf:          pedido.clienteInfo.endereco.uf          || "",
-                    pais:        pedido.clienteInfo.endereco.pais        || "Brasil",
-                    numero:      pedido.clienteInfo.endereco.numero      || 0,
-                  },
-                ]
-              : [],
-          },
+          observacao:     formData.observacoes + produtosObs,
+          clienteId:      pedido.clienteId || pedido.clienteInfo?.id || null,
+          clienteNome:    formData.clienteNome,
           status: {
             tipo: pedido.statusOriginal?.tipo || "PEDIDO",
             nome: pedido.statusOriginal?.nome || "ATIVO",
@@ -420,11 +421,11 @@ export default function PedidoDetalhe() {
         },
         servico: rawPedido?.servico
           ? {
-              ...rawPedido.servico,
-              nome: formData.servicoNome || rawPedido.servico.nome,
-              descricao: formData.servicoDescricao || rawPedido.servico.descricao,
-              precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : rawPedido.servico.precoBase,
-              ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : rawPedido.servico.ativo,
+              id: rawPedido.servico.id,
+              nome: formData.servicoNome || rawPedido.servico.nome || "",
+              descricao: formData.servicoDescricao !== undefined ? formData.servicoDescricao : (rawPedido.servico.descricao || ""),
+              precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : (rawPedido.servico.precoBase || 0),
+              ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : (rawPedido.servico.ativo !== false),
               etapa: {
                 tipo: "PEDIDO",
                 nome: formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE",
@@ -462,6 +463,9 @@ export default function PedidoDetalhe() {
       setShowSuccessModal(true);
       setEtapaOriginal(formData.etapaServico);
       setTimeout(() => setShowSuccessModal(false), 2500);
+      if (formData.etapaServico === "AGUARDANDO ORÇAMENTO") {
+        setTimeout(() => setShowAgendamentoSuggestion(true), 400);
+      }
     } catch (err) {
       console.error("❌ Erro ao salvar:", {
         status: err.response?.status,
@@ -489,6 +493,32 @@ export default function PedidoDetalhe() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (formData.etapaServico === "CONCLUÍDO") {
+      const iniciais = {};
+      formData.produtos.forEach((_, i) => { iniciais[i] = true; });
+      setProdutosUsados(iniciais);
+      setProdutosLivres("");
+      setShowFinalizarModal(true);
+      return;
+    }
+    executarSave();
+  };
+
+  const handleSaveConfirmed = () => {
+    setShowFinalizarModal(false);
+    let obs = "";
+    if (formData.produtos.length > 0) {
+      const linhas = formData.produtos
+        .map((p, i) => `${p.nome || `Item #${i + 1}`}: ${produtosUsados[i] !== false ? "Utilizado" : "Não utilizado"}`)
+        .join(", ");
+      obs = `\n\nProdutos utilizados — ${linhas}`;
+    } else if (produtosLivres.trim()) {
+      obs = `\n\nProdutos utilizados — ${produtosLivres.trim()}`;
+    }
+    executarSave(obs);
   };
 
   /* ── Loading ── */
@@ -842,13 +872,65 @@ export default function PedidoDetalhe() {
                             </p>
                             <div className="flex flex-col gap-4">
                               <FieldGroup label="Produto">
-                                <input
-                                  type="text"
-                                  value={produto.nome}
-                                  onChange={(e) => handleProdutoChange(index, "nome", e.target.value)}
-                                  placeholder="Nome do produto"
-                                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
-                                />
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    value={produtoDropdownOpen[index] ? (produtoBusca[index] ?? "") : (produto.nome || "")}
+                                    onFocus={(e) => {
+                                      const rect = e.target.getBoundingClientRect();
+                                      setProdutoDropdownPos((p) => ({ ...p, [index]: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX, width: rect.width } }));
+                                      setProdutoDropdownOpen((p) => ({ ...p, [index]: true }));
+                                      setProdutoBusca((p) => ({ ...p, [index]: "" }));
+                                    }}
+                                    onChange={(e) => setProdutoBusca((p) => ({ ...p, [index]: e.target.value }))}
+                                    onBlur={() => setTimeout(() => setProdutoDropdownOpen((p) => ({ ...p, [index]: false })), 150)}
+                                    placeholder="Buscar produto..."
+                                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
+                                  />
+                                  {produtoDropdownOpen[index] && produtoDropdownPos[index] && (
+                                    <div
+                                      className="fixed z-[9999] bg-white border border-gray-200 rounded-md shadow-xl max-h-52 overflow-y-auto"
+                                      style={{ top: produtoDropdownPos[index].top + 4, left: produtoDropdownPos[index].left, width: produtoDropdownPos[index].width }}
+                                    >
+                                      {estoqueItems
+                                        .filter((item) => {
+                                          const nome = item.produto?.nome || item.nomeProduto || item.nome || "";
+                                          const busca = produtoBusca[index] || "";
+                                          return nome.toLowerCase().includes(busca.toLowerCase());
+                                        })
+                                        .slice(0, 30)
+                                        .map((item) => {
+                                          const nome = item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.id}`;
+                                          return (
+                                            <button
+                                              key={item.id}
+                                              type="button"
+                                              onMouseDown={() => {
+                                                const updated = [...formData.produtos];
+                                                updated[index] = {
+                                                  ...updated[index],
+                                                  estoqueId: item.id,
+                                                  nome,
+                                                  preco: item.produto?.precoUnitario || item.precoUnitario || item.preco || updated[index].preco,
+                                                };
+                                                setFormData((p) => ({ ...p, produtos: updated }));
+                                                setProdutoDropdownOpen((p) => ({ ...p, [index]: false }));
+                                              }}
+                                              className="w-full text-left px-3 py-2 text-xs hover:bg-[#eef8fc] hover:text-[#007EA7] transition-colors cursor-pointer"
+                                            >
+                                              {nome}
+                                            </button>
+                                          );
+                                        })}
+                                      {estoqueItems.filter((item) => {
+                                        const nome = item.produto?.nome || item.nomeProduto || item.nome || "";
+                                        return nome.toLowerCase().includes((produtoBusca[index] || "").toLowerCase());
+                                      }).length === 0 && (
+                                        <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto encontrado</p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </FieldGroup>
                               <div className="grid grid-cols-3 gap-3">
                                 <FieldGroup label="Qtd">
@@ -1014,6 +1096,128 @@ export default function PedidoDetalhe() {
         description="Pedido atualizado com sucesso!"
         duration={2500}
       />
+
+      <TaskCreateModal
+        isOpen={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        onSave={() => {
+          setShowTaskModal(false);
+        }}
+        initialData={taskModalInitialData}
+      />
+
+      {showAgendamentoSuggestion && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-[#002A4B] px-6 py-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Agendar Orçamento?
+              </h3>
+              <p className="text-xs text-white/70 mt-1">
+                O serviço está aguardando orçamento. Deseja criar um agendamento de orçamento agora?
+              </p>
+            </div>
+            <div className="p-6 text-sm text-gray-600">
+              Um agendamento de orçamento permite definir data, horário e local para a vistoria com o cliente.
+            </div>
+            <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+              <button
+                onClick={() => setShowAgendamentoSuggestion(false)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Agora não
+              </button>
+              <button
+                onClick={() => {
+                  setShowAgendamentoSuggestion(false);
+                  const endereco = pedido.clienteInfo?.endereco;
+                  setTaskModalInitialData({
+                    tipoAgendamento: "ORCAMENTO",
+                    pedido: {
+                      value: pedido.id,
+                      label: servicoInfo?.nome || formData.servicoNome || `Pedido #${pedido.id}`,
+                      originalData: rawPedido,
+                    },
+                    rua: endereco?.rua || "",
+                    cep: endereco?.cep || "",
+                    numero: endereco?.numero ? String(endereco.numero) : "",
+                    bairro: endereco?.bairro || "",
+                    cidade: endereco?.cidade || "",
+                    uf: endereco?.uf || "",
+                    pais: endereco?.pais || "Brasil",
+                    complemento: endereco?.complemento || "",
+                  });
+                  setShowTaskModal(true);
+                }}
+                className="px-5 py-2 text-sm font-semibold text-white bg-[#007EA7] rounded-lg hover:bg-[#006891] transition-colors cursor-pointer flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Agendar Orçamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinalizarModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-[#002A4B] px-6 py-4">
+              <h3 className="text-base font-bold text-white">Finalizar Serviço — Produtos Utilizados</h3>
+              <p className="text-xs text-white/70 mt-1">Informe quais produtos foram utilizados durante a execução do serviço.</p>
+            </div>
+
+            <div className="p-6 flex flex-col gap-3 max-h-80 overflow-y-auto">
+              {formData.produtos.length > 0 ? (
+                formData.produtos.map((p, i) => (
+                  <label key={i} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={produtosUsados[i] !== false}
+                      onChange={(e) => setProdutosUsados((prev) => ({ ...prev, [i]: e.target.checked }))}
+                      className="w-4 h-4 accent-[#007EA7] cursor-pointer"
+                    />
+                    <span className="text-sm text-gray-800 flex-1">
+                      <strong>{p.nome || `Item #${i + 1}`}</strong>
+                      {p.quantidade > 0 && <span className="text-gray-500 ml-2">× {p.quantidade}</span>}
+                    </span>
+                    <span className={`text-xs font-semibold ${produtosUsados[i] !== false ? "text-green-600" : "text-gray-400"}`}>
+                      {produtosUsados[i] !== false ? "Utilizado" : "Não utilizado"}
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-gray-500">Nenhum produto cadastrado neste serviço. Descreva abaixo quais materiais ou produtos foram utilizados (opcional):</p>
+                  <textarea
+                    rows={4}
+                    value={produtosLivres}
+                    onChange={(e) => setProdutosLivres(e.target.value)}
+                    placeholder="Ex: Silicone transparente, fita dupla face, vidro 4mm..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] resize-none outline-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+              <button
+                onClick={() => setShowFinalizarModal(false)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveConfirmed}
+                className="px-5 py-2 text-sm font-semibold text-white bg-[#007EA7] rounded-lg hover:bg-[#006891] transition-colors cursor-pointer"
+              >
+                Confirmar e Finalizar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

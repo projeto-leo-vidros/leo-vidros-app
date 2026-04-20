@@ -161,7 +161,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
         try {
           const responseServicos = await Api.get("/pedidos/servicos");
-          allOrders = responseServicos.data || [];
+          const raw = responseServicos.data;
+          allOrders = raw?.content ?? (Array.isArray(raw) ? raw : []);
         } catch (error) {
           console.warn(
             "⚠️ Endpoint /Pedidos/servicos não disponível, tentando alternativa...",

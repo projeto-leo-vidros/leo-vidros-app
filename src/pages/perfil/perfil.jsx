@@ -345,6 +345,7 @@ export default function Perfil() {
       email: formData.email,
       cpf: formData.cpf,
       telefone: formData.telefone,
+      senha: isChangingPassword ? formData.novaSenha : "",
       endereco: enderecoRequest,
     };
 

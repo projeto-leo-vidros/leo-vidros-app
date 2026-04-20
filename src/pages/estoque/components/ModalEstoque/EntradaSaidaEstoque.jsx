@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { ArrowRightLeft, Hash, AlertCircle } from "lucide-react";
+import { ArrowRightLeft, Hash, AlertCircle, AlertTriangle } from "lucide-react";
 import Api from "../../../../api/client/Api";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/ui/Button/Button.component";
@@ -28,6 +28,8 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
               nome: item.produto?.nome || "Produto sem nome",
               unidade: item.detalhes?.unidadeMedida || "Unidade",
               localizacao: item.localizacao || "localizacao_padrao",
+              disponivel: item.quantidadeDisponivel ?? 0,
+              reservado: item.reservado ?? 0,
             };
           }
           return null;
@@ -50,6 +52,13 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
     }
   }, [isOpen, itemIds, estoque]);
 
+  const handleCancel = () => {
+    onClose();
+    if (processedItems.length > 0) {
+      navigate(0);
+    }
+  };
+
   const handleSaveClick = async () => {
     setError("");
     setLoading(true);
@@ -57,7 +66,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
     try {
       const endpoint = tipoMovimento === "entrada" ? "/estoques/entrada" : "/estoques/saida";
       const item = itemsInfo[currentItemIndex];
-      
+
       const requestBody = {
         produtoId: item.id,
         localizacao: item.localizacao,
@@ -78,7 +87,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
         setSuccess(true);
         setTimeout(() => {
           onClose();
-          navigate(0); // Recarrega a página para atualizar o estoque
+          navigate(0);
         }, 1500);
       }
     } catch (err) {
@@ -90,12 +99,15 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
   if (!isOpen || itemIds.length === 0) return null;
 
-  const unidadeMedida = itemsInfo[currentItemIndex]?.unidade || "Unidade";
+  const currentItem = itemsInfo[currentItemIndex];
+  const unidadeMedida = currentItem?.unidade || "Unidade";
+  const itemReservado = tipoMovimento === "saida" && (currentItem?.reservado ?? 0) > 0;
+  const bloqueadoPorReserva = itemReservado;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div 
-        className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-xl" 
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={handleCancel}>
+      <div
+        className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-gray-200 p-5">
@@ -115,10 +127,30 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
             </p>
             <div className="rounded-lg bg-white/80 px-4 py-3 shadow-sm">
               <span className="text-base font-bold text-gray-900">
-                {itemsInfo[currentItemIndex]?.nome}
+                {currentItem?.nome}
               </span>
+              {tipoMovimento === "saida" && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Disponível: <span className="font-semibold text-gray-700">{currentItem?.disponivel}</span>
+                  {(currentItem?.reservado ?? 0) > 0 && (
+                    <> · Reservado: <span className="font-semibold text-amber-600">{currentItem?.reservado}</span></>
+                  )}
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Bloqueio por reserva */}
+          {bloqueadoPorReserva && (
+            <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-red-500 bg-red-50 p-4">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+              <p className="text-sm text-red-800">
+                <strong>Saída bloqueada.</strong> Este item possui{" "}
+                <strong>{currentItem.reservado}</strong> {unidadeMedida.toLowerCase()}(s) reservada(s) em agendamento.
+                Cancele ou finalize o agendamento antes de retirar do estoque.
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-red-500 bg-red-50 p-4 shadow-sm">
@@ -154,23 +186,20 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
               min="1"
               value={quantidade}
               onChange={(e) => setQuantidade(e.target.value)}
-              disabled={loading}
+              disabled={loading || bloqueadoPorReserva}
               startIcon={<Hash className="h-4 w-4 text-blue-600" />}
             />
           </div>
         </div>
 
         <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-          >
+          <Button variant="ghost" onClick={handleCancel}>
             Cancelar
           </Button>
           <Button
             variant="primary"
             onClick={handleSaveClick}
-            disabled={loading || quantidade <= 0 || success}
+            disabled={loading || quantidade <= 0 || success || bloqueadoPorReserva}
           >
             {loading ? "Processando..." : currentItemIndex < itemsInfo.length - 1 ? "Próximo Item" : "Finalizar"}
           </Button>

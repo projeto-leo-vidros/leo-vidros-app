@@ -23,7 +23,9 @@ export default function Pedidos() {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const [busca, setBusca] = useState("");
-  const [triggerNovo, setTriggerNovo] = useState(false);
+  const [triggerNovo, setTriggerNovo] = useState(
+    location.state?.autoTriggerNovo === true,
+  );
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -155,7 +157,7 @@ export default function Pedidos() {
                     <div className="relative w-full md:w-[350px]">
                       <UniversalInput
                         variant="search"
-                        placeholder="Busque por..."
+                        placeholder="Buscar por cliente ou produto..."
                         value={busca}
                         onChange={(e) => setBusca(e.target.value)}
                         startIcon={<Search className="w-3.5 h-3.5" />}
@@ -225,6 +227,7 @@ export default function Pedidos() {
                             onNovoRegistroHandled={handleNovoRegistroHandled}
                             statusFilter={getStatusFilter()}
                             etapaFilter={getEtapaFilter()}
+                            clienteInicial={location.state?.clienteInicial}
                           />
                         )}
                       </motion.div>

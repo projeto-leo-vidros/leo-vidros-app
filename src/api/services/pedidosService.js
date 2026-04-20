@@ -6,30 +6,64 @@ class PedidosService extends BaseService {
     super(Api);
   }
 
-  async buscarTodos({ page = 0, size = 20 } = {}) {
-    const result = await this.get("/pedidos", { params: { page, size } });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+  async buscarTodos() {
+    const result = await this.get("/pedidos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
-  async buscarPedidosDeServico({ page = 0, size = 20 } = {}) {
-    const result = await this.get("/pedidos/servicos", { params: { page, size } });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+  async buscarPedidosDeServico() {
+    const result = await this.get("/pedidos/servicos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
-  async buscarPedidosDeProduto({ page = 0, size = 20 } = {}) {
-    const result = await this.get("/pedidos/produtos", { params: { page, size } });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+  async buscarServicosEndpoint() {
+    const result = await this.get("/servicos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
+    return result;
+  }
+
+  mapearServicoSimples(servico) {
+    const progresso = Array.isArray(servico.progresso)
+      ? servico.progresso
+      : [1, 6];
+    return {
+      id: servico.id,
+      clienteNome: servico.clienteNome || "Não informado",
+      clienteId: servico.clienteId,
+      clienteInfo: { nome: servico.clienteNome || "Não informado" },
+      produtosDesc: servico.descricao || "Serviço não especificado",
+      descricao: servico.descricao || "",
+      dataCompra: servico.data || new Date().toISOString().slice(0, 10),
+      data: servico.data || new Date().toISOString().slice(0, 10),
+      formaPagamento: servico.formaPagamento || "Não informado",
+      itensCount: 1,
+      valorTotal: servico.valorTotal || 0,
+      status: servico.status || "Ativo",
+      ativo: servico.ativo !== false,
+      tipoPedido: "servico",
+      etapa: servico.etapa || "Aguardando orçamento",
+      etapaOriginal: servico.etapa || null,
+      progresso,
+      servicoNome: servico.descricao || null,
+      produtos: [],
+      servico: {
+        id: servico.id,
+        nome: servico.descricao || "Serviço",
+        descricao: servico.descricao || "",
+        etapa: servico.etapa || "Aguardando orçamento",
+        agendamentos: [],
+      },
+      observacoes: servico.observacoes || "",
+      statusOriginal: null,
+      _origem: "servicos",
+    };
+  }
+
+  async buscarPedidosDeProduto() {
+    const result = await this.get("/pedidos/produtos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
@@ -37,14 +71,11 @@ class PedidosService extends BaseService {
     return this.get(`/pedidos/${id}`);
   }
 
-  async buscarPorTipoAndEtapa(nomeEtapa, { page = 0, size = 20 } = {}) {
+  async buscarPorTipoAndEtapa(nomeEtapa) {
     const result = await this.get("/pedidos/findAllBy", {
-      params: { nome: nomeEtapa, page, size },
+      params: { nome: nomeEtapa },
     });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
@@ -131,12 +162,14 @@ class PedidosService extends BaseService {
   }
 
   mapearParaFrontend(dadosBackend) {
+    const tipoPedidoNorm = dadosBackend.tipoPedido?.toLowerCase().replace(/[çc]/g, "c") ?? "";
     const isProduto =
-      dadosBackend.tipoPedido === "produto" &&
+      tipoPedidoNorm === "produto" &&
       dadosBackend.produtos &&
       dadosBackend.produtos.length > 0;
     const isServico =
-      dadosBackend.tipoPedido === "serviço" && dadosBackend.servico;
+      dadosBackend.servico != null &&
+      (tipoPedidoNorm.includes("servi") || !tipoPedidoNorm.includes("produto"));
 
     let produtosDesc = "";
     let itensCount = 0;
@@ -442,14 +475,7 @@ class PedidosService extends BaseService {
     if (filtros.busca && filtros.busca.trim()) {
       const termoBusca = filtros.busca.toLowerCase().trim();
       servicosFiltrados = servicosFiltrados.filter((servico) =>
-        [
-          servico.id?.toString().padStart(3, "0"),
-          servico.clienteNome,
-          servico.descricao,
-          servico.etapa,
-          servico.servicoNome,
-          servico.produtosDesc,
-        ]
+        [servico.clienteNome, servico.servicoNome, servico.produtosDesc]
           .join(" ")
           .toLowerCase()
           .includes(termoBusca),
