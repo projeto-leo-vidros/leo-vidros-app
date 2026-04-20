@@ -637,21 +637,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       const tipoValor =
         formData.tipoAgendamento?.value || formData.tipoAgendamento;
 
-      const funcionariosPayload = selectedFuncionarios.map((funcId) => {
-        const funcEncontrado = funcionariosOptions.find(
-          (f) => f.value === funcId,
-        );
-        return {
-          id: funcId,
-          nome: funcEncontrado?.label || "",
-          telefone: "",
-          funcao: "",
-          contrato: "",
-          escala: "",
-          status: true,
-        };
-      });
-
       const pedidoCompleto = formData.pedido?.originalData || null;
       // Mantém a etapa do pedido como está ou default, o backend irá atualizar automaticamente ao criar o agendamento
       const servicoPayload = pedidoCompleto?.servico
@@ -687,14 +672,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         }));
 
       const payload = {
-        id: formData.id,
-        servico: servicoPayload,
+        servicoId: servicoPayload.id,
         tipoAgendamento: tipoValor,
         dataAgendamento: formatDateToISO(formData.eventDate),
         inicioAgendamento: formatTimeToHHmmss(formData.startTime),
         fimAgendamento: formatTimeToHHmmss(formData.endTime),
         statusAgendamento: { tipo: "AGENDAMENTO", nome: "PENDENTE" },
-        observacao: formData.observacao || "",
+        observacao: formData.observacao || null,
         endereco: {
           rua: formData.rua || "",
           complemento: formData.complemento || "",
@@ -705,7 +689,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           pais: formData.pais || "",
           numero: formData.numero ? parseInt(formData.numero, 10) : 0,
         },
-        funcionarios: funcionariosPayload,
+        funcionariosIds: selectedFuncionarios,
         produtos: produtosPayload,
       };
 
