@@ -248,11 +248,16 @@ export default function ServicosList({
           !error &&
           pagina.map((item) => {
             const isCompleted = item.etapa === "Concluído" || item.status === "Cancelado";
+            const hasActiveAgendamento = (item.servico?.agendamentos || []).some(
+              (ag) => ag.statusAgendamento?.nome &&
+                ag.statusAgendamento.nome !== "CANCELADO" &&
+                ag.statusAgendamento.nome !== "INATIVO",
+            );
             const isInactive =
               item.ativo === false ||
               item.servico?.ativo === false ||
               String(item.status || "").toLowerCase() === "inativo";
-            const isGrayCard = isInactive || isCompleted;
+            const isGrayCard = (isInactive && !hasActiveAgendamento) || isCompleted;
             return (
             <article
               key={item.id}
