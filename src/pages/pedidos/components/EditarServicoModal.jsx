@@ -455,7 +455,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
   const mostrarBotaoAgendarServico = () => {
     const etapaAtual = formData.etapa?.toUpperCase();
-    return etapaAtual === "ORÇAMENTO APROVADO" && !modoEdicao;
+    return etapaAtual === "ORÇAMENTO APROVADO";
   };
 
   if (!isOpen || !servico) return null;

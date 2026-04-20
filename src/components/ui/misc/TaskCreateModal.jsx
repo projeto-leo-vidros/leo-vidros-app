@@ -246,14 +246,14 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
             let label = "";
 
-            if (dto.descricao) {
-              label = dto.descricao;
-            } else if (dto.nome) {
-              label = dto.nome;
-            } else if (dto.servico?.nome) {
+            if (dto.servico?.nome) {
               label = dto.servico.nome;
             } else if (dto.servico?.descricao) {
               label = dto.servico.descricao;
+            } else if (dto.nome) {
+              label = dto.nome;
+            } else if (dto.descricao) {
+              label = dto.descricao;
             } else if (pedidoId) {
               label = `Pedido #${pedidoId}`;
             } else {
@@ -290,14 +290,18 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   const fetchProdutos = useCallback(async () => {
     try {
-      const response = await Api.get("/produtos");
-      const dados = response.data || [];
+      const response = await Api.get("/estoques", { params: { size: 500 } });
+      const raw = response.data;
+      const dados = raw?.content ?? (Array.isArray(raw) ? raw : []);
       setProdutosOptions(
-        dados.map((prod) => ({
-          value: prod.id,
-          label: prod.nome || prod.descricao || `Produto ${prod.id}`,
-          originalData: prod,
-        })),
+        dados
+          .filter((item) => item.produto?.id)
+          .map((item) => ({
+            value: item.produto.id,
+            label: item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.produto.id}`,
+            estoqueId: item.id,
+            originalData: item,
+          })),
       );
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
@@ -555,7 +559,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         }
       }
 
-      if (initialData?.produtos?.length > 0) {
+      const tipoVal = initialData?.tipoAgendamento?.value || initialData?.tipoAgendamento;
+      if (tipoVal === "SERVICO" || initialData?.produtos?.length > 0) {
         fetchProdutos();
       }
     }
@@ -645,7 +650,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         .map((p) => ({
           produtoId: parseInt(p.id, 10),
           quantidadeUtilizada: 0.0,
-          quantidadeReservada: parseFloat(p.quantidade) || 0.0,
+          quantidadeReservada: Math.max(0.01, parseFloat(p.quantidade) || 1),
         }));
 
       const payload = {
@@ -658,12 +663,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         observacao: formData.observacao || "",
         endereco: {
           rua: formData.rua || "",
-          complemento: formData.complemento || "",
+          complemento: formData.complemento || null,
           cep: formData.cep || "",
           cidade: formData.cidade || "",
-          bairro: formData.bairro || "",
+          bairro: formData.bairro || null,
           uf: formData.uf || "",
-          pais: formData.pais || "",
+          pais: formData.pais || "Brasil",
           numero: formData.numero ? parseInt(formData.numero, 10) : 0,
         },
         funcionariosIds: selectedFuncionarios,

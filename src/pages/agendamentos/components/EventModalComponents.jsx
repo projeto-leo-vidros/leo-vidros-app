@@ -12,7 +12,7 @@ import {
   X,
   Tag,
 } from "lucide-react";
-import { getInitials } from "../utils/eventHelpers";
+import { getAgendamentoDisplayName, getInitials } from "../utils/eventHelpers";
 import Button from "../../../components/ui/Button/Button.component";
 import { cn } from "../../../utils/cn";
 
@@ -72,6 +72,7 @@ export const EventHeader = ({ title, badges, onClose }) => {
 };
 
 export const EventInfo = ({
+  event,
   date,
   startTime,
   endTime,
@@ -137,7 +138,7 @@ export const EventInfo = ({
           </div>
           <div className="mt-1 w-full text-start">
             <h3 className="text-md mb-1.5 text-left font-bold text-gray-900">
-              Agendamento: {servico.codigo} - {servico.nome}
+              {getAgendamentoDisplayName(event || { servico }).fullTitle}
             </h3>
             {servico.descricao && (
               <p className="mt-1.5 text-sm text-gray-800">
@@ -302,28 +303,34 @@ export const EventFooter = ({
   isDeleting,
   isLoading,
   hasAddress,
+  canDelete = true,
+  canEdit = true,
 }) => {
   return (
     <div className="mt-4 flex flex-wrap-reverse items-center justify-end gap-3 rounded-b-xl border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-nowrap">
-      <Button
-        variant="danger"
-        onClick={onDelete}
-        disabled={isLoading || isDeleting}
-        className="mr-auto w-full sm:w-auto"
-        startIcon={<Trash2 size={16} />}
-      >
-        {isDeleting ? "Cancelando..." : "Cancelar Agendamento"}
-      </Button>
+      {canDelete && (
+        <Button
+          variant="danger"
+          onClick={onDelete}
+          disabled={isLoading || isDeleting}
+          className="mr-auto w-full sm:w-auto"
+          startIcon={<Trash2 size={16} />}
+        >
+          {isDeleting ? "Cancelando..." : "Cancelar Agendamento"}
+        </Button>
+      )}
 
-      <Button
-        variant="outline"
-        onClick={onEdit}
-        disabled={isLoading}
-        className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 sm:w-auto"
-        startIcon={<Edit size={16} />}
-      >
-        Editar Detalhes
-      </Button>
+      {canEdit && (
+        <Button
+          variant="outline"
+          onClick={onEdit}
+          disabled={isLoading}
+          className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 sm:w-auto"
+          startIcon={<Edit size={16} />}
+        >
+          Editar Detalhes
+        </Button>
+      )}
 
       <Button
         variant="primary"

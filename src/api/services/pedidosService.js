@@ -6,6 +6,95 @@ class PedidosService extends BaseService {
     super(Api);
   }
 
+  normalizarEtapaOuStatus(valor = "") {
+    return String(valor)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/_/g, " ")
+      .trim()
+      .toUpperCase();
+  }
+
+  isTipoOrcamentoAgendamento(tipo = "") {
+    const tipoNorm = this.normalizarEtapaOuStatus(tipo);
+    return tipoNorm.includes("ORC") || tipoNorm.includes("VISTORIA");
+  }
+
+  isTipoServicoAgendamento(tipo = "") {
+    return !this.isTipoOrcamentoAgendamento(tipo);
+  }
+
+  etapaServicoEhObrigatoriaPorAgendamento(servico) {
+    if (!servico) return false;
+
+    return (servico.agendamentos || []).some((ag) => {
+      const statusNorm = this.normalizarEtapaOuStatus(
+        ag?.statusAgendamento?.nome,
+      );
+      return (
+        statusNorm &&
+        statusNorm !== "CANCELADO" &&
+        statusNorm !== "INATIVO" &&
+        statusNorm !== "CONCLUIDO"
+      );
+    });
+  }
+
+  calcularEtapaServicoPorAgendamentos(servico, etapaBase = "PENDENTE") {
+    if (!servico) return etapaBase;
+
+    const agendamentosAtivos = (servico.agendamentos || []).filter((ag) => {
+      const statusNorm = this.normalizarEtapaOuStatus(
+        ag?.statusAgendamento?.nome,
+      );
+      return (
+        statusNorm &&
+        statusNorm !== "CANCELADO" &&
+        statusNorm !== "INATIVO" &&
+        statusNorm !== "CONCLUIDO"
+      );
+    });
+
+    if (agendamentosAtivos.length === 0) {
+      return etapaBase;
+    }
+
+    const agendamentoServico = agendamentosAtivos.find((ag) =>
+      this.isTipoServicoAgendamento(ag?.tipoAgendamento),
+    );
+    const agendamentoOrcamento = agendamentosAtivos.find((ag) =>
+      this.isTipoOrcamentoAgendamento(ag?.tipoAgendamento),
+    );
+
+    if (agendamentoServico) {
+      const statusServico = this.normalizarEtapaOuStatus(
+        agendamentoServico.statusAgendamento?.nome,
+      );
+
+      if (statusServico === "CONCLUIDO") {
+        return "CONCLU\u00cdDO";
+      }
+      if (statusServico === "EM ANDAMENTO" || statusServico === "EM EXECUCAO") {
+        return "SERVI\u00c7O EM EXECU\u00c7\u00c3O";
+      }
+      return "SERVI\u00c7O AGENDADO";
+    }
+
+    if (agendamentoOrcamento) {
+      const statusOrcamento = this.normalizarEtapaOuStatus(
+        agendamentoOrcamento.statusAgendamento?.nome,
+      );
+
+      if (statusOrcamento === "PENDENTE" || statusOrcamento === "EM ANDAMENTO") {
+        return "AGUARDANDO OR\u00c7AMENTO";
+      }
+
+      return "OR\u00c7AMENTO APROVADO";
+    }
+
+    return etapaBase;
+  }
+
   async buscarTodos() {
     const result = await this.get("/pedidos");
     if (result.success) result.data = result.data?.content ?? result.data ?? [];
@@ -249,6 +338,11 @@ class PedidosService extends BaseService {
         etapaCalculada = etapaNome;
       }
 
+      etapaCalculada = this.calcularEtapaServicoPorAgendamentos(
+        dadosBackend.servico,
+        etapaCalculada,
+      );
+
       servicoInfo = {
         id: dadosBackend.servico.id,
         codigo: dadosBackend.servico.codigo,
@@ -263,10 +357,22 @@ class PedidosService extends BaseService {
       produtosDesc = servicoInfo.nome;
       itensCount = 1;
 
-      switch (etapaCalculada.toUpperCase()) {
+      switch (this.normalizarEtapaOuStatus(etapaCalculada)) {
         case "PENDENTE":
           etapaAtual = "Pendente";
           progressoValor = 1;
+          break;
+        case "CONCLUIDO":
+          etapaAtual = "Concluído";
+          progressoValor = 7;
+          break;
+        case "ANALISE DO ORCAMENTO":
+          etapaAtual = "Análise do Orçamento";
+          progressoValor = 3;
+          break;
+        case "AGUARDANDO ORCAMENTO":
+          etapaAtual = "Aguardando Orçamento";
+          progressoValor = 2;
           break;
         case "AGUARDANDO ORÇAMENTO":
           etapaAtual = "Aguardando Orçamento";

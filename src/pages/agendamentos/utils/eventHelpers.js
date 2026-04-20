@@ -169,3 +169,90 @@ export const normalizeStatus = (status) => {
   const str = typeof status === "object" ? status.nome || status.tipo || "" : String(status);
   return str.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 };
+
+export const isConcludedStatus = (status) => {
+  const statusNorm = normalizeStatus(status);
+  return statusNorm.includes("CONCLU");
+};
+
+export const isCancelledStatus = (status) => {
+  const statusNorm = normalizeStatus(status);
+  return statusNorm.includes("CANCEL");
+};
+
+export const isFinalizedStatus = (status) => {
+  return isConcludedStatus(status) || isCancelledStatus(status);
+};
+
+/**
+ * Define se um evento deve aparecer na agenda do dia.
+ * A regra diária oculta itens concluídos e cancelados.
+ * @param {Object} event - Objeto do evento/agendamento
+ * @param {string} dateKey - Data alvo no formato yyyy-MM-dd
+ * @returns {boolean}
+ */
+export const isVisibleInDailyAgenda = (event, dateKey) => {
+  const eventDateKey = getEventDate(event);
+  if (!eventDateKey || eventDateKey !== dateKey) return false;
+
+  return !isFinalizedStatus(event.statusAgendamento);
+};
+
+const cleanText = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+
+const formatAgendamentoNumero = (agendamento) => {
+  const rawNumero =
+    agendamento?.numeroAgendamento ??
+    agendamento?.numero ??
+    agendamento?.id ??
+    null;
+
+  if (rawNumero === null || rawNumero === undefined || rawNumero === "") {
+    return "SVC-000";
+  }
+
+  const numero = Number(rawNumero);
+
+  if (Number.isFinite(numero)) {
+    return `SVC-${String(Math.trunc(numero)).padStart(3, "0")}`;
+  }
+
+  const normalized = cleanText(rawNumero);
+  return normalized ? `SVC-${normalized}` : "SVC-000";
+};
+
+export const getAgendamentoTypeLabel = (tipoAgendamento) => {
+  const tipoNorm = normalizeStatus(tipoAgendamento);
+  if (tipoNorm.includes("ORC")) return "Orçamento";
+  if (tipoNorm.includes("SERV")) return "Serviço";
+  return cleanText(tipoAgendamento) || "Agendamento";
+};
+
+export const getAgendamentoDisplayName = (agendamento) => {
+  if (!agendamento) {
+    return {
+      shortTitle: "SVC-000",
+      fullTitle: "Agendamento",
+    };
+  }
+
+  const codigoAgendamento = formatAgendamentoNumero(agendamento);
+  const codigo = cleanText(agendamento.servico?.codigo);
+  const nome = cleanText(agendamento.servico?.nome);
+  const tipoLabel = getAgendamentoTypeLabel(agendamento.tipoAgendamento);
+
+  const fullTitle =
+    codigo && nome
+      ? `${codigo} - ${nome}`
+      : codigo || nome || tipoLabel || codigoAgendamento || "Agendamento";
+
+  const shortTitle = codigoAgendamento;
+
+  return {
+    shortTitle,
+    fullTitle,
+  };
+};

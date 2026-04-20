@@ -16,6 +16,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -42,7 +43,6 @@ import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import TaskCreateModal from "../../components/ui/misc/TaskCreateModal";
 import Button from "../../components/ui/Button/Button.component";
-import AgendamentoNotification from "../../components/ui/misc/AgendamentoNotification";
 import AgendamentoDetailModal from "./components/AgendamentoDetailModal";
 import Kpis from "../../components/kpis/Kpis";
 
@@ -50,11 +50,18 @@ import CalendarView from "./components/CalendarView";
 import MiniCalendar from "./components/MiniCalendar";
 import UpcomingEvents from "./components/UpcomingEvents";
 import EditarAgendamentoSimples from "../pedidos/components/EditarAgendamentoSimples";
+import {
+  getAgendamentoDisplayName,
+  isCancelledStatus,
+  isConcludedStatus,
+  isFinalizedStatus,
+  isVisibleInDailyAgenda,
+} from "./utils/eventHelpers";
 
 import { cn } from "../../utils/cn";
 import { useAgendamentos } from "../../hooks/queries/useAgendamentos";
-import { useAgendamentoNotifications } from "./hooks/useAgendamentoNotifications";
 import agendamentosService from "../../api/services/agendamentosService";
+import PedidosService from "../../api/services/pedidosService";
 
 import {
   normalizeStatus,
@@ -103,7 +110,8 @@ function ActionsDropdown({
   const [open, setOpen] = useState(false);
 
   const statusNome = agendamento?.statusAgendamento?.nome || "";
-  const isFinalizado = statusNome === "CONCLUIDO" || statusNome === "CANCELADO";
+  const statusNorm = normalizeStatus(statusNome);
+  const isFinalizado = isFinalizedStatus(statusNome);
 
   const hasEndereco = (() => {
     if (!agendamento?.endereco) return false;
@@ -162,7 +170,7 @@ function ActionsDropdown({
                 <Edit3 className="h-4 w-4 text-gray-400" /> Editar
               </button>
             )}
-            {statusNome !== "CONFIRMADO" && !isFinalizado && (
+            {statusNorm !== "CONFIRMADO" && !isFinalizado && (
               <button
                 className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-green-600 transition-colors hover:bg-gray-50"
                 onClick={(e) => {
@@ -174,7 +182,7 @@ function ActionsDropdown({
                 <Check className="h-4 w-4" /> Confirmar
               </button>
             )}
-            {statusNome !== "CONCLUIDO" && !isFinalizado && (
+            {!isConcludedStatus(statusNome) && !isFinalizado && (
               <button
                 className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
                 onClick={(e) => {
@@ -187,7 +195,7 @@ function ActionsDropdown({
               </button>
             )}
             {!isFinalizado && <div className="my-1 border-t border-gray-100" />}
-            {statusNome !== "CONCLUIDO" && (
+            {!isConcludedStatus(statusNome) && !isFinalizado && (
               <button
                 className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                 onClick={(e) => {
@@ -267,6 +275,7 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
 
 export default function Agendamentos() {
   const headerRef = useRef(null);
+  const location = useLocation();
   const [headerHeight, setHeaderHeight] = useState(0);
 
   useEffect(() => {
@@ -299,6 +308,7 @@ export default function Agendamentos() {
   const [showReagendarModal, setShowReagendarModal] = useState(false);
   const [agendamentoToReagendar, setAgendamentoToReagendar] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const autoOpenFromServiceRef = useRef(false);
 
   const { data: agendamentos = [], isLoading, refetch } = useAgendamentos();
 
@@ -310,7 +320,7 @@ export default function Agendamentos() {
     if (!activeKpiFilter) return tasks;
     if (activeKpiFilter === 'today') {
       const todayStr = format(new Date(), "yyyy-MM-dd");
-      return tasks.filter(t => t.dataAgendamento === todayStr);
+      return tasks.filter((t) => isVisibleInDailyAgenda(t, todayStr));
     }
     if (activeKpiFilter === 'confirmed') {
       return tasks.filter(t => t.statusAgendamento?.nome === "CONFIRMADO");
@@ -321,13 +331,7 @@ export default function Agendamentos() {
     return tasks;
   }, [tasks, activeKpiFilter]);
 
-  const calendarActiveTasks = useMemo(() => {
-    if (calendarViewType === 'list') return filteredTasks;
-    return filteredTasks.filter((t) => {
-      const s = t.statusAgendamento?.nome;
-      return s !== "CANCELADO" && s !== "CONCLUIDO";
-    });
-  }, [filteredTasks, calendarViewType]);
+  const calendarActiveTasks = useMemo(() => filteredTasks, [filteredTasks]);
 
   const handleKpiClick = useCallback((filterType) => {
     if (activeKpiFilter === filterType) {
@@ -345,32 +349,24 @@ export default function Agendamentos() {
       const startTime =
         agendamento.inicioAgendamento?.substring(0, 5) || "00:00";
       const endTime = agendamento.fimAgendamento?.substring(0, 5) || "00:00";
+      const { shortTitle, fullTitle } = getAgendamentoDisplayName(agendamento);
 
-      let fullTitle = "Agendamento";
-      let calendarTitle = `#${String(agendamento.id).padStart(3, "0")}`;
-
-      if (agendamento.servico) {
-        const codigo = agendamento.servico.codigo || "";
-        const nome = agendamento.servico.nome || "";
-        fullTitle =
-          `${codigo} ${nome}`.trim() ||
-          agendamento.tipoAgendamento ||
-          "Agendamento";
-        if (codigo) calendarTitle = codigo;
+      const SERVICE_COLORS = [
+        "#3B82F6","#8B5CF6","#10B981","#F59E0B","#EF4444",
+        "#06B6D4","#EC4899","#6366F1","#84CC16","#F97316",
+      ];
+      const servicoId = agendamento.servico?.id ?? agendamento.servicoId ?? null;
+      let backgroundColor;
+      if (servicoId != null) {
+        backgroundColor = SERVICE_COLORS[servicoId % SERVICE_COLORS.length];
       } else {
-        fullTitle = agendamento.tipoAgendamento || "Agendamento";
+        backgroundColor = agendamento.tipoAgendamento === "ORCAMENTO" ? "#FBBF24" : "#3B82F6";
       }
-
-      let backgroundColor = "#3B82F6";
-      if (agendamento.tipoAgendamento === "SERVICO")
-        backgroundColor = "#3B82F6";
-      else if (agendamento.tipoAgendamento === "ORCAMENTO")
-        backgroundColor = "#FBBF24";
 
       return {
         id: agendamento.id,
-        title: calendarTitle,
-        fullTitle: fullTitle,
+        title: shortTitle,
+        fullTitle,
         date: dataFormatada,
         startTime: startTime,
         endTime: endTime,
@@ -381,13 +377,10 @@ export default function Agendamentos() {
     setTasks(transformedTasks);
   }, [agendamentos]);
 
-  const { currentNotification, dismissNotification } =
-    useAgendamentoNotifications(tasks);
-
   const stats = useMemo(() => {
     const todayKey = format(new Date(), "yyyy-MM-dd");
     return {
-      today: agendamentos.filter((a) => a.dataAgendamento === todayKey).length,
+      today: agendamentos.filter((a) => isVisibleInDailyAgenda(a, todayKey)).length,
       confirmed: agendamentos.filter(
         (a) =>
           a.statusAgendamento?.nome === "CONFIRMADO" &&
@@ -436,6 +429,61 @@ export default function Agendamentos() {
     },
     [selectedDate],
   );
+
+  useEffect(() => {
+    const routeState = location.state;
+
+    if (
+      autoOpenFromServiceRef.current ||
+      !routeState ||
+      routeState.tipo !== "servico" ||
+      !routeState.servicoId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const openServiceAgendamento = async () => {
+      try {
+        const result = await PedidosService.buscarPorId(routeState.servicoId);
+        if (!result.success || cancelled) {
+          return;
+        }
+
+        const pedidoCompleto = result.data;
+        const pedidoLabel =
+          pedidoCompleto?.servico?.nome ||
+          routeState.servicoNome ||
+          `Pedido #${routeState.servicoId}`;
+
+        setModalInitialData({
+          tipoAgendamento: {
+            value: "SERVICO",
+            label: "Prestação de serviço",
+          },
+          pedido: {
+            value: pedidoCompleto?.id || routeState.servicoId,
+            label: pedidoLabel,
+            originalData: pedidoCompleto,
+          },
+          eventDate: format(new Date(), "yyyy-MM-dd"),
+          startTime: "",
+          endTime: "",
+        });
+        setShowTaskModal(true);
+        autoOpenFromServiceRef.current = true;
+      } catch (error) {
+        console.error("❌ Erro ao preparar agendamento do serviço:", error);
+      }
+    };
+
+    openServiceAgendamento();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.state]);
 
   const handleTaskSave = useCallback(() => {
     refetch();
@@ -515,56 +563,13 @@ export default function Agendamentos() {
     setShowTaskModal(true);
   }, []);
 
-  const handleReagendarFromNotification = async (agendamento) => {
-    dismissNotification();
-    setAgendamentoToReagendar(agendamento);
-    setShowReagendarModal(true);
-  };
-
   const handleReagendarSuccess = () => {
     setShowReagendarModal(false);
     setAgendamentoToReagendar(null);
     refetch();
   };
 
-  const handleNotificationCancelar = useCallback(
-    async (agendamento) => {
-      if (
-        window.confirm(
-          `Cancelar agendamento #${String(agendamento.id).padStart(3, "0")}?`,
-        )
-      ) {
-        try {
-          await agendamentosService.delete(agendamento.id);
-          dismissNotification();
-          refetch();
-        } catch (err) {
-          console.error("Erro ao cancelar:", err);
-        }
-      }
-    },
-    [dismissNotification, refetch],
-  );
 
-  const handleNotificationIniciar = useCallback(
-    async (agendamento) => {
-      try {
-        await agendamentosService.update(agendamento.id, {
-          tipoAgendamento: agendamento.tipoAgendamento,
-          dataAgendamento: agendamento.dataAgendamento,
-          inicioAgendamento: agendamento.inicioAgendamento,
-          fimAgendamento: agendamento.fimAgendamento,
-          statusAgendamento: { tipo: "AGENDAMENTO", nome: "EM ANDAMENTO" },
-          observacao: agendamento.observacao || "",
-        });
-        dismissNotification();
-        refetch();
-      } catch (err) {
-        console.error("Erro ao iniciar:", err);
-      }
-    },
-    [dismissNotification, refetch],
-  );
 
   const getServicoNome = (apt) => {
     if (apt.servico?.nome) return apt.servico.nome;
@@ -748,15 +753,6 @@ export default function Agendamentos() {
       />
 
       {/* Notificação de agendamento próximo */}
-      {currentNotification && (
-        <AgendamentoNotification
-          agendamento={currentNotification}
-          onReagendar={handleReagendarFromNotification}
-          onCancelar={handleNotificationCancelar}
-          onIniciar={handleNotificationIniciar}
-          onClose={dismissNotification}
-        />
-      )}
     </div>
   );
 }

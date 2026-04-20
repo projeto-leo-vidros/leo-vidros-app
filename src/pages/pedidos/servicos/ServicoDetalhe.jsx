@@ -328,6 +328,7 @@ export default function PedidoDetalhe() {
 
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [produtosUsados, setProdutosUsados] = useState({});
+  const [produtosQuantidades, setProdutosQuantidades] = useState({});
   const [produtosLivres, setProdutosLivres] = useState("");
   const [estoqueItems, setEstoqueItems] = useState([]);
   const [showAgendamentoSuggestion, setShowAgendamentoSuggestion] = useState(false);
@@ -355,6 +356,16 @@ export default function PedidoDetalhe() {
     });
   };
 
+  const etapaObrigatoriaPorAgendamento = rawPedido?.servico
+    ? PedidosService.calcularEtapaServicoPorAgendamentos(
+        rawPedido.servico,
+        rawPedido?.servico?.etapa?.nome || "PENDENTE",
+      )
+    : null;
+  const etapaTravadaPorAgendamento = rawPedido?.servico
+    ? PedidosService.etapaServicoEhObrigatoriaPorAgendamento(rawPedido.servico)
+    : false;
+
   const fetchPedido = async () => {
     setLoading(true);
     try {
@@ -365,12 +376,13 @@ export default function PedidoDetalhe() {
       const mapped = PedidosService.mapearParaFrontend(raw);
       setPedido(mapped);
 
-      let etapa = "PENDENTE";
-      if (mapped.servico?.etapa) {
-        etapa = typeof mapped.servico.etapa === "string"
-          ? mapped.servico.etapa
-          : mapped.servico.etapa.nome || "PENDENTE";
-      } else if (mapped.status) {
+      let etapa = raw?.servico
+        ? PedidosService.calcularEtapaServicoPorAgendamentos(
+            raw.servico,
+            raw?.servico?.etapa?.nome || "PENDENTE",
+          )
+        : "PENDENTE";
+      if (!raw?.servico && mapped.status) {
         etapa = typeof mapped.status === "string"
           ? mapped.status
           : mapped.status.nome || "PENDENTE";
@@ -386,7 +398,7 @@ export default function PedidoDetalhe() {
         servicoNome:         mapped.servico?.nome         || "",
         servicoDescricao:    mapped.servico?.descricao    || "",
         servicoPrecoBase:    mapped.servico?.precoBase    || 0,
-        servicoAtivo:        mapped.servico?.ativo === true,
+        servicoAtivo:        mapped.servico?.ativo !== false,
       });
     } catch (err) {
       console.error("Erro ao buscar pedido:", err);
@@ -474,6 +486,10 @@ export default function PedidoDetalhe() {
     
     try {
       const valorTotal  = calcularValorTotal();
+      const etapaParaSalvar =
+        etapaTravadaPorAgendamento && etapaObrigatoriaPorAgendamento
+          ? etapaObrigatoriaPorAgendamento
+          : formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE";
       requestBody = {
         pedido: {
           valorTotal,
@@ -497,7 +513,7 @@ export default function PedidoDetalhe() {
               descricao: formData.servicoDescricao !== undefined ? formData.servicoDescricao : (rawPedido.servico.descricao || ""),
               precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : (rawPedido.servico.precoBase || 0),
               ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : (rawPedido.servico.ativo !== false),
-              etapaNome: formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE",
+              etapaNome: etapaParaSalvar,
             }
           : null,
         produtos: formData.produtos
@@ -563,8 +579,13 @@ export default function PedidoDetalhe() {
     if (saving) return;
     if (formData.etapaServico === "CONCLUÍDO") {
       const iniciais = {};
-      formData.produtos.forEach((_, i) => { iniciais[i] = true; });
+      const qtds = {};
+      formData.produtos.forEach((p, i) => {
+        iniciais[i] = true;
+        qtds[i] = p.quantidade ?? 1;
+      });
       setProdutosUsados(iniciais);
+      setProdutosQuantidades(qtds);
       setProdutosLivres("");
       setShowFinalizarModal(true);
       return;
@@ -572,18 +593,68 @@ export default function PedidoDetalhe() {
     executarSave();
   };
 
-  const handleSaveConfirmed = () => {
+  const handleSaveConfirmed = async () => {
     if (saving) return;
     setShowFinalizarModal(false);
     let obs = "";
     if (formData.produtos.length > 0) {
       const linhas = formData.produtos
-        .map((p, i) => `${p.nome || `Item #${i + 1}`}: ${produtosUsados[i] !== false ? "Utilizado" : "Não utilizado"}`)
-        .join(", ");
-      obs = `\n\nProdutos utilizados — ${linhas}`;
+        .map((p, i) => {
+          const usado = produtosUsados[i] !== false;
+          const qtdReservada = parseFloat(p.quantidade) || 0;
+          const qtdUsada = usado ? (parseFloat(produtosQuantidades[i]) || qtdReservada) : 0;
+          const qtdDevolvida = qtdReservada - qtdUsada;
+          const descricao = usado
+            ? `Utilizado: ${qtdUsada} un${qtdDevolvida > 0 ? ` (devolve ${qtdDevolvida} ao estoque)` : ""}`
+            : `Não utilizado (devolve ${qtdReservada} ao estoque)`;
+          return `${p.nome || `Item #${i + 1}`}: ${descricao}`;
+        })
+        .join("; ");
+      obs = `\n\nProdutos — ${linhas}`;
     } else if (produtosLivres.trim()) {
       obs = `\n\nProdutos utilizados — ${produtosLivres.trim()}`;
     }
+
+    // Tentar atualizar agendamentos vinculados com quantidadeUtilizada real
+    const agendamentosServico = (pedido?.servico?.agendamentos || []).filter(
+      (ag) => ag.tipoAgendamento === "SERVICO" && ag.id,
+    );
+    for (const ag of agendamentosServico) {
+      if (ag.agendamentoProdutos?.length > 0) {
+        try {
+          const produtosAtualizados = ag.agendamentoProdutos.map((ap) => {
+            const idx = formData.produtos.findIndex(
+              (p) => p.estoqueId === ap.estoque?.id || p.nome === ap.produto?.nome,
+            );
+            const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
+            const qtdUsada = idx >= 0
+              ? (usado ? (parseFloat(produtosQuantidades[idx]) || ap.quantidadeReservada) : 0)
+              : ap.quantidadeUtilizada ?? 0;
+            return {
+              produtoId: ap.produto?.id,
+              quantidadeUtilizada: qtdUsada,
+              quantidadeReservada: ap.quantidadeReservada,
+            };
+          }).filter((p) => p.produtoId);
+          if (produtosAtualizados.length > 0) {
+            await Api.put(`/agendamentos/${ag.id}`, {
+              tipoAgendamento: ag.tipoAgendamento,
+              dataAgendamento: ag.dataAgendamento,
+              inicioAgendamento: ag.inicioAgendamento,
+              fimAgendamento: ag.fimAgendamento,
+              statusAgendamento: ag.statusAgendamento,
+              observacao: ag.observacao || "",
+              endereco: ag.endereco || {},
+              funcionariosIds: (ag.funcionarios || []).map((f) => f.id),
+              produtos: produtosAtualizados,
+            });
+          }
+        } catch (err) {
+          console.warn("Não foi possível atualizar produtos do agendamento:", err);
+        }
+      }
+    }
+
     executarSave(obs);
   };
 
@@ -882,6 +953,7 @@ export default function PedidoDetalhe() {
                         <select
                           value={formData.etapaServico}
                           onChange={(e) => {
+                            if (etapaTravadaPorAgendamento) return;
                             const novaEtapa = e.target.value;
                             if (
                               normalizeStatus(novaEtapa) === "ANALISE DO ORCAMENTO" &&
@@ -891,6 +963,41 @@ export default function PedidoDetalhe() {
                               return;
                             }
                             setError(null);
+                            if (normalizeStatus(novaEtapa) === "SERVICO AGENDADO") {
+                              const endereco = pedido?.clienteInfo?.endereco;
+                              const produtosPedido = (rawPedido?.produtos || [])
+                                .filter((p) => p.estoqueId)
+                                .map((p) => {
+                                  const estoqueItem = estoqueItems.find((e) => e.id === p.estoqueId);
+                                  const produtoId = estoqueItem?.produto?.id;
+                                  if (!produtoId) return null;
+                                  return {
+                                    id: produtoId,
+                                    nome: estoqueItem?.produto?.nome || p.nomeProduto || `Produto #${produtoId}`,
+                                    quantidade: p.quantidadeSolicitada || p.quantidade || 1,
+                                  };
+                                })
+                                .filter(Boolean);
+                              setTaskModalInitialData({
+                                tipoAgendamento: "SERVICO",
+                                pedido: {
+                                  value: pedido.id,
+                                  label: servicoInfo?.nome || formData.servicoNome || `Pedido #${pedido.id}`,
+                                  originalData: rawPedido,
+                                },
+                                produtos: produtosPedido,
+                                rua: endereco?.rua || "",
+                                cep: endereco?.cep || "",
+                                numero: endereco?.numero ? String(endereco.numero) : "",
+                                bairro: endereco?.bairro || "",
+                                cidade: endereco?.cidade || "",
+                                uf: endereco?.uf || "",
+                                pais: endereco?.pais || "Brasil",
+                                complemento: endereco?.complemento || "",
+                              });
+                              setShowTaskModal(true);
+                              return;
+                            }
                             handleFieldChange("etapaServico", novaEtapa);
                           }}
                           className={`w-full px-3 py-2 border-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
@@ -898,11 +1005,17 @@ export default function PedidoDetalhe() {
                               ? "border-amber-400 bg-amber-50"
                               : "border-gray-300 focus:border-[#007EA7]"
                           }`}
+                          disabled={etapaTravadaPorAgendamento}
                         >
                           {ETAPA_OPTIONS.map((etapa) => (
                             <option key={etapa} value={etapa}>{etapa}</option>
                           ))}
                         </select>
+                        {etapaTravadaPorAgendamento && (
+                          <p className="mt-2 text-xs text-[#007EA7]">
+                            Etapa definida automaticamente pelos agendamentos vinculados.
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
@@ -1216,7 +1329,7 @@ export default function PedidoDetalhe() {
         onClose={() => setShowTaskModal(false)}
         onSave={() => {
           setShowTaskModal(false);
-          fetchPedido();
+          navigate("/Agendamentos");
         }}
         initialData={taskModalInitialData}
       />
@@ -1233,7 +1346,7 @@ export default function PedidoDetalhe() {
                 O serviço está aguardando orçamento. Deseja criar um agendamento de orçamento agora?
               </p>
             </div>
-            <div className="p-6 text-sm text-gray-600">
+            <div className="px-6 py-5 text-sm text-gray-600 leading-relaxed">
               Um agendamento de orçamento permite definir data, horário e local para a vistoria com o cliente.
             </div>
             <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
@@ -1277,34 +1390,76 @@ export default function PedidoDetalhe() {
 
       {showFinalizarModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl flex flex-col overflow-hidden">
-            <div className="bg-[#002A4B] px-6 py-4">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-[#002A4B] px-6 py-5">
               <h3 className="text-base font-bold text-white">Finalizar Serviço — Produtos Utilizados</h3>
-              <p className="text-xs text-white/70 mt-1">Informe quais produtos foram utilizados durante a execução do serviço.</p>
+              <p className="text-xs text-white/70 mt-1.5">
+                Informe quais produtos foram utilizados e as quantidades reais. O excedente será devolvido ao estoque.
+              </p>
             </div>
 
-            <div className="p-6 flex flex-col gap-3 max-h-80 overflow-y-auto">
+            <div className="p-6 flex flex-col gap-4 max-h-[400px] overflow-y-auto">
               {formData.produtos.length > 0 ? (
-                formData.produtos.map((p, i) => (
-                  <label key={i} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={produtosUsados[i] !== false}
-                      onChange={(e) => setProdutosUsados((prev) => ({ ...prev, [i]: e.target.checked }))}
-                      className="w-4 h-4 accent-[#007EA7] cursor-pointer"
-                    />
-                    <span className="text-sm text-gray-800 flex-1">
-                      <strong>{p.nome || `Item #${i + 1}`}</strong>
-                      {p.quantidade > 0 && <span className="text-gray-500 ml-2">× {p.quantidade}</span>}
-                    </span>
-                    <span className={`text-xs font-semibold ${produtosUsados[i] !== false ? "text-green-600" : "text-gray-400"}`}>
-                      {produtosUsados[i] !== false ? "Utilizado" : "Não utilizado"}
-                    </span>
-                  </label>
-                ))
+                formData.produtos.map((p, i) => {
+                  const usado = produtosUsados[i] !== false;
+                  return (
+                    <div
+                      key={i}
+                      className={`flex flex-col gap-3 p-4 rounded-lg border transition-colors ${usado ? "border-[#b9deeb] bg-[#eef8fc]" : "border-gray-200 bg-gray-50"}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={usado}
+                          onChange={(e) => setProdutosUsados((prev) => ({ ...prev, [i]: e.target.checked }))}
+                          className="w-4 h-4 accent-[#007EA7] cursor-pointer shrink-0"
+                        />
+                        <span className="text-sm font-semibold text-gray-800 flex-1">
+                          {p.nome || `Item #${i + 1}`}
+                          <span className="text-gray-400 font-normal ml-2 text-xs">
+                            (reservado: {p.quantidade ?? 0} un)
+                          </span>
+                        </span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${usado ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
+                          {usado ? "Utilizado" : "Não utilizado"}
+                        </span>
+                      </div>
+                      {usado && (
+                        <div className="flex items-center gap-3 pl-7">
+                          <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">
+                            Qtd. utilizada:
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            max={p.quantidade ?? undefined}
+                            value={produtosQuantidades[i] ?? p.quantidade ?? 1}
+                            onChange={(e) =>
+                              setProdutosQuantidades((prev) => ({ ...prev, [i]: parseFloat(e.target.value) || 0 }))
+                            }
+                            className="w-24 px-2.5 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none"
+                          />
+                          {(() => {
+                            const reservado = parseFloat(p.quantidade) || 0;
+                            const utilizado = parseFloat(produtosQuantidades[i] ?? reservado) || 0;
+                            const devolve = reservado - utilizado;
+                            return devolve > 0 ? (
+                              <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
+                                devolve {devolve.toFixed(2)} ao estoque
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-gray-500">Nenhum produto cadastrado neste serviço. Descreva abaixo quais materiais ou produtos foram utilizados (opcional):</p>
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-gray-500">
+                    Nenhum produto cadastrado neste serviço. Descreva abaixo quais materiais foram utilizados (opcional):
+                  </p>
                   <textarea
                     rows={4}
                     value={produtosLivres}
@@ -1319,13 +1474,13 @@ export default function PedidoDetalhe() {
             <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
               <button
                 onClick={() => setShowFinalizarModal(false)}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                className="px-4 py-2.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveConfirmed}
-                className="px-5 py-2 text-sm font-semibold text-white bg-[#007EA7] rounded-lg hover:bg-[#006891] transition-colors cursor-pointer"
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#007EA7] rounded-lg hover:bg-[#006891] transition-colors cursor-pointer"
               >
                 Confirmar e Finalizar
               </button>

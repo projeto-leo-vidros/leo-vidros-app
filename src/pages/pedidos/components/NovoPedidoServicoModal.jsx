@@ -75,7 +75,6 @@ const DEFAULT_FORM_DATA = {
     uf: "",
   },
   servicos: [],
-  observacoes: "",
   etapa: "PENDENTE",
   prioridade: "Normal",
 };
@@ -312,7 +311,6 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) 
         pedido: {
           valorTotal: total,
           ativo: true,
-          observacao: formData.observacoes || "",
           clienteId: clienteData.id,
           status: { tipo: "PEDIDO", nome: "ATIVO" },
         },
@@ -432,15 +430,6 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) 
                   <UniversalInput type="number" label="Preço" placeholder="Preço" value={formData.servicos[0]?.precoEstimado || 0} onChange={e => handleServicoChange(0, "precoEstimado", parseFloat(e.target.value))} />
                 </div>
               </div>
-              <UniversalInput
-                as="textarea"
-                label="O que será feito neste serviço"
-                name="observacoes"
-                placeholder="Informe de forma objetiva o que será executado neste serviço..."
-                rows={4}
-                value={formData.observacoes}
-                onChange={handleChange}
-              />
             </div>
           )}
 
@@ -479,12 +468,6 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) 
                 </div>
               </div>
 
-              {formData.observacoes && (
-                <div className="bg-gray-50 p-4 border rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">Observações</h4>
-                  <p className="text-sm text-gray-700">{formData.observacoes}</p>
-                </div>
-              )}
             </div>
           )}
         </div>
