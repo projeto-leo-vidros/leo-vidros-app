@@ -448,12 +448,14 @@ export default function PedidoDetalhe() {
               etapaNome: formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE",
             }
           : null,
-        produtos: formData.produtos.map((p) => ({
-          estoqueId:              p.estoqueId              || 0,
-          quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
-          precoUnitarioNegociado: parseFloat(p.preco)      || 0,
-          observacao:             p.observacao             || "",
-        })),
+        produtos: formData.produtos
+          .filter((p) => p.estoqueId && p.estoqueId > 0)
+          .map((p) => ({
+            estoqueId:              p.estoqueId,
+            quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
+            precoUnitarioNegociado: parseFloat(p.preco)      || 0,
+            observacao:             p.observacao             || "",
+          })),
       };
 
       console.log("🔄 Enviando salvamento:", requestBody);
