@@ -638,46 +638,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       const tipoValor =
         formData.tipoAgendamento?.value || formData.tipoAgendamento;
 
-      const funcionariosPayload = selectedFuncionarios.map((funcId) => {
-        const funcEncontrado = funcionariosOptions.find(
-          (f) => f.value === funcId,
-        );
-        return {
-          id: funcId,
-          nome: funcEncontrado?.label || "",
-          telefone: "",
-          funcao: "",
-          contrato: "",
-          escala: "",
-          status: true,
-        };
-      });
-
       const pedidoCompleto = formData.pedido?.originalData || null;
-      // Mantém a etapa do pedido como está ou default, o backend irá atualizar automaticamente ao criar o agendamento
-      const servicoPayload = pedidoCompleto?.servico
-        ? {
-            id: pedidoCompleto.servico.id,
-            codigo: pedidoCompleto.servico.codigo,
-            nome: pedidoCompleto.servico.nome,
-            descricao: pedidoCompleto.servico.descricao,
-            precoBase: pedidoCompleto.servico.precoBase,
-            ativo: true,
-            etapa: pedidoCompleto.servico.etapa || {
-              id: 0,
-              tipo: "SERVICO",
-              nome: "PENDENTE",
-            },
-          }
-        : {
-            id: 0,
-            codigo: `auto_${Date.now()}`,
-            nome: "",
-            descricao: "",
-            precoBase: 0.0,
-            ativo: true,
-            etapa: { id: 0, tipo: "SERVICO", nome: "PENDENTE" },
-          };
 
       const produtosPayload = formData.produtos
         .filter((p) => p.id != null)
@@ -688,8 +649,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         }));
 
       const payload = {
-        id: formData.id,
-        servico: servicoPayload,
+        servicoId: pedidoCompleto?.servico?.id || pedidoCompleto?.id || null,
         tipoAgendamento: tipoValor,
         dataAgendamento: formatDateToISO(formData.eventDate),
         inicioAgendamento: formatTimeToHHmmss(formData.startTime),
@@ -706,7 +666,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           pais: formData.pais || "",
           numero: formData.numero ? parseInt(formData.numero, 10) : 0,
         },
-        funcionarios: funcionariosPayload,
+        funcionariosIds: selectedFuncionarios,
         produtos: produtosPayload,
       };
 

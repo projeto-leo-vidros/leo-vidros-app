@@ -19,6 +19,21 @@ import Api from "../../../api/client/Api";
 import PedidosService from "../../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
 
+const METODOS_COM_PARCELA = ["Cartão de crédito"];
+
+const parseFormaPagamento = (valor = "") => {
+  const match = valor.match(/^(.+?) - (\d+)x$/);
+  if (match) return { formaPagamento: match[1], parcelas: parseInt(match[2]) };
+  return { formaPagamento: valor, parcelas: 1 };
+};
+
+const composeFormaPagamento = (metodo, parcelas) => {
+  if (METODOS_COM_PARCELA.includes(metodo) && parcelas > 1) {
+    return `${metodo} - ${parcelas}x`;
+  }
+  return metodo;
+};
+
 const STEPS = [
   { label: "PENDENTE" },
   { label: "AGUARDANDO ORÇAMENTO" },
@@ -228,7 +243,9 @@ function AgendamentoTabs({ agendamentos }) {
                 <div className="rounded-md border border-[#b9deeb] bg-[#eef8fc] px-3 py-2">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[#00617f]">Horário</p>
                   <p className="text-xs font-semibold text-[#004f68] mt-0.5">
-                    {ag.horaAgendamento || "Não informado"}
+                    {ag.inicioAgendamento && ag.fimAgendamento
+                      ? `${ag.inicioAgendamento.substring(0, 5)} – ${ag.fimAgendamento.substring(0, 5)}`
+                      : ag.horaAgendamento || "Não informado"}
                   </p>
                 </div>
               </div>
@@ -279,6 +296,7 @@ export default function PedidoDetalhe() {
   const [formData, setFormData] = useState({
     clienteNome:         "",
     formaPagamento:      "",
+    parcelas:            1,
     observacoes:         "",
     etapaServico:        "",
     produtos:            [],
@@ -330,7 +348,7 @@ export default function PedidoDetalhe() {
         setEtapaOriginal(etapa);
         setFormData({
           clienteNome:         mapped.clienteNome           || "",
-          formaPagamento:      mapped.formaPagamento        || "",
+          ...parseFormaPagamento(mapped.formaPagamento || ""),
           observacoes:         mapped.observacoes           || "",
           etapaServico:        etapa,
           produtos:            mapped.produtos              || [],
@@ -400,6 +418,7 @@ export default function PedidoDetalhe() {
     }));
 
   const executarSave = async (produtosObs = "") => {
+    if (saving) return;
     setSaving(true);
     setError(null);
     let requestBody = null;
@@ -410,7 +429,7 @@ export default function PedidoDetalhe() {
         pedido: {
           valorTotal,
           ativo:          rawPedido?.ativo !== undefined ? rawPedido.ativo : true,
-          formaPagamento: formData.formaPagamento,
+          formaPagamento: composeFormaPagamento(formData.formaPagamento, formData.parcelas),
           observacao:     formData.observacoes + produtosObs,
           clienteId:      pedido.clienteId || pedido.clienteInfo?.id || null,
           clienteNome:    formData.clienteNome,
@@ -426,10 +445,7 @@ export default function PedidoDetalhe() {
               descricao: formData.servicoDescricao !== undefined ? formData.servicoDescricao : (rawPedido.servico.descricao || ""),
               precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : (rawPedido.servico.precoBase || 0),
               ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : (rawPedido.servico.ativo !== false),
-              etapa: {
-                tipo: "PEDIDO",
-                nome: formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE",
-              },
+              etapaNome: formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE",
             }
           : null,
         produtos: formData.produtos.map((p) => ({
@@ -446,24 +462,36 @@ export default function PedidoDetalhe() {
       
       console.log("✅ Resposta da API:", response);
 
-      setPedido((prev) => ({
-        ...prev,
-        clienteNome:    formData.clienteNome,
-        formaPagamento: formData.formaPagamento,
-        observacoes:    formData.observacoes,
-        status:         formData.etapaServico || prev.status,
-        servico:        prev.servico
-          ? { ...prev.servico, etapa: formData.etapaServico || prev.servico.etapa }
-          : prev.servico,
-        produtos:   formData.produtos,
-        valorTotal,
-        itensCount: formData.produtos.length,
-      }));
+      const dataAtualizada = response?.data;
+      if (dataAtualizada) {
+        const mapped = PedidosService.mapearParaFrontend(dataAtualizada);
+        setRawPedido(dataAtualizada);
+        setPedido(mapped);
+
+        setFormData((prev) => ({
+          ...prev,
+          clienteNome: mapped.clienteNome || prev.clienteNome,
+          ...parseFormaPagamento(mapped.formaPagamento || ""),
+          observacoes: mapped.observacoes || "",
+          etapaServico: mapped.servico?.etapa || prev.etapaServico,
+          produtos: mapped.produtos || prev.produtos,
+          servicoNome: mapped.servico?.nome || prev.servicoNome,
+          servicoDescricao: mapped.servico?.descricao || prev.servicoDescricao,
+          servicoPrecoBase: mapped.servico?.precoBase ?? prev.servicoPrecoBase,
+          servicoAtivo: mapped.servico?.ativo !== false,
+        }));
+      }
 
       setShowSuccessModal(true);
       setEtapaOriginal(formData.etapaServico);
       setTimeout(() => setShowSuccessModal(false), 2500);
-      if (formData.etapaServico === "AGUARDANDO ORÇAMENTO") {
+      const temAgendamentoOrcamentoAtivo = agendamentos.some(
+        (ag) =>
+          ag.tipoAgendamento?.toUpperCase().includes("ORC") &&
+          ag.statusAgendamento?.nome !== "CANCELADO" &&
+          ag.statusAgendamento?.nome !== "INATIVO",
+      );
+      if (formData.etapaServico === "AGUARDANDO ORÇAMENTO" && !temAgendamentoOrcamentoAtivo) {
         setTimeout(() => setShowAgendamentoSuggestion(true), 400);
       }
     } catch (err) {
@@ -475,15 +503,16 @@ export default function PedidoDetalhe() {
       });
       
       let mensagemErro = "Erro ao salvar";
+      const mensagemApi = err.response?.data?.message;
       
       if (err.response?.status === 401 || err.response?.status === 403) {
         mensagemErro = "❌ Acesso negado. Você precisa estar logado para realizar alterações.";
       } else if (err.response?.status === 404) {
-        mensagemErro = "❌ Pedido não encontrado na API.";
+        mensagemErro = `❌ ${mensagemApi || "Recurso não encontrado na API."}`;
       } else if (err.response?.status === 400) {
-        mensagemErro = `❌ Dados inválidos: ${err.response?.data?.message || "Verifique os dados preenchidos."}`;
-      } else if (err.response?.data?.message) {
-        mensagemErro = `❌ ${err.response.data.message}`;
+        mensagemErro = `❌ Dados inválidos: ${mensagemApi || "Verifique os dados preenchidos."}`;
+      } else if (mensagemApi) {
+        mensagemErro = `❌ ${mensagemApi}`;
       } else if (err.message) {
         mensagemErro = `❌ ${err.message}`;
       }
@@ -496,6 +525,7 @@ export default function PedidoDetalhe() {
   };
 
   const handleSave = () => {
+    if (saving) return;
     if (formData.etapaServico === "CONCLUÍDO") {
       const iniciais = {};
       formData.produtos.forEach((_, i) => { iniciais[i] = true; });
@@ -508,6 +538,7 @@ export default function PedidoDetalhe() {
   };
 
   const handleSaveConfirmed = () => {
+    if (saving) return;
     setShowFinalizarModal(false);
     let obs = "";
     if (formData.produtos.length > 0) {
@@ -736,15 +767,31 @@ export default function PedidoDetalhe() {
                       </FieldGroup>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">
+                    <div className="flex flex-col gap-3">
+                      <div className="text-left">
+                        <h3 className="text-base font-semibold text-gray-900">
+                          Informações de Pagamento
+                        </h3>
+                        <p className="text-md text-gray-500 mt-1">
+                          Defina a forma de pagamento e parcelas
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-left text-sm font-bold text-gray-700">
                           Forma de Pagamento
                         </label>
                         <select
                           value={formData.formaPagamento}
-                          onChange={(e) => handleFieldChange("formaPagamento", e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white outline-none shadow-sm"
+                          onChange={(e) => {
+                            handleFieldChange("formaPagamento", e.target.value);
+                            if (!METODOS_COM_PARCELA.includes(e.target.value)) {
+                              handleFieldChange("parcelas", 1);
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white ${
+                            !formData.formaPagamento ? "border-red-500" : "border-gray-700"
+                          }`}
                         >
                           <option value="">Selecione...</option>
                           <option value="Dinheiro">Dinheiro</option>
@@ -755,6 +802,23 @@ export default function PedidoDetalhe() {
                           <option value="Boleto">Boleto</option>
                           <option value="Transferência">Transferência bancária</option>
                         </select>
+
+                        {METODOS_COM_PARCELA.includes(formData.formaPagamento) && (
+                          <div>
+                            <label className="block text-left text-sm font-bold text-gray-700 mb-1">
+                              Parcelas
+                            </label>
+                            <select
+                              value={formData.parcelas}
+                              onChange={(e) => handleFieldChange("parcelas", parseInt(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-700 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                                <option key={n} value={n}>{n}x {n === 1 ? "(à vista)" : ""}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-left text-xs font-semibold text-gray-500 mb-1 pl-1">

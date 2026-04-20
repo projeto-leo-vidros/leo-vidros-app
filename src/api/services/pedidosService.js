@@ -175,9 +175,9 @@ class PedidosService extends BaseService {
     let itensCount = 0;
     let produtos = [];
 
-    if (isProduto && dadosBackend.produtos) {
+    if (dadosBackend.produtos && dadosBackend.produtos.length > 0) {
       produtos = dadosBackend.produtos.map((produto) => ({
-        nome: produto.nomeProduto || "Produto",
+        nome: produto.nomeProduto || produto.nome || "Produto",
         quantidade: produto.quantidadeSolicitada || 0,
         preco: produto.precoUnitarioNegociado || 0,
         estoqueId: produto.estoqueId,
@@ -185,8 +185,10 @@ class PedidosService extends BaseService {
         observacao: produto.observacao || "",
       }));
 
-      produtosDesc = produtos.map((p) => p.nome).join(", ");
-      itensCount = produtos.length;
+      if (isProduto) {
+        produtosDesc = produtos.map((p) => p.nome).join(", ");
+        itensCount = produtos.length;
+      }
     }
 
     let servicoInfo = null;
@@ -242,8 +244,7 @@ class PedidosService extends BaseService {
           }
         }
       } else {
- 
-        etapaCalculada = "PENDENTE";
+        etapaCalculada = etapaNome;
       }
 
       servicoInfo = {
