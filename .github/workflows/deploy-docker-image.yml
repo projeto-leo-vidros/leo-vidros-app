@@ -1,0 +1,53 @@
+name: Build and Push Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    tags: [ "*" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build JAR
+        run: ./mvnw clean package -DskipTests
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          rm -rf .docker-build-context
+          mkdir -p .docker-build-context/target
+          cp Dockerfile .docker-build-context/Dockerfile
+          cp -r target/. .docker-build-context/target/
+
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/leo-vidros-backend:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/leo-vidros-backend:${{ env.VERSION }} \
+            .docker-build-context
+      
+      - name: Push Docker image
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/leo-vidros-backend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/leo-vidros-backend:${{ env.VERSION }}
