@@ -187,7 +187,15 @@ const UniversalInput = React.forwardRef(
     // ── Error message ───────────────────────────────────────
     const renderError = () =>
       errorMessage ? (
-        <p id={errorId} role="alert" className="text-sm text-red-500 mt-1">
+        <p
+          id={errorId}
+          role="alert"
+          className={cn(
+            "mt-1 text-sm font-medium text-red-600",
+            variant === "underline" &&
+              "rounded-lg border border-red-200 bg-red-50 px-3 py-2",
+          )}
+        >
           {errorMessage}
         </p>
       ) : null;

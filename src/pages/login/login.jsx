@@ -42,7 +42,7 @@ function Login() {
         }
       }, 2000);
     } catch (error) {
-      setError(error.response?.data?.message || "Email ou senha inválidos");
+      setError(error.response?.data?.message || "Email ou senha inv\u00e1lidos");
     } finally {
       setLoading(false);
     }
@@ -56,8 +56,7 @@ function Login() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-t from-[#dff0f5] via-[#edf6f9] to-white p-4 sm:p-6">
-      <div className="w-full max-w-6xl flex items-center justify-center gap-6 lg:gap-12">
-        {/* Imagem lateral com overlay */}
+      <div className="w-full max-w-6xl flex items-center justify-center gap-6 lg:items-stretch lg:gap-12">
         <div className="hidden lg:flex flex-1 h-[620px] rounded-2xl overflow-hidden shadow-2xl relative">
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -66,27 +65,26 @@ function Login() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#003d5b]/70 via-[#007EA7]/20 to-transparent" />
         </div>
 
-        {/* Formulário */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md bg-white border border-gray-100 shadow-xl px-6 py-8 sm:px-10 sm:py-10 rounded-2xl"
+          className="w-full max-w-md rounded-2xl border border-gray-100 bg-white px-6 py-8 shadow-xl sm:px-10 sm:py-10 lg:h-[620px]"
         >
-          <div className="flex flex-col gap-8">
-            <div className="text-center flex flex-col items-center gap-3">
+          <div className="mx-auto flex h-full w-full max-w-[372px] flex-col">
+            <div className="flex flex-col items-center gap-3 text-center">
               <img src={Logo} alt="Logo" className="h-12 w-auto" />
-              <div className="flex flex-col gap-1 mt-2">
+              <div className="mt-2 flex flex-col gap-1">
                 <h1 className="text-3xl font-bold text-[#111827]">
                   Entre na sua conta
                 </h1>
-                <p className="text-[#6b7280] text-sm">
-                  Faça login para continuar
+                <p className="text-sm text-[#6b7280]">
+                  {"Fa\u00e7a login para continuar"}
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleLogin} className="flex flex-col gap-6">
+            <form onSubmit={handleLogin} className="mt-10 flex flex-1 flex-col gap-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key="login"
@@ -124,51 +122,53 @@ function Login() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
+                  className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
                 >
                   {error}
                 </motion.div>
               )}
 
-              <div className="flex justify-end">
+              <div className="-mt-1 flex justify-end">
                 <button
                   type="button"
-                  className="text-sm text-[#007EA7] hover:text-[#005f73] transition font-medium cursor-pointer"
+                  className="cursor-pointer text-sm font-medium text-[#007EA7] transition hover:text-[#005f73]"
                   onClick={() => navigate("/esqueceu-senha")}
                 >
                   Esqueceu sua senha?
                 </button>
               </div>
 
-              <div className="pt-1">
+              <div className="pt-2">
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#007EA7] to-[#005f73] hover:from-[#006d93] hover:to-[#004d5e] text-white font-semibold py-4 rounded-xl transition-all shadow-md cursor-pointer"
+                  className="w-full cursor-pointer rounded-xl bg-gradient-to-r from-[#007EA7] to-[#005f73] py-4 font-semibold text-white shadow-md transition-all hover:from-[#006d93] hover:to-[#004d5e]"
                 >
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </div>
             </form>
 
-            <div className="flex items-center gap-3">
-              <div className="h-px bg-gray-200 flex-1" />
-              <span className="text-xs text-gray-400 font-medium">ou</span>
-              <div className="h-px bg-gray-200 flex-1" />
-            </div>
+            <div className="mt-8 flex flex-col gap-5 pb-1">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs font-medium text-gray-400">ou</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
 
-            <p className="text-sm text-[#6b7280] text-center">
-              Ainda não tem uma conta?{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/cadastro")}
-                className="text-[#007EA7] hover:text-[#005f73] font-semibold transition-colors cursor-pointer"
-              >
-                Cadastre-se
-              </button>
-            </p>
+              <p className="text-center text-sm text-[#6b7280]">
+                {"Ainda n\u00e3o tem uma conta? "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/cadastro")}
+                  className="cursor-pointer font-semibold text-[#007EA7] transition-colors hover:text-[#005f73]"
+                >
+                  Cadastre-se
+                </button>
+              </p>
+            </div>
           </div>
         </motion.div>
       </div>
