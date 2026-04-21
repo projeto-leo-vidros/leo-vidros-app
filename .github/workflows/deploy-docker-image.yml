@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: leo-vidros-frontend
 
 jobs:
-  build:
+  deploy_docker_image:
     runs-on: ubuntu-latest
 
     steps:
