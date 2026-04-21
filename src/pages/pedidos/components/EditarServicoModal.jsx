@@ -449,13 +449,14 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   };
 
   const mostrarBotaoAgendarOrcamento = () => {
-    const etapaAtual = formData.etapa?.toUpperCase();
-    return etapaAtual === "PENDENTE" && !modoEdicao;
+    return limparTextoParaComparacao(formData.etapa) === "PENDENTE" && !modoEdicao;
   };
 
   const mostrarBotaoAgendarServico = () => {
-    const etapaAtual = formData.etapa?.toUpperCase();
-    return etapaAtual === "ORÇAMENTO APROVADO";
+    return (
+      limparTextoParaComparacao(formData.etapa) === "ORCAMENTO_APROVADO" &&
+      !modoEdicao
+    );
   };
 
   if (!isOpen || !servico) return null;

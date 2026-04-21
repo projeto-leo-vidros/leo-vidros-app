@@ -12,6 +12,7 @@ import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import Kpis from "../../components/kpis/Kpis";
 import { useDashboardKpis } from "../../hooks/queries/useDashboard";
+import { usePedidosServico } from "../../hooks/queries/usePedidos";
 
 export default function PaginaInicial() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function PaginaInicial() {
     valorOrcamentosAberto,
     isLoading: loading,
   } = useDashboardKpis();
+  const { data: pedidosServico = [] } = usePedidosServico();
 
   const handleAgendamentoItemClick = (agendamentoId) => {
     navigate(`/agendamentos?id=${agendamentoId}`);
@@ -42,6 +44,32 @@ export default function PaginaInicial() {
         openMovimentacaoForItemId: itemId,
       },
     });
+  };
+
+  const formatHorarioAgendamento = (inicio, fim) => {
+    const toHourMinute = (valor) => {
+      if (!valor) return "";
+      return String(valor).substring(0, 5);
+    };
+
+    const horarioInicio = toHourMinute(inicio);
+    const horarioFim = toHourMinute(fim);
+
+    if (horarioInicio && horarioFim) {
+      return `${horarioInicio} - ${horarioFim}`;
+    }
+
+    return horarioInicio || horarioFim || "--:--";
+  };
+
+  const formatDiaMesAgendamento = (dataAgendamento) => {
+    if (!dataAgendamento) return "--/--";
+
+    const [ano, mes, dia] = String(dataAgendamento).split("-");
+
+    if (!ano || !mes || !dia) return "--/--";
+
+    return `${dia}/${mes}`;
   };
 
   const calculatedKpiData = useMemo(
@@ -91,6 +119,31 @@ export default function PaginaInicial() {
     ],
   );
 
+  const servicoNomePorAgendamento = useMemo(() => {
+    const mapa = new Map();
+
+    pedidosServico.forEach((pedido) => {
+      const nomeServico =
+        pedido?.servico?.nome || pedido?.servicoNome || pedido?.produtosDesc || "";
+
+      (pedido?.servico?.agendamentos || []).forEach((agendamento) => {
+        if (agendamento?.id) {
+          mapa.set(agendamento.id, nomeServico);
+        }
+      });
+    });
+
+    return mapa;
+  }, [pedidosServico]);
+
+  const getServicoNomeAgendamento = (agendamento) => {
+    return (
+      agendamento?.servicoNome ||
+      servicoNomePorAgendamento.get(agendamento?.idAgendamento) ||
+      "Nao informado"
+    );
+  };
+
   return (
     <div className="flex min-h-screen bg-[#f7f9fa]">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
@@ -99,7 +152,7 @@ export default function PaginaInicial() {
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20" />
 
-        <main className="flex-1 flex flex-col items-center px-4 pt-6 pb-10 gap-6 md:px-8">
+        <main className="flex-1 flex flex-col items-center px-4 pt-6 pb-10 gap-[3.75rem] md:px-8">
           <div className="mx-auto w-full max-w-[1380px] text-center">
             <h1 className="mb-2 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
               Painel de Controle
@@ -109,7 +162,7 @@ export default function PaginaInicial() {
             </p>
           </div>
 
-          <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-[3.75rem]">
             {qtdItensCriticos > 0 && (
               <div className="flex w-full items-center justify-between gap-4 rounded-xl border border-[#ffe08a] bg-[#fff7db] px-5 py-4 shadow-sm">
                 <div className="flex items-start gap-3">
@@ -164,18 +217,18 @@ export default function PaginaInicial() {
                         <div className="flex items-center gap-4">
                           <div className="min-w-[55px] rounded-lg border border-blue-100 bg-blue-50 p-2 text-center text-[#003d6b]">
                             <span className="block text-lg font-bold leading-none">
-                              {ag.inicioAgendamento?.split("/")[0] || "--"}
-                            </span>
-                            <span className="text-[9px] font-bold uppercase text-blue-400">
-                              AG
+                              {formatDiaMesAgendamento(ag.dataAgendamento)}
                             </span>
                           </div>
                           <div>
                             <p className="text-base font-bold text-[#1a2b3b] md:text-lg">
-                              {ag.agendamentoObservacao || "Servico"}
+                              Servico: {getServicoNomeAgendamento(ag)}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {ag.clienteNome} • {ag.inicioAgendamento}
+                              {formatHorarioAgendamento(
+                                ag.inicioAgendamento,
+                                ag.fimAgendamento,
+                              )}
                             </p>
                           </div>
                         </div>
@@ -188,7 +241,7 @@ export default function PaginaInicial() {
                 </div>
               </div>
 
-              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm self-start">
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
                   <h2 className="text-base font-semibold">Itens em Estoque Critico</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
@@ -196,7 +249,7 @@ export default function PaginaInicial() {
                   </span>
                 </div>
 
-                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
+                <div className="divide-y divide-gray-50">
                   {itensCriticos.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                       <p className="text-sm italic text-gray-400">Estoque em dia.</p>

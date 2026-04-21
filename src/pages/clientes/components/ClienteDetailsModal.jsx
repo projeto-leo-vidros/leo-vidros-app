@@ -5,6 +5,7 @@ import api from "../../../api/client/Api";
 import { formatCurrency } from "../../../utils/formatters";
 import Button from "../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
+import PedidosService from "../../../api/services/pedidosService";
 
 export default function ClienteDetailsModal({
   open,
@@ -145,7 +146,7 @@ export default function ClienteDetailsModal({
                             </td>
                             <td className="p-3 text-gray-900">{statusNome}</td>
                             <td className="p-3 text-gray-900">{pedido.formaPagamento || "N/A"}</td>
-                            <td className="p-3 text-gray-900">{serv.etapa?.nome || "N/A"}</td>
+                            <td className="p-3 text-gray-900">{PedidosService.calcularEtapaServicoPorAgendamentos(serv, serv.etapa?.nome || "PENDENTE")}</td>
                             <td className="p-3 text-gray-900 text-sm">{serv.descricao || "N/A"}</td>
                           </tr>
                         );

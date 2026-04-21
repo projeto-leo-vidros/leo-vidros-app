@@ -432,11 +432,12 @@ export default function Agendamentos() {
 
   useEffect(() => {
     const routeState = location.state;
+    const tipoRota = String(routeState?.tipo || "").toLowerCase();
 
     if (
       autoOpenFromServiceRef.current ||
       !routeState ||
-      routeState.tipo !== "servico" ||
+      !["servico", "orcamento"].includes(tipoRota) ||
       !routeState.servicoId
     ) {
       return;
@@ -456,11 +457,12 @@ export default function Agendamentos() {
           pedidoCompleto?.servico?.nome ||
           routeState.servicoNome ||
           `Pedido #${routeState.servicoId}`;
+        const isOrcamento = tipoRota === "orcamento";
 
         setModalInitialData({
           tipoAgendamento: {
-            value: "SERVICO",
-            label: "Prestação de serviço",
+            value: isOrcamento ? "ORCAMENTO" : "SERVICO",
+            label: isOrcamento ? "Orçamento" : "Prestação de serviço",
           },
           pedido: {
             value: pedidoCompleto?.id || routeState.servicoId,
@@ -474,7 +476,7 @@ export default function Agendamentos() {
         setShowTaskModal(true);
         autoOpenFromServiceRef.current = true;
       } catch (error) {
-        console.error("❌ Erro ao preparar agendamento do serviço:", error);
+        console.error("❌ Erro ao preparar agendamento:", error);
       }
     };
 

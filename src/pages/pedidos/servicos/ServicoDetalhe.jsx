@@ -332,6 +332,7 @@ export default function PedidoDetalhe() {
   const [produtosLivres, setProdutosLivres] = useState("");
   const [estoqueItems, setEstoqueItems] = useState([]);
   const [showAgendamentoSuggestion, setShowAgendamentoSuggestion] = useState(false);
+  const [showServicoSuggestion, setShowServicoSuggestion] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskModalInitialData, setTaskModalInitialData] = useState({});
   const [produtoBusca, setProdutoBusca] = useState({});
@@ -353,6 +354,14 @@ export default function PedidoDetalhe() {
       const tipo = (ag?.tipoAgendamento || "").toString().toUpperCase();
       const ehOrcamento = tipo.includes("ORC") || tipo.includes("VISTORIA");
       return ehOrcamento && isAgendamentoBloqueante(ag?.statusAgendamento?.nome);
+    });
+  };
+
+  const possuiAgendamentoServicoEmAberto = () => {
+    const ags = pedido?.servico?.agendamentos || [];
+    return ags.some((ag) => {
+      const tipo = (ag?.tipoAgendamento || "").toString().toUpperCase();
+      return tipo.includes("SERV") && isAgendamentoBloqueante(ag?.statusAgendamento?.nome);
     });
   };
 
@@ -532,18 +541,25 @@ export default function PedidoDetalhe() {
       
       console.log("✅ Resposta da API:", response);
 
+      const etapaNormalizada = normalizeStatus(etapaParaSalvar);
+      const etapaAnteriorNormalizada = normalizeStatus(etapaOriginal);
+      const etapaFoiAlterada = etapaNormalizada !== etapaAnteriorNormalizada;
+      const temAgendamentoOrcamentoAtivo = possuiAgendamentoOrcamentoEmAberto();
+      const temAgendamentoServicoAtivo = possuiAgendamentoServicoEmAberto();
+
       await fetchPedido();
 
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 2500);
-      const temAgendamentoOrcamentoAtivo = agendamentos.some(
-        (ag) =>
-          ag.tipoAgendamento?.toUpperCase().includes("ORC") &&
-          ag.statusAgendamento?.nome !== "CANCELADO" &&
-          ag.statusAgendamento?.nome !== "INATIVO",
-      );
-      if (formData.etapaServico === "AGUARDANDO ORÇAMENTO" && !temAgendamentoOrcamentoAtivo) {
-        setTimeout(() => setShowAgendamentoSuggestion(true), 400);
+
+      if (etapaFoiAlterada && etapaNormalizada === "AGUARDANDO ORCAMENTO" && !temAgendamentoOrcamentoAtivo) {
+        setShowAgendamentoSuggestion(true);
+        return;
+      }
+
+      if (etapaFoiAlterada && etapaNormalizada === "ORCAMENTO APROVADO" && !temAgendamentoServicoAtivo) {
+        setShowServicoSuggestion(true);
+        return;
       }
     } catch (err) {
       console.error("❌ Erro ao salvar:", {
@@ -620,9 +636,10 @@ export default function PedidoDetalhe() {
       (ag) => ag.tipoAgendamento === "SERVICO" && ag.id,
     );
     for (const ag of agendamentosServico) {
-      if (ag.agendamentoProdutos?.length > 0) {
+      const agProdutos = ag.agendamentoProdutos ?? ag.produtos ?? [];
+      if (agProdutos.length > 0) {
         try {
-          const produtosAtualizados = ag.agendamentoProdutos.map((ap) => {
+          const produtosAtualizados = agProdutos.map((ap) => {
             const idx = formData.produtos.findIndex(
               (p) => p.estoqueId === ap.estoque?.id || p.nome === ap.produto?.nome,
             );
@@ -1382,6 +1399,60 @@ export default function PedidoDetalhe() {
               >
                 <Calendar className="w-4 h-4" />
                 Agendar Orçamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showServicoSuggestion && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-[#002A4B] px-6 py-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Agendar Serviço?
+              </h3>
+              <p className="text-xs text-white/70 mt-1">
+                O orçamento foi aprovado. Deseja criar um agendamento de serviço agora?
+              </p>
+            </div>
+            <div className="px-6 py-5 text-sm text-gray-600 leading-relaxed">
+              Um agendamento de serviço permite definir data, horário, local e equipe para a execução do serviço com o cliente.
+            </div>
+            <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+              <button
+                onClick={() => setShowServicoSuggestion(false)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Agora não
+              </button>
+              <button
+                onClick={() => {
+                  setShowServicoSuggestion(false);
+                  const endereco = pedido.clienteInfo?.endereco;
+                  setTaskModalInitialData({
+                    tipoAgendamento: "ORCAMENTO",
+                    pedido: {
+                      value: pedido.id,
+                      label: formData.servicoNome || rawPedido?.servico?.nome || `Pedido #${pedido.id}`,
+                      originalData: rawPedido,
+                    },
+                    rua: endereco?.rua || "",
+                    cep: endereco?.cep || "",
+                    numero: endereco?.numero ? String(endereco.numero) : "",
+                    bairro: endereco?.bairro || "",
+                    cidade: endereco?.cidade || "",
+                    uf: endereco?.uf || "",
+                    pais: endereco?.pais || "Brasil",
+                    complemento: endereco?.complemento || "",
+                  });
+                  setShowTaskModal(true);
+                }}
+                className="px-5 py-2 text-sm font-semibold text-white bg-[#007EA7] rounded-lg hover:bg-[#006891] transition-colors cursor-pointer flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Agendar Serviço
               </button>
             </div>
           </div>

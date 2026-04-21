@@ -84,13 +84,17 @@ class PedidosService extends BaseService {
       const statusOrcamento = this.normalizarEtapaOuStatus(
         agendamentoOrcamento.statusAgendamento?.nome,
       );
-
-      if (statusOrcamento === "PENDENTE" || statusOrcamento === "EM ANDAMENTO") {
-        return "AGUARDANDO OR\u00c7AMENTO";
+      if (statusOrcamento === "CONCLUIDO") {
+        return "OR\u00c7AMENTO APROVADO";
       }
-
-      return "OR\u00c7AMENTO APROVADO";
+      return "AGUARDANDO OR\u00c7AMENTO";
     }
+
+    const orcamentoConcluido = (servico.agendamentos || []).find((ag) => {
+      const statusNorm = this.normalizarEtapaOuStatus(ag?.statusAgendamento?.nome);
+      return this.isTipoOrcamentoAgendamento(ag?.tipoAgendamento) && statusNorm === "CONCLUIDO";
+    });
+    if (orcamentoConcluido) return "OR\u00c7AMENTO APROVADO";
 
     return etapaBase;
   }
@@ -319,19 +323,11 @@ class PedidosService extends BaseService {
         }
 
         else if (agendamentoOrcamento) {
-          const statusOrcamento = agendamentoOrcamento.statusAgendamento?.nome;
-
-          if (statusOrcamento === "CONCLUÍDO") {
-            if (etapaNome === "ORÇAMENTO APROVADO") {
-              etapaCalculada = "ORÇAMENTO APROVADO";
-            } else {
-              etapaCalculada = "ANÁLISE DO ORÇAMENTO";
-            }
-          } else if (
-            statusOrcamento === "EM ANDAMENTO" ||
-            statusOrcamento === "PENDENTE"
-          ) {
-            etapaCalculada = "AGUARDANDO ORÇAMENTO";
+          const statusOrcamento = this.normalizarEtapaOuStatus(agendamentoOrcamento.statusAgendamento?.nome);
+          if (statusOrcamento === "CONCLUIDO") {
+            etapaCalculada = "OR\u00c7AMENTO APROVADO";
+          } else {
+            etapaCalculada = "AGUARDANDO OR\u00c7AMENTO";
           }
         }
       } else {
@@ -357,45 +353,34 @@ class PedidosService extends BaseService {
       produtosDesc = servicoInfo.nome;
       itensCount = 1;
 
-      switch (this.normalizarEtapaOuStatus(etapaCalculada)) {
+      const etapaNorm = this.normalizarEtapaOuStatus(etapaCalculada);
+      switch (etapaNorm) {
         case "PENDENTE":
           etapaAtual = "Pendente";
           progressoValor = 1;
           break;
-        case "CONCLUIDO":
-          etapaAtual = "Concluído";
-          progressoValor = 7;
+        case "AGUARDANDO ORCAMENTO":
+          etapaAtual = "Aguardando Or\u00e7amento";
+          progressoValor = 2;
           break;
         case "ANALISE DO ORCAMENTO":
-          etapaAtual = "Análise do Orçamento";
+          etapaAtual = "An\u00e1lise do Or\u00e7amento";
           progressoValor = 3;
           break;
-        case "AGUARDANDO ORCAMENTO":
-          etapaAtual = "Aguardando Orçamento";
-          progressoValor = 2;
-          break;
-        case "AGUARDANDO ORÇAMENTO":
-          etapaAtual = "Aguardando Orçamento";
-          progressoValor = 2;
-          break;
-        case "ANÁLISE DO ORÇAMENTO":
-          etapaAtual = "Análise do Orçamento";
-          progressoValor = 3;
-          break;
-        case "ORÇAMENTO APROVADO":
-          etapaAtual = "Orçamento Aprovado";
+        case "ORCAMENTO APROVADO":
+          etapaAtual = "Or\u00e7amento Aprovado";
           progressoValor = 4;
           break;
-        case "SERVIÇO AGENDADO":
-          etapaAtual = "Serviço Agendado";
+        case "SERVICO AGENDADO":
+          etapaAtual = "Servi\u00e7o Agendado";
           progressoValor = 5;
           break;
-        case "SERVIÇO EM EXECUÇÃO":
-          etapaAtual = "Serviço em Execução";
+        case "SERVICO EM EXECUCAO":
+          etapaAtual = "Servi\u00e7o em Execu\u00e7\u00e3o";
           progressoValor = 6;
           break;
-        case "CONCLUÍDO":
-          etapaAtual = "Concluído";
+        case "CONCLUIDO":
+          etapaAtual = "Conclu\u00eddo";
           progressoValor = 7;
           break;
         case "CANCELADO":

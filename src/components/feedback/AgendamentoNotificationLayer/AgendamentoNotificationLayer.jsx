@@ -10,12 +10,27 @@ import { useAgendamentoNotifications } from "../../../pages/agendamentos/hooks/u
 import Api from "../../../api/client/Api";
 
 const buildPayload = (agendamento, nomeStatus) => ({
+  servicoId: agendamento.servico?.id,
   tipoAgendamento: agendamento.tipoAgendamento,
   dataAgendamento: agendamento.dataAgendamento,
   inicioAgendamento: agendamento.inicioAgendamento,
   fimAgendamento: agendamento.fimAgendamento,
   statusAgendamento: { tipo: "AGENDAMENTO", nome: nomeStatus },
-  observacao: agendamento.observacao || "",
+  observacao: agendamento.observacao || " ",
+  endereco: agendamento.endereco
+    ? {
+        rua: agendamento.endereco.rua || "",
+        numero: agendamento.endereco.numero || 0,
+        bairro: agendamento.endereco.bairro || "",
+        cidade: agendamento.endereco.cidade || "",
+        uf: agendamento.endereco.uf || "",
+        cep: agendamento.endereco.cep || "",
+        pais: agendamento.endereco.pais || "Brasil",
+        complemento: agendamento.endereco.complemento || "",
+      }
+    : { rua: "", numero: 0, bairro: "", cidade: "", uf: "", cep: "", pais: "Brasil", complemento: "" },
+  funcionariosIds: (agendamento.funcionarios || []).map((f) => f.id),
+  produtos: [],
 });
 
 export default function AgendamentoNotificationLayer() {
@@ -165,7 +180,28 @@ export default function AgendamentoNotificationLayer() {
       })
       .catch(() => {});
 
-    const produtos = agendamento.agendamentoProdutos ?? [];
+    let produtos = agendamento.agendamentoProdutos ?? agendamento.produtos ?? [];
+
+    // Se não há produtos no agendamento, buscar do pedido vinculado ao serviço
+    if (produtos.length === 0) {
+      const pedidoId = agendamento.servico?.pedidoId;
+      if (pedidoId) {
+        try {
+          const res = await Api.get(`/pedidos/${pedidoId}`);
+          const itensPedido = res.data?.itensPedido ?? [];
+          produtos = itensPedido
+            .filter((item) => item.produtoId)
+            .map((item) => ({
+              produto: { id: item.produtoId, nome: item.nomeProduto },
+              quantidadeReservada: item.quantidadeSolicitada,
+              quantidadeUtilizada: null,
+            }));
+        } catch {
+          // sem itens — vai para seletor manual
+        }
+      }
+    }
+
     const iniciais = {};
     const qtds = {};
     produtos.forEach((ap, i) => {

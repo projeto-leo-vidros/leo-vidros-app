@@ -621,6 +621,32 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!formData?.rua?.trim()) newErrors.rua = "* Rua obrigatória";
       if (!formData?.cep?.trim()) newErrors.cep = "* CEP obrigatório";
     }
+    if (currentStep === 3) {
+      const produtosInvalidos = (formData?.produtos || [])
+        .map((produto) => {
+          const option = produtosOptions.find((opt) => opt.value === produto.id);
+          const disponivel = parseFloat(
+            option?.originalData?.quantidadeDisponivel ?? 0,
+          );
+          const reservado = parseFloat(produto.quantidade) || 0;
+
+          if (reservado <= 0) {
+            return `${produto.nome}: informe uma quantidade maior que zero.`;
+          }
+
+          if (reservado > disponivel) {
+            return `${produto.nome}: disponivel ${disponivel}, solicitado ${reservado}.`;
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
+      if (produtosInvalidos.length > 0) {
+        newErrors.submit = `A selecao dos itens nao pode passar do disponivel. Ajuste as quantidades: ${produtosInvalidos.join(" ")}`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

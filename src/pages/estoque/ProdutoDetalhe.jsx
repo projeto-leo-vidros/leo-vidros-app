@@ -665,6 +665,32 @@ export default function ProductDetailPage() {
                         isProductField={true}
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-left text-sm font-bold text-gray-700 mb-2">
+                        Preço de Custo
+                      </label>
+                      <EditableField
+                        field="precoCusto"
+                        value={produto.precoCusto ?? 0}
+                        type="number"
+                        prefix="R$ "
+                        isProductField={true}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-left text-sm font-bold text-gray-700 mb-2">
+                        Preço de Venda
+                      </label>
+                      <EditableField
+                        field="precoVenda"
+                        value={produto.precoVenda ?? 0}
+                        type="number"
+                        prefix="R$ "
+                        isProductField={true}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
