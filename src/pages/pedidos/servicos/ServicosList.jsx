@@ -76,6 +76,7 @@ export default function ServicosList({
   onNovoRegistroHandled,
   statusFilter,
   etapaFilter,
+  clienteInicial,
 }) {
   const navigate = useNavigate();
   const [servicos, setServicos] = useState([]);
@@ -96,14 +97,26 @@ export default function ServicosList({
     setError(null);
 
     try {
-      const result = await PedidosService.buscarPedidosDeServico();
+      const resultPedidos = await PedidosService.buscarPedidosDeServico();
 
-      if (result.success) {
-        const servicosMapeados = result.data.map((servico) =>
-          PedidosService.mapearParaFrontend(servico),
-        );
+      const servicosMapeados = resultPedidos.success
+        ? resultPedidos.data.map((s) => PedidosService.mapearParaFrontend(s))
+        : [];
 
-        const servicosOrdenados = [...servicosMapeados].sort((a, b) => {
+      const servicosSimples = [];
+
+      const idsDePedidos = new Set(servicosMapeados.map((s) => String(s.id)));
+      const servicosSemDuplicata = servicosSimples.filter(
+        (s) => !idsDePedidos.has(String(s.id)),
+      );
+
+      const todos = [...servicosMapeados, ...servicosSemDuplicata];
+
+      if (todos.length === 0 && !resultPedidos.success && !resultServicos.success) {
+        setError(resultPedidos.error || resultServicos.error);
+        setServicos([]);
+      } else {
+        const servicosOrdenados = todos.sort((a, b) => {
           const idAisNum = /^\d+$/.test(a.id);
           const idBisNum = /^\d+$/.test(b.id);
           if (idAisNum && idBisNum)
@@ -123,16 +136,10 @@ export default function ServicosList({
             setCurrent(updatedCurrent);
           }
         }
-      } else {
-        setError(result.error);
-        if (result.status === 204) {
-          setServicos([]);
-          setError(null);
-        }
       }
     } catch (error) {
-      console.error("Erro inesperado ao buscar pedidos de serviço:", error);
-      setError("Erro inesperado ao carregar pedidos de serviço");
+      console.error("Erro inesperado ao buscar serviços:", error);
+      setError("Erro inesperado ao carregar serviços");
       setServicos([]);
     } finally {
       setLoading(false);
@@ -158,11 +165,17 @@ export default function ServicosList({
     });
   }, [busca, servicos, statusFilter, etapaFilter]);
 
-  // Limpos os itens não usados da paginação
-  const { setPage, paginated: pagina } = usePagination(
-    listaFiltrada,
-    ITEMS_PER_PAGE,
-  );
+  const {
+    page,
+    setPage,
+    paginated: pagina,
+    totalPages,
+    startIndex,
+    endIndex,
+    total,
+    next,
+    prev,
+  } = usePagination(listaFiltrada, ITEMS_PER_PAGE);
 
   const fecharTodos = () => {
     closeAll();
@@ -233,27 +246,39 @@ export default function ServicosList({
 
         {!loading &&
           !error &&
-          pagina.map((item) => (
+          pagina.map((item) => {
+            const isCompleted = item.etapa === "Concluído" || item.status === "Cancelado";
+            const hasActiveAgendamento = (item.servico?.agendamentos || []).some(
+              (ag) => ag.statusAgendamento?.nome &&
+                ag.statusAgendamento.nome !== "CANCELADO" &&
+                ag.statusAgendamento.nome !== "INATIVO",
+            );
+            const isInactive =
+              item.ativo === false ||
+              item.servico?.ativo === false ||
+              String(item.status || "").toLowerCase() === "inativo";
+            const isGrayCard = (isInactive && !hasActiveAgendamento) || isCompleted;
+            return (
             <article
               key={item.id}
-              className={`flex flex-col gap-3 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${item.status === "Finalizado" ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}
+              className={`flex flex-col gap-3 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${isGrayCard ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}
             >
               {/* HEADER DO CARD */}
               <header className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-md ${item.status === "Finalizado" ? "text-gray-400 bg-gray-200" : "text-slate-400 bg-slate-100"}`}
+                    className={`p-2 rounded-md ${isGrayCard ? "text-gray-400 bg-gray-200" : "text-slate-400 bg-slate-100"}`}
                   >
                     <Wrench size={16} />
                   </div>
                   <div>
                     <h3
-                      className={`font-semibold text-sm md:text-base ${item.status === "Finalizado" ? "text-gray-600" : "text-slate-800"}`}
+                      className={`font-semibold text-sm md:text-base ${isGrayCard ? "text-gray-600" : "text-slate-800"}`}
                     >
                       Serviço #{formatServicoId(item.id)}
                     </h3>
                     <span
-                      className={`text-xs block md:hidden ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                      className={`text-xs block md:hidden ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                     >
                       {formatDate(item.data)}
                     </span>
@@ -293,12 +318,12 @@ export default function ServicosList({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-2">
                 <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
                   <span
-                    className={`text-md font-bold mb-1 ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-md font-bold mb-1 ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                   >
                     Preço
                   </span>
                   <span
-                    className={`text-md font-medium ${item.status === "Finalizado" ? "text-gray-500" : "text-slate-700"}`}
+                    className={`text-md font-medium ${isGrayCard ? "text-gray-500" : "text-slate-700"}`}
                   >
                     {item.valorTotal > 0
                       ? `R$ ${item.valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
@@ -310,12 +335,12 @@ export default function ServicosList({
 
                 <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
                   <span
-                    className={`text-md font-bold mb-1 ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-md font-bold mb-1 ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                   >
                     Serviço
                   </span>
                   <p
-                    className={`text-md font-medium line-clamp-2 leading-snug w-full text-left ${item.status === "Finalizado" ? "text-gray-500" : "text-slate-700"}`}
+                    className={`text-md font-medium line-clamp-2 leading-snug w-full text-left ${isGrayCard ? "text-gray-500" : "text-slate-700"}`}
                     title={item.servicoNome || item.produtosDesc}
                   >
                     {item.servicoNome ||
@@ -326,12 +351,12 @@ export default function ServicosList({
 
                 <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
                   <span
-                    className={`text-md font-bold mb-1 ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-md font-bold mb-1 ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                   >
                     Descrição
                   </span>
                   <p
-                    className={`text-sm line-clamp-2 leading-snug w-full text-left ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-sm line-clamp-2 leading-snug w-full text-left ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                     title={item.descricao}
                   >
                     {item.descricao || "Sem descrição"}
@@ -340,12 +365,12 @@ export default function ServicosList({
 
                 <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
                   <span
-                    className={`text-md font-bold mb-1 ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-md font-bold mb-1 ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                   >
                     Cliente
                   </span>
                   <span
-                    className={`text-md font-medium truncate w-full text-left ${item.status === "Finalizado" ? "text-gray-500" : "text-slate-700"}`}
+                    className={`text-md font-medium truncate w-full text-left ${isGrayCard ? "text-gray-500" : "text-slate-700"}`}
                     title={item.clienteNome}
                   >
                     {item.clienteNome || `ID: ${item.clienteId}`}
@@ -354,12 +379,12 @@ export default function ServicosList({
 
                 <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
                   <span
-                    className={`text-md font-bold mb-1 ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-md font-bold mb-1 ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                   >
                     Etapa
                   </span>
                   <span
-                    className={`text-md font-medium truncate w-full text-left ${item.status === "Finalizado" ? "text-gray-500" : "text-slate-700"}`}
+                    className={`text-md font-medium truncate w-full text-left ${isGrayCard ? "text-gray-500" : "text-slate-700"}`}
                     title={item.etapa}
                   >
                     {item.etapa}
@@ -367,26 +392,61 @@ export default function ServicosList({
                   <Progress
                     value={item.progresso?.[0]}
                     total={item.progresso?.[1]}
-                    dark={item.status === "Finalizado"}
+                    dark={isGrayCard}
                   />
                 </div>
 
                 <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
                   <span
-                    className={`text-md font-bold mb-1 ${item.status === "Finalizado" ? "text-gray-400" : "text-slate-500"}`}
+                    className={`text-md font-bold mb-1 ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
                   >
                     Data
                   </span>
                   <span
-                    className={`text-md font-medium ${item.status === "Finalizado" ? "text-gray-500" : "text-slate-700"}`}
+                    className={`text-md font-medium ${isGrayCard ? "text-gray-500" : "text-slate-700"}`}
                   >
                     {formatDate(item.data)}
                   </span>
                 </div>
               </div>
             </article>
-          ))}
+          );
+          })}
       </div>
+
+      {/* Rodapé de paginação */}
+      {!loading && !error && total > 0 && (
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
+          <div className="text-sm text-slate-500">
+            Mostrando{" "}
+            <span className="font-medium text-slate-800">{startIndex + 1}</span>{" "}
+            a{" "}
+            <span className="font-medium text-slate-800">{endIndex}</span>{" "}
+            de {total} resultado{total !== 1 ? "s" : ""}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prev}
+                disabled={page === 1}
+                className="px-3 py-1.5 text-sm border border-slate-200 rounded-md hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-slate-600">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={next}
+                disabled={page === totalPages}
+                className="px-3 py-1.5 text-sm border border-slate-200 rounded-md hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Próximo
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* MODAL CONFIRMAÇÃO */}
       {modal.confirm && (
@@ -427,6 +487,7 @@ export default function ServicosList({
         onClose={fecharTodos}
         onSuccess={handleNovoServicoSuccess}
         tipoInicial="servico"
+        clienteInicial={clienteInicial}
       />
 
       <EditarServicoModal

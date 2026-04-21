@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
@@ -68,6 +69,7 @@ const HistoryCard = ({ hist }) => (
 );
 
 export default function Clientes() {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -155,6 +157,7 @@ export default function Clientes() {
   };
 
   const atualizarClientes = async (dadosCliente) => {
+    const statusAnterior = clienteSelecionado?.status;
     if (modoEdicao && clienteSelecionado) {
       try {
         const clienteAtualizado = { ...clienteSelecionado, ...dadosCliente };
@@ -164,7 +167,6 @@ export default function Clientes() {
           clienteAtualizado,
         );
 
-        // Usar os dados retornados pela API
         const clienteRetornado = response.data;
 
         setClientes((prev) =>
@@ -172,8 +174,21 @@ export default function Clientes() {
             c.id === clienteSelecionado.id ? clienteRetornado : c,
           ),
         );
+
+        setOpenForm(false);
+
+        if (dadosCliente.status === "Ativo" && statusAnterior !== "Ativo") {
+          navigate("/Pedidos", {
+            state: {
+              initialTab: "servicos",
+              autoTriggerNovo: true,
+              clienteInicial: clienteRetornado,
+            },
+          });
+        }
       } catch (error) {
         console.error("Erro ao editar cliente (PUT):", error);
+        setOpenForm(false);
       }
     } else {
       try {
@@ -183,11 +198,23 @@ export default function Clientes() {
 
         const novoCliente = response.data;
         setClientes((prev) => [novoCliente, ...prev]);
+
+        setOpenForm(false);
+
+        if (dadosCliente.status === "Ativo") {
+          navigate("/Pedidos", {
+            state: {
+              initialTab: "servicos",
+              autoTriggerNovo: true,
+              clienteInicial: novoCliente,
+            },
+          });
+        }
       } catch (error) {
         console.error("Erro ao criar cliente (POST):", error);
+        setOpenForm(false);
       }
     }
-    setOpenForm(false);
   };
 
   const handleSelectAllClick = (event) => {

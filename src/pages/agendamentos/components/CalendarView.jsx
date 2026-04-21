@@ -19,7 +19,7 @@ import {
   useEventDetails,
   useDeleteAgendamento,
 } from "../hooks/useCalendarEvents";
-import { getBadgeColor } from "../utils/eventHelpers";
+import { getBadgeColor, isFinalizedStatus } from "../utils/eventHelpers";
 import {
   EventHeader,
   EventInfo,
@@ -127,7 +127,12 @@ const EventDetailsModal = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const handleDeleteClick = () => setIsDeleteModalOpen(true);
+  const isFinalizado = isFinalizedStatus(details?.statusAgendamento);
+
+  const handleDeleteClick = () => {
+    if (isFinalizado) return;
+    setIsDeleteModalOpen(true);
+  };
 
   const handleConfirmDelete = async () => {
     const success = await deleteAgendamento(details.id);
@@ -202,6 +207,7 @@ const EventDetailsModal = ({
                       <>
                         <ErrorMessage message={error} />
                         <EventInfo
+                          event={details}
                           date={formattedDate}
                           startTime={details.startTime}
                           endTime={details.endTime}
@@ -223,6 +229,8 @@ const EventDetailsModal = ({
                   isDeleting={deleting}
                   isLoading={loading}
                   hasAddress={!!details.endereco}
+                  canDelete={!isFinalizado}
+                  canEdit={!isFinalizado}
                 />
               </motion.div>
             </div>

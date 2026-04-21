@@ -112,6 +112,8 @@ const usePedidoAPI = () => {
   };
 };
 
+const METODOS_COM_PARCELA = ["Cartão de crédito"];
+
 const DEFAULT_FORM_DATA = {
   tipoCliente: "nenhum",
   clienteId: "",
@@ -122,6 +124,7 @@ const DEFAULT_FORM_DATA = {
   produtos: [],
   descricao: "",
   formaPagamento: "Pix",
+  parcelas: 1,
   data: new Date().toISOString().split("T")[0],
 };
 
@@ -165,12 +168,16 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
         buscarProdutos(),
       ]);
 
-      const clientesFiltrados = Array.isArray(clientes)
-        ? clientes.filter((c) => c.status !== "Avulso")
-        : [];
+      const listaClientes = Array.isArray(clientes)
+        ? clientes
+        : clientes?.content ?? [];
 
-      setClientesExistentes(clientesFiltrados);
-      setProdutosDisponiveis(Array.isArray(produtos) ? produtos : []);
+      const listaProdutos = Array.isArray(produtos)
+        ? produtos
+        : produtos?.content ?? [];
+
+      setClientesExistentes(listaClientes.filter((c) => c.status !== "Avulso"));
+      setProdutosDisponiveis(listaProdutos);
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
       setClientesExistentes([]);
@@ -367,9 +374,12 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
         pedido: {
           valorTotal: calcularValorTotal(),
           ativo: true,
-          formaPagamento: formData.formaPagamento,
+          formaPagamento:
+            METODOS_COM_PARCELA.includes(formData.formaPagamento) && formData.parcelas > 1
+              ? `${formData.formaPagamento} - ${formData.parcelas}x`
+              : formData.formaPagamento,
           observacao: formData.descricao || "",
-          cliente: clienteData,
+          clienteId: clienteData.id,
           status: {
             tipo: "PEDIDO",
             nome: "ATIVO",
@@ -784,8 +794,27 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     { value: "Transferência", label: "Transferência bancária" },
                   ]}
                   value={formData.formaPagamento}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (!METODOS_COM_PARCELA.includes(e.target.value))
+                      setFormData((prev) => ({ ...prev, parcelas: 1 }));
+                  }}
                 />
+                {METODOS_COM_PARCELA.includes(formData.formaPagamento) && (
+                  <UniversalInput
+                    as="select"
+                    label="Parcelas"
+                    name="parcelas"
+                    value={formData.parcelas}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, parcelas: parseInt(e.target.value) }))
+                    }
+                    options={Array.from({ length: 12 }, (_, i) => ({
+                      value: i + 1,
+                      label: `${i + 1}x${i === 0 ? " (à vista)" : ""}`,
+                    }))}
+                  />
+                )}
 
                 <UniversalInput
                   as="textarea"
@@ -905,7 +934,9 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     <div className="flex gap-2">
                       <span className="text-gray-600">Forma de Pagamento:</span>
                       <span className="font-medium text-gray-900">
-                        {formData.formaPagamento}
+                        {METODOS_COM_PARCELA.includes(formData.formaPagamento) && formData.parcelas > 1
+                          ? `${formData.formaPagamento} - ${formData.parcelas}x`
+                          : formData.formaPagamento}
                       </span>
                     </div>
                     {formData.descricao && (

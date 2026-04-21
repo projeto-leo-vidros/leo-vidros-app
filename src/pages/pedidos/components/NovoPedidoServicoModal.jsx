@@ -75,12 +75,11 @@ const DEFAULT_FORM_DATA = {
     uf: "",
   },
   servicos: [],
-  observacoes: "",
   etapa: "PENDENTE",
   prioridade: "Normal",
 };
 
-const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
+const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
   const [loading, setLoading] = useState(false);
@@ -98,7 +97,29 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(DEFAULT_FORM_DATA);
+      const endereco = clienteInicial?.enderecos?.[0] || {};
+      setFormData(
+        clienteInicial
+          ? {
+              ...DEFAULT_FORM_DATA,
+              tipoCliente: "existente",
+              clienteId: clienteInicial.id ?? "",
+              clienteNome: clienteInicial.nome ?? "",
+              clienteCpf: clienteInicial.cpf ?? "",
+              clienteEmail: clienteInicial.email ?? "",
+              clienteTelefone: clienteInicial.telefone ?? "",
+              endereco: {
+                cep: endereco.cep ?? "",
+                rua: endereco.rua ?? "",
+                numero: endereco.numero ? String(endereco.numero) : "",
+                complemento: endereco.complemento ?? "",
+                bairro: endereco.bairro ?? "",
+                cidade: endereco.cidade ?? "",
+                uf: endereco.uf ?? "",
+              },
+            }
+          : DEFAULT_FORM_DATA,
+      );
       setCurrentStep(0);
       setError(null);
       const carregarDados = async () => {
@@ -149,19 +170,42 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
     setError(null);
   };
 
-  const handleClienteExistenteChange = (e) => {
+  const handleClienteExistenteChange = async (e) => {
     const id = e.target.value;
+    if (!id) return;
     const selecionado = clientesExistentes.find((c) => String(c.id) === String(id));
+    if (!selecionado) return;
 
-    if (selecionado) {
+    setFormData((prev) => ({
+      ...prev,
+      clienteId: selecionado.id,
+      clienteNome: selecionado.nome,
+      clienteCpf: selecionado.cpf || "",
+      clienteEmail: selecionado.email || "",
+      clienteTelefone: selecionado.telefone || "",
+    }));
+
+    // Fetch full client to get addresses (list endpoint may omit them)
+    try {
+      const response = await Api.get(`/clientes/${id}`);
+      const clienteCompleto = response.data;
+      const end = clienteCompleto.enderecos?.[0] || selecionado.enderecos?.[0] || {};
+      setFormData((prev) => ({
+        ...prev,
+        endereco: {
+          cep: end.cep || "",
+          rua: end.rua || "",
+          numero: end.numero?.toString() || "",
+          complemento: end.complemento || "",
+          bairro: end.bairro || "",
+          cidade: end.cidade || "",
+          uf: end.uf || "",
+        },
+      }));
+    } catch {
       const end = selecionado.enderecos?.[0] || {};
       setFormData((prev) => ({
         ...prev,
-        clienteId: selecionado.id,
-        clienteNome: selecionado.nome,
-        clienteCpf: selecionado.cpf || "",
-        clienteEmail: selecionado.email || "",
-        clienteTelefone: selecionado.telefone || "",
         endereco: {
           cep: end.cep || "",
           rua: end.rua || "",
@@ -185,7 +229,9 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleServicoChange = (index, field, value) => {
     setFormData((prev) => {
-      const novos = [...prev.servicos];
+      const novos = prev.servicos.length > index
+        ? [...prev.servicos]
+        : [...prev.servicos, { nome: "", descricao: "", precoEstimado: 0 }];
       novos[index] = { ...novos[index], [field]: value };
       return { ...prev, servicos: novos };
     });
@@ -270,7 +316,7 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         },
         servico: {
           nome: formData.servicos[0]?.nome || "Serviço personalizado",
-          descricao: formData.observacoes || formData.servicos.map((s) => s.descricao || s.nome).join("; "),
+          descricao: formData.servicos.map((s) => s.descricao || s.nome).join("; ") || formData.servicos[0]?.nome || "Serviço personalizado",
           precoBase: total,
           ativo: true,
           etapaNome: formData.etapa,
@@ -378,21 +424,12 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
               <div className="p-4 border rounded-lg bg-gray-50 space-y-4 flex flex-col">
                 <h4 className="font-semibold text-gray-900">Informações do Serviço</h4>
                 <div className="w-full">
-                  <UniversalInput label="Nome do serviço" placeholder="Nome do serviço" value={formData.servicos[0]?.nome || ""} onChange={e => handleServicoChange(0, "nome", e.target.value)} />
+                  <UniversalInput label="Nome do serviço" placeholder="Nome do serviço" value={formData.servicos[0]?.nome ?? ""} onChange={e => handleServicoChange(0, "nome", e.target.value)} />
                 </div>
                 <div className="w-full">
                   <UniversalInput type="number" label="Preço" placeholder="Preço" value={formData.servicos[0]?.precoEstimado || 0} onChange={e => handleServicoChange(0, "precoEstimado", parseFloat(e.target.value))} />
                 </div>
               </div>
-              <UniversalInput
-                as="textarea"
-                label="O que será feito neste serviço"
-                name="observacoes"
-                placeholder="Informe de forma objetiva o que será executado neste serviço..."
-                rows={4}
-                value={formData.observacoes}
-                onChange={handleChange}
-              />
             </div>
           )}
 
@@ -431,12 +468,6 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               </div>
 
-              {formData.observacoes && (
-                <div className="bg-gray-50 p-4 border rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">Observações</h4>
-                  <p className="text-sm text-gray-700">{formData.observacoes}</p>
-                </div>
-              )}
             </div>
           )}
         </div>

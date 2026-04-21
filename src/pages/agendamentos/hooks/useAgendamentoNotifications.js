@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { format } from "date-fns";
 import { normalizeStatus } from "../utils/eventHelpers";
 
 /**
@@ -7,12 +8,19 @@ import { normalizeStatus } from "../utils/eventHelpers";
  */
 export const useAgendamentoNotifications = (agendamentos = []) => {
   const notifiedAgendamentosRef = useRef(new Set());
-  const timeoutRef = useRef(null);
-  const [currentNotification, setCurrentNotification] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+
+  const parseMinutes = (timeStr) => {
+    if (!timeStr) return null;
+    const [hours = "0", minutes = "0"] = String(timeStr)
+      .substring(0, 5)
+      .split(":");
+    return Number(hours) * 60 + Number(minutes);
+  };
 
   const checkUpcomingAgendamentos = useCallback(() => {
     const now = new Date();
-    const currentDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const currentDate = format(now, "yyyy-MM-dd");
     const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
 
     // Filtrar agendamentos de hoje
@@ -23,42 +31,55 @@ export const useAgendamentoNotifications = (agendamentos = []) => {
 
     // Verificar cada agendamento
     for (const agendamento of todayAgendamentos) {
-      // Pular se já foi notificado
-      if (notifiedAgendamentosRef.current.has(agendamento.id)) {
-        continue;
-      }
-
-      // Pular se o status já é "EM ANDAMENTO" ou "CONCLUÍDO"
       const statusNome = normalizeStatus(agendamento.statusAgendamento);
       if (
-        statusNome === "EM ANDAMENTO" ||
-        statusNome === "CONCLUIDO" ||
-        statusNome === "CANCELADO"
+        statusNome === "CANCELADO" ||
+        statusNome === "CONCLUIDO"
       ) {
         continue;
       }
 
-      // Calcular minutos até o início
-      const [startHours, startMinutes] = agendamento.inicioAgendamento
-        ?.substring(0, 5)
-        .split(":")
-        .map(Number) || [0, 0];
+      const startTimeMinutes = parseMinutes(agendamento.inicioAgendamento);
+      const endTimeMinutes = parseMinutes(agendamento.fimAgendamento);
 
-      const agendamentoTimeMinutes = startHours * 60 + startMinutes;
-      const minutesUntilStart = agendamentoTimeMinutes - currentTimeMinutes;
+      if (startTimeMinutes === null) {
+        continue;
+      }
 
-      // Notificar se falta 5 minutos ou menos, ou se já começou (mas não passou mais de 30 minutos)
-      if (minutesUntilStart <= 5 && minutesUntilStart >= -30) {
-        setCurrentNotification(agendamento);
-        notifiedAgendamentosRef.current.add(agendamento.id);
+      const minutesUntilStart = startTimeMinutes - currentTimeMinutes;
+      const minutesSinceEnd = endTimeMinutes === null ? null : currentTimeMinutes - endTimeMinutes;
 
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        // Auto-fechar após 15 segundos
-        timeoutRef.current = setTimeout(() => {
-          setCurrentNotification(null);
-        }, 15000);
+      const finalizeKey = `${agendamento.id}:finalizar`;
+      const startKey = `${agendamento.id}:iniciar`;
 
-        break; // Mostrar apenas uma notificação por vez
+      const shouldFinalize =
+        statusNome === "EM ANDAMENTO" &&
+        minutesSinceEnd !== null &&
+        minutesSinceEnd >= 0 &&
+        minutesSinceEnd <= 30;
+
+      const shouldStart =
+        statusNome === "PENDENTE" &&
+        minutesUntilStart <= 2 &&
+        minutesUntilStart >= -30;
+
+      if (shouldFinalize && !notifiedAgendamentosRef.current.has(finalizeKey)) {
+        setNotifications((prev) => {
+          if (prev.some((item) => item.key === finalizeKey)) return prev;
+          return [...prev, { key: finalizeKey, agendamento, tipo: "finalizar" }];
+        });
+        notifiedAgendamentosRef.current.add(finalizeKey);
+
+        continue;
+      }
+
+      if (shouldStart && !notifiedAgendamentosRef.current.has(startKey)) {
+        setNotifications((prev) => {
+          if (prev.some((item) => item.key === startKey)) return prev;
+          return [...prev, { key: startKey, agendamento, tipo: "iniciar" }];
+        });
+        notifiedAgendamentosRef.current.add(startKey);
+        continue;
       }
     }
   }, [agendamentos]);
@@ -74,21 +95,21 @@ export const useAgendamentoNotifications = (agendamentos = []) => {
 
     return () => {
       clearInterval(interval);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [checkUpcomingAgendamentos]);
 
-  const dismissNotification = useCallback(() => {
-    setCurrentNotification(null);
+  const dismissNotification = useCallback((key) => {
+    if (!key) return;
+    setNotifications((prev) => prev.filter((item) => item.key !== key));
   }, []);
 
   const resetNotifications = useCallback(() => {
     notifiedAgendamentosRef.current = new Set();
-    setCurrentNotification(null);
+    setNotifications([]);
   }, []);
 
   return {
-    currentNotification,
+    notifications,
     dismissNotification,
     resetNotifications,
   };

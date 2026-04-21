@@ -1,249 +1,304 @@
-import { useState, useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  Calendar,
+  CircleDollarSign,
+  ExternalLink,
+  FileText,
+  PackageSearch,
+} from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import {
-  Info,
-  CalendarDays,
-  TrendingUp,
-  Clock,
-  ExternalLink,
-} from "lucide-react";
 import Kpis from "../../components/kpis/Kpis";
 import { useDashboardKpis } from "../../hooks/queries/useDashboard";
-
-const isToday = (date) => {
-  if (!date) return false;
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
-};
-
-const isFuture = (date) => {
-  if (!date) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return date >= today;
-};
-
-const parseDate = (dateString) => {
-  if (!dateString) return null;
-  try {
-    if (dateString.includes("/")) {
-      const parts = dateString.split("/");
-      return new Date(parts[2], parts[1] - 1, parts[0]);
-    } else if (dateString.includes("-")) {
-      const parts = dateString.split("-");
-      return new Date(parts[0], parts[1] - 1, parts[2]);
-    }
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) {
-      return date;
-    }
-  } catch (e) {
-    console.error("Erro ao parsear data:", dateString, e);
-  }
-  return null;
-};
+import { usePedidosServico } from "../../hooks/queries/usePedidos";
 
 export default function PaginaInicial() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(80);
-  const headerRef = useRef(null);
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const {
+    faturamentoMes,
+    percentualFaturamento,
     qtdAgendamentosHoje,
     qtdAgendamentosFuturos,
-    agendamentosFuturos,
-    itensCriticos,
-    taxaOcupacaoServicos,
+    agendamentosFuturos = [],
+    itensCriticos = [],
     qtdItensCriticos,
+    orcamentosAberto,
+    valorOrcamentosAberto,
     isLoading: loading,
   } = useDashboardKpis();
-
-  const handleEstoqueItemClick = (itemId) => {
-    navigate(`/estoque/${itemId}`);
-  };
+  const { data: pedidosServico = [] } = usePedidosServico();
 
   const handleAgendamentoItemClick = (agendamentoId) => {
     navigate(`/agendamentos?id=${agendamentoId}`);
   };
 
+  const handleEstoqueItemClick = (itemId) => {
+    navigate("/estoque", {
+      state: {
+        focusItemId: itemId,
+        openMovimentacaoForItemId: itemId,
+      },
+    });
+  };
+
+  const formatHorarioAgendamento = (inicio, fim) => {
+    const toHourMinute = (valor) => {
+      if (!valor) return "";
+      return String(valor).substring(0, 5);
+    };
+
+    const horarioInicio = toHourMinute(inicio);
+    const horarioFim = toHourMinute(fim);
+
+    if (horarioInicio && horarioFim) {
+      return `${horarioInicio} - ${horarioFim}`;
+    }
+
+    return horarioInicio || horarioFim || "--:--";
+  };
+
+  const formatDiaMesAgendamento = (dataAgendamento) => {
+    if (!dataAgendamento) return "--/--";
+
+    const [ano, mes, dia] = String(dataAgendamento).split("-");
+
+    if (!ano || !mes || !dia) return "--/--";
+
+    return `${dia}/${mes}`;
+  };
+
   const calculatedKpiData = useMemo(
     () => [
       {
-        title: "Total de Itens em Baixo Estoque",
-        value: qtdItensCriticos,
-        icon: Info,
-        caption: `${qtdItensCriticos} item(ns) requer atenção`,
+        title: "Faturamento do mes",
+        value: faturamentoMes ? `R$ ${faturamentoMes.toLocaleString("pt-BR")}` : "R$ 0",
+        icon: CircleDollarSign,
+        caption: "Maio 2026",
+        trend: percentualFaturamento
+          ? `${percentualFaturamento > 0 ? "+" : ""}${percentualFaturamento}%`
+          : "",
+        color: "blue",
       },
       {
         title: "Agendamentos de Hoje",
-        value: qtdAgendamentosHoje,
-        icon: CalendarDays,
-        caption: `${qtdAgendamentosHoje} agendamento(s) hoje`,
+        value: qtdAgendamentosHoje || 0,
+        icon: Calendar,
+        caption: `${qtdAgendamentosFuturos || 0} agendamentos futuros`,
+        color: "green",
       },
       {
-        title: "Taxa de Ocupação de Serviços",
-        value: `${taxaOcupacaoServicos}%`,
-        icon: TrendingUp,
-        caption: `${qtdAgendamentosFuturos} agendamentos futuros`,
+        title: "Itens em Baixo Estoque",
+        value: qtdItensCriticos || 0,
+        icon: PackageSearch,
+        caption: `${qtdItensCriticos || 0} itens requerem atencao`,
+        color: "orange",
       },
       {
-        title: "Total de Agendamentos Futuros",
-        value: qtdAgendamentosFuturos,
-        icon: Clock,
-        caption: `Próximos serviços`,
+        title: "Orcamentos em Aberto",
+        value: orcamentosAberto || 0,
+        icon: FileText,
+        caption: valorOrcamentosAberto
+          ? `R$ ${valorOrcamentosAberto.toLocaleString("pt-BR")} em negociacao`
+          : "R$ 0 em negociacao",
+        color: "purple",
       },
     ],
     [
-      qtdItensCriticos,
+      faturamentoMes,
+      percentualFaturamento,
       qtdAgendamentosHoje,
-      taxaOcupacaoServicos,
       qtdAgendamentosFuturos,
+      qtdItensCriticos,
+      orcamentosAberto,
+      valorOrcamentosAberto,
     ],
   );
 
+  const servicoNomePorAgendamento = useMemo(() => {
+    const mapa = new Map();
+
+    pedidosServico.forEach((pedido) => {
+      const nomeServico =
+        pedido?.servico?.nome || pedido?.servicoNome || pedido?.produtosDesc || "";
+
+      (pedido?.servico?.agendamentos || []).forEach((agendamento) => {
+        if (agendamento?.id) {
+          mapa.set(agendamento.id, nomeServico);
+        }
+      });
+    });
+
+    return mapa;
+  }, [pedidosServico]);
+
+  const getServicoNomeAgendamento = (agendamento) => {
+    return (
+      agendamento?.servicoNome ||
+      servicoNomePorAgendamento.get(agendamento?.idAgendamento) ||
+      "Nao informado"
+    );
+  };
+
   return (
-    <div
-      className="flex min-h-screen font-[Inter]"
-      style={{ backgroundColor: "#f7f9fa" }}
-    >
+    <div className="flex min-h-screen bg-[#f7f9fa]">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col">
-        <Header
-          ref={headerRef}
-          toggleSidebar={toggleSidebar}
-          sidebarOpen={sidebarOpen}
-        />
+      <div className="flex min-h-screen flex-1 flex-col">
+        <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+        <div className="pt-20" />
 
-        <main
-          className="flex-1 flex flex-col items-center justify-start px-6 sm:px-8 md:px-10 py-10 gap-10 transition-all duration-300"
-          style={{ paddingTop: `${headerHeight + 40}px` }}
-        >
-          {/* Título */}
-          <div className="text-center mb-4 px-2 w-full max-w-[1600px]">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2">
+        <main className="flex-1 flex flex-col items-center px-4 pt-6 pb-10 gap-[3.75rem] md:px-8">
+          <div className="mx-auto w-full max-w-[1380px] text-center">
+            <h1 className="mb-2 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
               Painel de Controle
             </h1>
-            <p className="text-gray-500 text-sm sm:text-base">
-              Visualize todas as informações importantes em um só lugar
+            <p className="text-sm text-gray-500 sm:text-base">
+              Visualize todas as informacoes importantes em um so lugar
             </p>
           </div>
 
-          {/* KPIs */}
-          <div className="w-full max-w-[1600px]">
-            {loading ? (
-              <p>Carregando KPIs...</p>
-            ) : (
-              <Kpis stats={calculatedKpiData} />
-            )}
-          </div>
-
-          {/* Seções lado a lado */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-[1600px] mx-auto px-2">
-            <div className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
-              <div className="bg-[#003d6b] text-white py-4 px-6 text-center font-semibold text-lg tracking-wide">
-                Itens em Estoque Crítico ( Total: {itensCriticos.length} )
-              </div>
-              <div className="divide-y divide-gray-100 min-h-[200px]">
-                {loading ? (
-                  <p className="p-6 text-center">Carregando...</p>
-                ) : itensCriticos.length === 0 ? (
-                  <p className="p-6 text-center text-gray-500">
-                    Nenhum item crítico encontrado.
+          <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-[3.75rem]">
+            {qtdItensCriticos > 0 && (
+              <div className="flex w-full items-center justify-between gap-4 rounded-xl border border-[#ffe08a] bg-[#fff7db] px-5 py-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-6 w-6 flex-shrink-0 text-[#856404]" />
+                  <p className="text-sm text-[#856404]">
+                    <strong>Atencao:</strong> {qtdItensCriticos} produtos precisam de
+                    reposicao no estoque.
                   </p>
-                ) : (
-                  itensCriticos.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col md:flex-row items-center justify-between px-6 py-4"
-                    >
-                      <div className="flex flex-row items-center align-center gap-3 text-center md:text-left">
-                        <p className="text-lg font-semibold text-gray-800 text-base">
-                          {item.nomeProduto || "Sem nome"}
-                        </p>
-                        <p className="text-lg text-gray-600">
-                          Quantidade: {item.quantidadeTotal} | Mínimo:{" "}
-                          {item.nivelMinimo}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3 mt-3 md:mt-0">
-                        <span
-                          className={`text-xg px-4 py-2 rounded-full font-bold ${
-                            item.status === "Crítico"
-                              ? "bg-red-200 text-black-800"
-                              : "bg-yellow-200 text-black-800"
-                          }`}
-                        >
-                          {item.status === "Crítico" ? "Crítico" : "Atenção"}
-                        </span>
-                        <button
-                          title="Ver detalhes do estoque"
-                          onClick={() => handleEstoqueItemClick(item.id)}
-                          className="border border-gray-300 p-1.5 rounded-md cursor-pointer hover:bg-gray-100 transition text-gray-600 hover:text-[#003d6b]"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
+                </div>
+                <span className="rounded-full bg-[#856404] px-3 py-1 text-sm font-semibold text-white">
+                  {qtdItensCriticos}
+                </span>
               </div>
+            )}
+
+            <div className="w-full">
+              {loading ? (
+                <div className="flex h-32 items-center justify-center rounded-xl border border-gray-100 bg-white">
+                  <span className="animate-pulse text-gray-400">
+                    Carregando indicadores...
+                  </span>
+                </div>
+              ) : (
+                <Kpis stats={calculatedKpiData} />
+              )}
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
-              <div className="bg-[#003d6b] text-white py-4 px-6 text-center font-semibold text-lg tracking-wide">
-                Próximos Agendamentos ( Total: {agendamentosFuturos.length} )
-              </div>
-              <div className="divide-y divide-gray-100 min-h-[200px]">
-                {loading ? (
-                  <p className="p-6 text-center">Carregando...</p>
-                ) : agendamentosFuturos.length === 0 ? (
-                  <p className="p-6 text-center text-gray-500">
-                    Nenhum agendamento futuro encontrado.
-                  </p>
-                ) : (
-                  agendamentosFuturos.map((ag) => (
-                    <div
-                      key={ag.idAgendamento}
-                      className="flex flex-col md:flex-row items-center justify-between px-6 py-4"
-                    >
-                      <div className="text-center md:text-left">
-                        <p className="font-semibold text-gray-800 text-base">
-                          {ag.agendamentoObservacao || "Sem descrição"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Etapa: {ag.status} | Valor: R${" "}
-                          {ag.valorTotal.toFixed(2)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3 mt-3 md:mt-0">
-                        <span className="bg-gray-100 text-gray-700 text-base font-semibold px-5 py-2 rounded-full">
-                          {ag.inicioAgendamento}
-                        </span>
-                        <span className="bg-gray-100 text-gray-700 text-base font-semibold px-5 py-2 rounded-full">
-                          {ag.fimAgendamento}
-                        </span>
-                        <button
-                          title="Ver detalhes do agendamento"
-                          onClick={() =>
-                            handleAgendamentoItemClick(ag.idAgendamento)
-                          }
-                          className="border border-gray-300 p-1.5 rounded-md hover:bg-gray-100 transition text-gray-600 hover:text-[#003d6b]"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
-                      </div>
+            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
+                  <h2 className="text-base font-semibold">Proximos Agendamentos</h2>
+                  <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
+                    Total: {agendamentosFuturos.length}
+                  </span>
+                </div>
+
+                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
+                  {agendamentosFuturos.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      <p className="text-sm italic text-gray-400">
+                        Nenhum agendamento futuro.
+                      </p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    agendamentosFuturos.map((ag) => (
+                      <button
+                        key={ag.idAgendamento}
+                        type="button"
+                        onClick={() => handleAgendamentoItemClick(ag.idAgendamento)}
+                        className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="min-w-[55px] rounded-lg border border-blue-100 bg-blue-50 p-2 text-center text-[#003d6b]">
+                            <span className="block text-lg font-bold leading-none">
+                              {formatDiaMesAgendamento(ag.dataAgendamento)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-[#1a2b3b] md:text-lg">
+                              Servico: {getServicoNomeAgendamento(ag)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatHorarioAgendamento(
+                                ag.inicioAgendamento,
+                                ag.fimAgendamento,
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-gray-400 transition-colors hover:text-blue-600">
+                          <ExternalLink size={16} />
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm self-start">
+                <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
+                  <h2 className="text-base font-semibold">Itens em Estoque Critico</h2>
+                  <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
+                    Total: {itensCriticos.length}
+                  </span>
+                </div>
+
+                <div className="divide-y divide-gray-50">
+                  {itensCriticos.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      <p className="text-sm italic text-gray-400">Estoque em dia.</p>
+                    </div>
+                  ) : (
+                    itensCriticos.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleEstoqueItemClick(item.id)}
+                        className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`h-2.5 w-2.5 rounded-full ${
+                              item.status === "Critico" ? "bg-red-500" : "bg-yellow-500"
+                            }`}
+                          />
+                          <div>
+                            <p className="text-base font-semibold text-[#1a2b3b] md:text-lg">
+                              {item.nomeProduto}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span
+                            className={`text-sm font-bold ${
+                              item.status === "Critico" ? "text-red-600" : "text-orange-600"
+                            }`}
+                          >
+                            {item.quantidadeTotal} {item.unidadeMedida || "un"}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              item.status === "Critico"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-orange-50 text-orange-600"
+                            }`}
+                          >
+                            {item.status || "Baixo"}
+                          </span>
+                          <span className="text-gray-400">
+                            <ExternalLink size={16} />
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>

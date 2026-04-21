@@ -50,8 +50,9 @@ export default function Acesso() {
       }
 
       const response = await Api.get(url);
-      const data = response.data?.content ?? response.data;
-      setSolicitacoes(Array.isArray(data) ? data : []);
+      // Garantindo que sempre seja um array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setSolicitacoes(data);
     } catch (error) {
       console.error("Erro ao buscar solicitações:", error);
       setSolicitacoes([]);
@@ -163,17 +164,20 @@ export default function Acesso() {
 
   const filteredSolicitacoes = useMemo(() => {
     const statusAtual = StatusSolicitacaoMap[activeTab];
-    let items = solicitacoes.filter(
-      (s) => s.status?.nome?.toUpperCase() === statusAtual.toUpperCase(),
-    );
+
+    let items = busca.trim()
+      ? solicitacoes.filter(
+          (s) => s.status?.nome?.toUpperCase() === statusAtual.toUpperCase(),
+        )
+      : solicitacoes;
 
     if (busca) {
       items = items.filter(
         (s) =>
-          s.nome.toLowerCase().includes(busca.toLowerCase()) ||
-          s.cpf.replace(/[.-]/g, "").includes(busca.replace(/[.-]/g, "")) ||
+          s.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+          s.cpf?.replace(/[.-]/g, "").includes(busca.replace(/[.-]/g, "")) ||
           s.telefone
-            .replace(/[\s()-]/g, "")
+            ?.replace(/[\s()-]/g, "")
             .includes(busca.replace(/[\s()-]/g, "")),
       );
     }
@@ -190,7 +194,8 @@ export default function Acesso() {
     return filteredSolicitacoes.slice(startIndex, endIndex);
   }, [filteredSolicitacoes, pagina, totalPaginas]);
 
-  const startIndex = (pagina - 1) * ITENS_POR_PAGINA;
+  const paginaAtual = Math.min(pagina, totalPaginas) || 1;
+  const startIndex = (paginaAtual - 1) * ITENS_POR_PAGINA;
   const endIndex = Math.min(
     startIndex + ITENS_POR_PAGINA,
     filteredSolicitacoes.length,
@@ -402,16 +407,21 @@ export default function Acesso() {
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-4">
                 <p className="text-sm text-gray-600">
-                  Mostrando{" "}
-                  <span className="font-medium">
-                    {filteredSolicitacoes.length > 0 ? startIndex + 1 : 0}-
-                    {endIndex}
-                  </span>{" "}
-                  de{" "}
-                  <span className="font-medium">
-                    {filteredSolicitacoes.length}
-                  </span>{" "}
-                  resultados
+                  {filteredSolicitacoes.length > 0 ? (
+                    <>
+                      Mostrando{" "}
+                      <span className="font-medium">
+                        {startIndex + 1}–{endIndex}
+                      </span>{" "}
+                      de{" "}
+                      <span className="font-medium">
+                        {filteredSolicitacoes.length}
+                      </span>{" "}
+                      resultados
+                    </>
+                  ) : (
+                    "Nenhum resultado"
+                  )}
                 </p>
                 <div className="flex gap-2">
                   <Button

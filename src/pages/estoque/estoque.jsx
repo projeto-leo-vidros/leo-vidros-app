@@ -56,6 +56,7 @@ export default function Estoque() {
   const location = useLocation();
   const navigate = useNavigate();
   const focusItemId = location.state?.focusItemId;
+  const openMovimentacaoForItemId = location.state?.openMovimentacaoForItemId;
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
@@ -130,8 +131,7 @@ export default function Estoque() {
       items = items.filter(
         (item) =>
           item.produto.nome.toLowerCase().includes(buscaLower) ||
-          item.produto.descricao.toLowerCase().includes(buscaLower) ||
-          item.localizacao.toLowerCase().includes(buscaLower),
+          item.produto.descricao.toLowerCase().includes(buscaLower),
       );
     }
 
@@ -219,6 +219,35 @@ export default function Estoque() {
       }
     }
   }, [focusItemId, filteredEstoque, expandedItemId, pagina]);
+
+  useEffect(() => {
+    if (!openMovimentacaoForItemId || loading || filteredEstoque.length === 0) {
+      return;
+    }
+
+    const itemExists = filteredEstoque.some(
+      (item) => item.id === openMovimentacaoForItemId,
+    );
+
+    if (!itemExists) {
+      return;
+    }
+
+    setSelectedItems([openMovimentacaoForItemId]);
+    setExpandedItemId(openMovimentacaoForItemId);
+    setIsEntradaSaidaModalOpen(true);
+
+    navigate(location.pathname, {
+      replace: true,
+      state: { focusItemId: openMovimentacaoForItemId },
+    });
+  }, [
+    openMovimentacaoForItemId,
+    loading,
+    filteredEstoque,
+    navigate,
+    location.pathname,
+  ]);
 
   const handleSaveItem = useCallback(
     async (itemData) => {

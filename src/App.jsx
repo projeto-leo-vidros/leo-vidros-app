@@ -6,6 +6,7 @@ import { UserProvider } from './context/UserContext.jsx';
 import { queryClient } from './lib/queryClient.js';
 import { OrcamentoProgressProvider, useOrcamentoProgress } from './context/OrcamentoProgressContext.jsx';
 import { OrcamentoProgressToast } from './components/feedback/OrcamentoProgressToast/index.js';
+import AgendamentoNotificationLayer from './components/feedback/AgendamentoNotificationLayer/AgendamentoNotificationLayer.jsx';
 
 function AppWithToast() {
   const { orcamentoId, numeroOrcamento, showToast, closeToast } = useOrcamentoProgress();
@@ -13,6 +14,7 @@ function AppWithToast() {
   return (
     <>
       <RouterProvider router={appRouter} />
+      <AgendamentoNotificationLayer />
       {showToast && orcamentoId && (
         <OrcamentoProgressToast
           orcamentoId={orcamentoId}

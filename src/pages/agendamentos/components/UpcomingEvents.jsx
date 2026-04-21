@@ -2,32 +2,80 @@ import { useState } from "react";
 import { format, addDays, isToday, isTomorrow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "../../../components/ui/misc/AppIcon";
+import { getEventDate, normalizeStatus } from "../utils/eventHelpers";
 
-const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar }) => {
+const UpcomingEvents = ({
+  events = [],
+  onViewEvent,
+  onEditEvent,
+  onViewCalendar,
+}) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  // Filtrar e ordenar eventos futuros (próximos 7 dias)
+
   const getUpcomingEvents = () => {
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now);
     today.setHours(0, 0, 0, 0);
     const sevenDaysLater = addDays(today, 7);
 
     return events
       .filter((event) => {
         try {
-          const eventDate = parseISO(event.date); // espera formato YYYY-MM-DD
-          return eventDate >= today && eventDate <= sevenDaysLater;
+          const statusNorm = normalizeStatus(event.statusAgendamento);
+          if (statusNorm === "CANCELADO" || statusNorm === "CONCLUIDO") {
+            return false;
+          }
+
+          const dateKey = getEventDate(event);
+          if (!dateKey) return false;
+
+          const eventDate = parseISO(`${dateKey}T00:00:00`);
+          if (eventDate < today || eventDate > sevenDaysLater) {
+            return false;
+          }
+
+          const [hours = 0, minutes = 0] = String(
+            event.startTime || event.inicioAgendamento || "00:00",
+          )
+            .substring(0, 5)
+            .split(":")
+            .map(Number);
+
+          const startDateTime = new Date(eventDate);
+          startDateTime.setHours(hours, minutes, 0, 0);
+
+          // Include events that haven't started yet OR are currently in progress
+          const endTimeStr = event.endTime || event.fimAgendamento;
+          if (startDateTime <= now && endTimeStr) {
+            const [endH = 0, endM = 0] = String(endTimeStr)
+              .substring(0, 5)
+              .split(":")
+              .map(Number);
+            const endDateTime = new Date(eventDate);
+            endDateTime.setHours(endH, endM, 0, 0);
+            return endDateTime > now;
+          }
+
+          return startDateTime > now;
         } catch {
           return false;
         }
       })
       .sort((a, b) => {
-        const dateA = parseISO(a.date);
-        const dateB = parseISO(b.date);
+        const dateA = parseISO(
+          `${getEventDate(a) || String(a.date).split("T")[0]}T00:00:00`,
+        );
+        const dateB = parseISO(
+          `${getEventDate(b) || String(b.date).split("T")[0]}T00:00:00`,
+        );
+
         if (dateA.getTime() !== dateB.getTime()) {
           return dateA.getTime() - dateB.getTime();
         }
-        // Se mesma data, ordena por hora de início
-        return (a.startTime || "").localeCompare(b.startTime || "");
+
+        return (a.startTime || a.inicioAgendamento || "").localeCompare(
+          b.startTime || b.inicioAgendamento || "",
+        );
       });
   };
 
@@ -43,7 +91,6 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
   };
 
   const getPriorityColor = (status) => {
-    // Baseado no statusAgendamento do backend
     if (status?.nome === "PENDENTE") return "border-l-warning";
     if (status?.nome === "CONFIRMADO") return "border-l-success";
     if (status?.nome === "CANCELADO") return "border-l-error";
@@ -56,7 +103,7 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
       if (isToday(date)) {
         return "Hoje";
       } else if (isTomorrow(date)) {
-        return "Amanhã";
+        return "Amanha";
       } else {
         return format(date, "dd/MM", { locale: ptBR });
       }
@@ -66,13 +113,13 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
   };
 
   const calculateDuration = (startTime, endTime) => {
-    if (!startTime || !endTime) return "–";
+    if (!startTime || !endTime) return "-";
     try {
       const [startHour, startMin] = startTime.split(":").map(Number);
       const [endHour, endMin] = endTime.split(":").map(Number);
 
       let minutes = endHour * 60 + endMin - (startHour * 60 + startMin);
-      if (minutes < 0) minutes += 24 * 60; // próximo dia
+      if (minutes < 0) minutes += 24 * 60;
 
       if (minutes < 60) {
         return `${minutes}min`;
@@ -81,7 +128,7 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
       const remaining = minutes % 60;
       return remaining > 0 ? `${hours}h ${remaining}min` : `${hours}h`;
     } catch {
-      return "–";
+      return "-";
     }
   };
 
@@ -91,10 +138,12 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-text-primary">Próximos Eventos</h3>
+          <h3 className="font-semibold text-text-primary">
+            Proximos Eventos
+          </h3>
         </div>
-        <div className="text-center py-8 text-text-secondary text-sm">
-          Nenhum evento nos próximos 7 dias
+        <div className="py-8 text-center text-sm text-text-secondary">
+          Nenhum evento nos proximos 7 dias
         </div>
       </div>
     );
@@ -103,22 +152,22 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-text-primary">Próximos Eventos</h3>
-        <span className="text-xs text-text-secondary bg-muted px-2 py-1 rounded-modern">
+        <h3 className="font-semibold text-text-primary">Proximos Eventos</h3>
+        <span className="rounded-modern bg-muted px-2 py-1 text-xs text-text-secondary">
           {upcomingEvents.length}
         </span>
       </div>
 
-      <div className="space-y-3 max-h-96 overflow-y-auto">
+      <div className="max-h-96 space-y-3 overflow-y-auto">
         {upcomingEvents?.map((event) => (
           <div
             key={event?.id}
             onClick={() => onViewEvent?.(event)}
-            className={`bg-card border border-hairline rounded-modern p-3 hover:shadow-soft transition-micro cursor-pointer group border-l-4 ${getPriorityColor(event?.statusAgendamento)}`}
+            className={`bg-card group cursor-pointer rounded-modern border border-hairline border-l-4 p-3 transition-micro hover:shadow-soft ${getPriorityColor(event?.statusAgendamento)}`}
           >
             <div className="flex items-start space-x-3">
-              <div className="shrink-0 mt-1">
-                <div className="w-8 h-8 bg-muted rounded-modern flex items-center justify-center">
+              <div className="mt-1 shrink-0">
+                <div className="flex h-8 w-8 items-center justify-center rounded-modern bg-muted">
                   <Icon
                     name={getEventIcon(event?.tipoAgendamento)}
                     size={16}
@@ -127,17 +176,17 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
                 </div>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-sm font-medium text-text-primary truncate">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center justify-between">
+                  <h4 className="truncate text-sm font-medium text-text-primary">
                     {event?.title || event?.tipoAgendamento}
                   </h4>
-                  <span className="text-xs text-text-secondary shrink-0 ml-2">
+                  <span className="ml-2 shrink-0 text-xs text-text-secondary">
                     {getDateLabel(event?.date)}
                   </span>
                 </div>
 
-                <div className="flex items-center space-x-3 text-xs text-text-secondary mb-2">
+                <div className="mb-2 flex items-center space-x-3 text-xs text-text-secondary">
                   <div className="flex items-center space-x-1">
                     <Icon name="Clock" size={12} />
                     <span>{event?.startTime}</span>
@@ -151,7 +200,7 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
                 </div>
 
                 {event?.endereco?.rua && (
-                  <div className="flex items-center space-x-1 text-xs text-text-secondary mb-2">
+                  <div className="mb-2 flex items-center space-x-1 text-xs text-text-secondary">
                     <Icon name="MapPin" size={12} />
                     <span className="truncate">
                       {event?.endereco?.rua}, {event?.endereco?.numero}
@@ -163,7 +212,10 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
                   <div className="flex items-center space-x-1 text-xs text-text-secondary">
                     <Icon name="Users" size={12} />
                     <span className="truncate">
-                      {event?.funcionarios?.slice(0, 2)?.map(f => f.nome)?.join(", ")}
+                      {event?.funcionarios
+                        ?.slice(0, 2)
+                        ?.map((f) => f.nome)
+                        ?.join(", ")}
                       {event?.funcionarios?.length > 2 &&
                         ` +${event?.funcionarios?.length - 2}`}
                     </span>
@@ -175,25 +227,33 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setOpenDropdownId(openDropdownId === event.id ? null : event.id);
+                    setOpenDropdownId(
+                      openDropdownId === event.id ? null : event.id,
+                    );
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted text-gray-400 hover:text-gray-800 rounded-modern transition-micro"
+                  className="rounded-modern p-1 text-gray-400 opacity-0 transition-micro hover:bg-muted hover:text-gray-800 group-hover:opacity-100"
                 >
                   <Icon name="MoreVertical" size={14} />
                 </button>
                 {openDropdownId === event.id && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpenDropdownId(null); }} />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-36 bg-white border border-gray-200 shadow-lg rounded-xl py-1">
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDropdownId(null);
+                      }}
+                    />
+                    <div className="absolute right-0 top-full z-50 mt-1 w-36 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
                       <button
                         onClick={(e) => {
-                           e.stopPropagation();
-                           setOpenDropdownId(null);
-                           onEditEvent?.(event);
+                          e.stopPropagation();
+                          setOpenDropdownId(null);
+                          onEditEvent?.(event);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                       >
-                         <Icon name="Edit3" size={14} /> Editar
+                        <Icon name="Edit3" size={14} /> Editar
                       </button>
                     </div>
                   </>
@@ -207,7 +267,7 @@ const UpcomingEvents = ({ events = [], onViewEvent, onEditEvent, onViewCalendar 
       <div className="border-t border-hairline">
         <button
           onClick={onViewCalendar}
-          className="w-full flex items-center justify-center gap-2 py-2 text-sm text-primary hover:bg-primary/10 rounded-modern transition-micro"
+          className="flex w-full items-center justify-center gap-2 rounded-modern py-2 text-sm text-primary transition-micro hover:bg-primary/10"
         >
           <Icon name="Calendar" size={16} />
           <span>Ver Agenda Completa</span>

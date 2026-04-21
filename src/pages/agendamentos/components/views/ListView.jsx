@@ -2,17 +2,31 @@ import { useMemo } from "react";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Clock, Calendar as CalendarIcon, MapPin, User } from "lucide-react";
-import { getBadgeColor, normalizeStatus } from "../../utils/eventHelpers";
+import {
+  getBadgeColor,
+  getEventDate,
+  normalizeStatus,
+} from "../../utils/eventHelpers";
 
 const ListView = ({ events = [], onEventClick }) => {
   const sortedEvents = useMemo(() => {
-    return [...events].sort((a, b) => {
+    const today = startOfDay(new Date());
+
+    return events
+      .filter((event) => {
+        const dateKey = getEventDate(event);
+        if (!dateKey) return false;
+
+        const eventDate = parseISO(`${dateKey}T00:00:00`);
+        return !isBefore(eventDate, today);
+      })
+      .sort((a, b) => {
       const datePartA = String(a.date).split("T")[0];
       const datePartB = String(b.date).split("T")[0];
       const dateA = new Date(`${datePartA}T${a.startTime}`);
       const dateB = new Date(`${datePartB}T${b.startTime}`);
       return dateA - dateB;
-    });
+      });
   }, [events]);
 
   const groupedEvents = useMemo(() => {

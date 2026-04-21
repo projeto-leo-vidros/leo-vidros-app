@@ -17,6 +17,21 @@ import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal
 import Api from "../../api/client/Api";
 import PedidosService from "../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../utils/formatters";
+import ProdutoSearchSelect from "../../components/ui/misc/ProdutoSearchSelect";
+
+const METODOS_COM_PARCELA = ["Cartão de crédito"];
+
+const parseFormaPagamento = (valor = "") => {
+  const match = valor.match(/^(.+?) - (\d+)x$/);
+  if (match) return { metodo: match[1], parcelas: parseInt(match[2]) };
+  return { metodo: valor, parcelas: 1 };
+};
+
+const composeFormaPagamento = (metodo, parcelas) => {
+  if (METODOS_COM_PARCELA.includes(metodo) && parcelas > 1)
+    return `${metodo} - ${parcelas}x`;
+  return metodo;
+};
 
 export default function PedidoDetalhe() {
   const { id } = useParams();
@@ -30,10 +45,12 @@ export default function PedidoDetalhe() {
   const [editing, setEditing] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState([]);
 
   const [formData, setFormData] = useState({
     clienteNome: "",
     formaPagamento: "",
+    parcelas: 1,
     observacoes: "",
     produtos: [],
   });
@@ -50,6 +67,13 @@ export default function PedidoDetalhe() {
     setSectionsOpen((prev) => ({ ...prev, [s]: !prev[s] }));
 
   useEffect(() => {
+    Api.get("/produtos?size=200").then((res) => {
+      const lista = Array.isArray(res.data) ? res.data : res.data?.content ?? [];
+      setProdutosDisponiveis(lista);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     const fetchPedido = async () => {
       setLoading(true);
       try {
@@ -59,9 +83,11 @@ export default function PedidoDetalhe() {
         setRawPedido(raw);
         const mapped = PedidosService.mapearParaFrontend(raw);
         setPedido(mapped);
+        const { metodo, parcelas } = parseFormaPagamento(mapped.formaPagamento);
         setFormData({
           clienteNome: mapped.clienteNome || "",
-          formaPagamento: mapped.formaPagamento || "",
+          formaPagamento: metodo,
+          parcelas,
           observacoes: mapped.observacoes || "",
           produtos: mapped.produtos || [],
         });
@@ -101,6 +127,17 @@ export default function PedidoDetalhe() {
     setFormData((prev) => ({ ...prev, produtos: updated }));
   };
 
+  const handleProdutoSelect = (index, produto) => {
+    const updated = [...formData.produtos];
+    updated[index] = {
+      ...updated[index],
+      nome: produto?.nome ?? "",
+      preco: parseFloat(produto?.preco ?? 0),
+      estoqueId: produto?.id ?? 0,
+    };
+    setFormData((prev) => ({ ...prev, produtos: updated }));
+  };
+
   const handleAdicionarProduto = () => {
     setFormData((prev) => ({
       ...prev,
@@ -134,32 +171,10 @@ export default function PedidoDetalhe() {
         pedido: {
           valorTotal,
           ativo: rawPedido?.ativo !== undefined ? rawPedido.ativo : true,
-          formaPagamento: formData.formaPagamento,
+          formaPagamento: composeFormaPagamento(formData.formaPagamento, formData.parcelas),
           observacao: formData.observacoes,
-          cliente: {
-            id: pedido.clienteId || pedido.clienteInfo?.id || 0,
-            nome: formData.clienteNome,
-            cpf: pedido.clienteInfo?.cpf || "",
-            email: pedido.clienteInfo?.email || "",
-            telefone: pedido.clienteInfo?.telefone || "",
-            status: "ATIVO",
-            enderecos: pedido.clienteInfo?.endereco
-              ? [
-                  {
-                    id: pedido.clienteInfo.endereco.id || 0,
-                    rua: pedido.clienteInfo.endereco.rua || "",
-                    complemento:
-                      pedido.clienteInfo.endereco.complemento || "",
-                    cep: pedido.clienteInfo.endereco.cep || "",
-                    cidade: pedido.clienteInfo.endereco.cidade || "",
-                    bairro: pedido.clienteInfo.endereco.bairro || "",
-                    uf: pedido.clienteInfo.endereco.uf || "",
-                    pais: pedido.clienteInfo.endereco.pais || "Brasil",
-                    numero: pedido.clienteInfo.endereco.numero || 0,
-                  },
-                ]
-              : [],
-          },
+          clienteId: pedido.clienteId,
+          clienteNome: formData.clienteNome,
           status: {
             tipo: pedido.statusOriginal?.tipo || "PEDIDO",
             nome: pedido.statusOriginal?.nome || "ATIVO",
@@ -194,7 +209,10 @@ export default function PedidoDetalhe() {
       setFormData(newFormData);
 
       setShowSuccessModal(true);
-      setTimeout(() => setShowSuccessModal(false), 2500);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        window.location.reload();
+      }, 2500);
     } catch (err) {
       console.error("❌ Erro:", err);
       setError(
@@ -446,35 +464,46 @@ export default function PedidoDetalhe() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-left text-sm font-bold text-gray-700 mb-2">
+                    <div className="flex flex-col gap-2">
+                      <label className="block text-left text-sm font-bold text-gray-700">
                         Forma de Pagamento
                       </label>
                       <select
                         value={formData.formaPagamento}
-                        onChange={(e) =>
-                          handleFieldChange("formaPagamento", e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleFieldChange("formaPagamento", e.target.value);
+                          if (!METODOS_COM_PARCELA.includes(e.target.value))
+                            handleFieldChange("parcelas", 1);
+                        }}
                         className={`w-full px-3 py-2 border rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white ${
-                          !formData.formaPagamento
-                            ? "border-red-500"
-                            : "border-gray-700"
+                          !formData.formaPagamento ? "border-red-500" : "border-gray-700"
                         }`}
                       >
                         <option value="">Selecione...</option>
                         <option value="Dinheiro">Dinheiro</option>
                         <option value="Pix">Pix</option>
-                        <option value="Cartão de crédito">
-                          Cartão de crédito
-                        </option>
-                        <option value="Cartão de débito">
-                          Cartão de débito
-                        </option>
+                        <option value="Cartão de crédito">Cartão de crédito</option>
+                        <option value="Cartão de débito">Cartão de débito</option>
                         <option value="Boleto">Boleto</option>
-                        <option value="Transferência">
-                          Transferência bancária
-                        </option>
+                        <option value="Transferência">Transferência bancária</option>
                       </select>
+
+                      {METODOS_COM_PARCELA.includes(formData.formaPagamento) && (
+                        <div>
+                          <label className="block text-left text-sm font-bold text-gray-700 mb-1">
+                            Parcelas
+                          </label>
+                          <select
+                            value={formData.parcelas}
+                            onChange={(e) => handleFieldChange("parcelas", parseInt(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-700 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white"
+                          >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                              <option key={n} value={n}>{n}x {n === 1 ? "(à vista)" : ""}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -563,14 +592,11 @@ export default function PedidoDetalhe() {
                           <label className="block text-left text-xs font-bold text-gray-600 mb-1">
                             Nome do Produto
                           </label>
-                          <input
-                            type="text"
-                            value={produto.nome}
-                            onChange={(e) =>
-                              handleProdutoChange(index, "nome", e.target.value)
-                            }
-                            placeholder="Nome do produto"
-                            className="w-full px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
+                          <ProdutoSearchSelect
+                            produtos={produtosDisponiveis}
+                            value={produto.nome ? { id: produto.estoqueId, nome: produto.nome } : null}
+                            onChange={(p) => handleProdutoSelect(index, p)}
+                            placeholder="Pesquisar produto..."
                           />
                         </div>
                         <div className="col-span-6 md:col-span-2 flex flex-col gap-1">

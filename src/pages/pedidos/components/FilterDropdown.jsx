@@ -26,15 +26,17 @@ const FilterDropdown = ({
   const filterOptionsServicos = {
     situacao: {
       title: "Situação do Serviço",
-      options: ["Ativo", "Finalizado"],
+      options: ["Ativo", "Em Andamento", "Aguardando", "Finalizado", "Cancelado"],
     },
     etapa: {
       title: "Etapa do Serviço",
       options: [
-        "Aguardando orçamento",
-        "Orçamento aprovado",
-        "Execução em andamento",
-        "Aguardando peças",
+        "Pendente",
+        "Aguardando Orçamento",
+        "Análise do Orçamento",
+        "Orçamento Aprovado",
+        "Serviço Agendado",
+        "Serviço em Execução",
         "Concluído",
       ],
     },

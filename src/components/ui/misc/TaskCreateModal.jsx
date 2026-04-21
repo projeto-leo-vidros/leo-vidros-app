@@ -161,7 +161,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
         try {
           const responseServicos = await Api.get("/pedidos/servicos");
-          allOrders = responseServicos.data || [];
+          const raw = responseServicos.data;
+          allOrders = raw?.content ?? (Array.isArray(raw) ? raw : []);
         } catch (error) {
           console.warn(
             "⚠️ Endpoint /Pedidos/servicos não disponível, tentando alternativa...",
@@ -245,14 +246,14 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
             let label = "";
 
-            if (dto.descricao) {
-              label = dto.descricao;
-            } else if (dto.nome) {
-              label = dto.nome;
-            } else if (dto.servico?.nome) {
+            if (dto.servico?.nome) {
               label = dto.servico.nome;
             } else if (dto.servico?.descricao) {
               label = dto.servico.descricao;
+            } else if (dto.nome) {
+              label = dto.nome;
+            } else if (dto.descricao) {
+              label = dto.descricao;
             } else if (pedidoId) {
               label = `Pedido #${pedidoId}`;
             } else {
@@ -289,14 +290,18 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   const fetchProdutos = useCallback(async () => {
     try {
-      const response = await Api.get("/produtos");
-      const dados = response.data || [];
+      const response = await Api.get("/estoques", { params: { size: 500 } });
+      const raw = response.data;
+      const dados = raw?.content ?? (Array.isArray(raw) ? raw : []);
       setProdutosOptions(
-        dados.map((prod) => ({
-          value: prod.id,
-          label: prod.nome || prod.descricao || `Produto ${prod.id}`,
-          originalData: prod,
-        })),
+        dados
+          .filter((item) => item.produto?.id)
+          .map((item) => ({
+            value: item.produto.id,
+            label: item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.produto.id}`,
+            estoqueId: item.id,
+            originalData: item,
+          })),
       );
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
@@ -554,7 +559,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         }
       }
 
-      if (initialData?.produtos?.length > 0) {
+      const tipoVal = initialData?.tipoAgendamento?.value || initialData?.tipoAgendamento;
+      if (tipoVal === "SERVICO" || initialData?.produtos?.length > 0) {
         fetchProdutos();
       }
     }
@@ -615,6 +621,32 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!formData?.rua?.trim()) newErrors.rua = "* Rua obrigatória";
       if (!formData?.cep?.trim()) newErrors.cep = "* CEP obrigatório";
     }
+    if (currentStep === 3) {
+      const produtosInvalidos = (formData?.produtos || [])
+        .map((produto) => {
+          const option = produtosOptions.find((opt) => opt.value === produto.id);
+          const disponivel = parseFloat(
+            option?.originalData?.quantidadeDisponivel ?? 0,
+          );
+          const reservado = parseFloat(produto.quantidade) || 0;
+
+          if (reservado <= 0) {
+            return `${produto.nome}: informe uma quantidade maior que zero.`;
+          }
+
+          if (reservado > disponivel) {
+            return `${produto.nome}: disponivel ${disponivel}, solicitado ${reservado}.`;
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
+      if (produtosInvalidos.length > 0) {
+        newErrors.submit = `A selecao dos itens nao pode passar do disponivel. Ajuste as quantidades: ${produtosInvalidos.join(" ")}`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -638,41 +670,17 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         formData.tipoAgendamento?.value || formData.tipoAgendamento;
 
       const pedidoCompleto = formData.pedido?.originalData || null;
-      // Mantém a etapa do pedido como está ou default, o backend irá atualizar automaticamente ao criar o agendamento
-      const servicoPayload = pedidoCompleto?.servico
-        ? {
-            id: pedidoCompleto.servico.id,
-            codigo: pedidoCompleto.servico.codigo,
-            nome: pedidoCompleto.servico.nome,
-            descricao: pedidoCompleto.servico.descricao,
-            precoBase: pedidoCompleto.servico.precoBase,
-            ativo: true,
-            etapa: pedidoCompleto.servico.etapa || {
-              id: 0,
-              tipo: "SERVICO",
-              nome: "PENDENTE",
-            },
-          }
-        : {
-            id: 0,
-            codigo: `auto_${Date.now()}`,
-            nome: "",
-            descricao: "",
-            precoBase: 0.0,
-            ativo: true,
-            etapa: { id: 0, tipo: "SERVICO", nome: "PENDENTE" },
-          };
 
       const produtosPayload = formData.produtos
         .filter((p) => p.id != null)
         .map((p) => ({
           produtoId: parseInt(p.id, 10),
           quantidadeUtilizada: 0.0,
-          quantidadeReservada: parseFloat(p.quantidade) || 0.0,
+          quantidadeReservada: Math.max(0.01, parseFloat(p.quantidade) || 1),
         }));
 
       const payload = {
-        servicoId: servicoPayload.id,
+        servicoId: pedidoCompleto?.servico?.id || pedidoCompleto?.id || null,
         tipoAgendamento: tipoValor,
         dataAgendamento: formatDateToISO(formData.eventDate),
         inicioAgendamento: formatTimeToHHmmss(formData.startTime),
@@ -681,12 +689,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         observacao: formData.observacao || null,
         endereco: {
           rua: formData.rua || "",
-          complemento: formData.complemento || "",
+          complemento: formData.complemento || null,
           cep: formData.cep || "",
           cidade: formData.cidade || "",
-          bairro: formData.bairro || "",
+          bairro: formData.bairro || null,
           uf: formData.uf || "",
-          pais: formData.pais || "",
+          pais: formData.pais || "Brasil",
           numero: formData.numero ? parseInt(formData.numero, 10) : 0,
         },
         funcionariosIds: selectedFuncionarios,

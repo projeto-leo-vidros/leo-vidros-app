@@ -3,7 +3,7 @@ import { format, isToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Clock } from "lucide-react";
 import { motion } from "framer-motion";
-import { getEventDate } from "../../utils/eventHelpers";
+import { isVisibleInDailyAgenda } from "../../utils/eventHelpers";
 import { calculateEventStyle, calculateEventLayout } from "../../utils/calendarUtils";
 
 const DayView = ({
@@ -16,9 +16,9 @@ const DayView = ({
   const dayKey = format(currentDay, "yyyy-MM-dd");
   const dayEvents =
     events?.filter((e) => {
-      const eventDateKey = getEventDate(e);
-      return eventDateKey === dayKey;
+      return isVisibleInDailyAgenda(e, dayKey);
     }) || [];
+
   const eventsWithLayout = calculateEventLayout(dayEvents);
   const [currentTime, setCurrentTime] = useState(new Date());
   const scrollContainerRef = useRef(null);

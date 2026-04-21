@@ -6,30 +6,157 @@ class PedidosService extends BaseService {
     super(Api);
   }
 
-  async buscarTodos({ page = 0, size = 20 } = {}) {
-    const result = await this.get("/pedidos", { params: { page, size } });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
+  normalizarEtapaOuStatus(valor = "") {
+    return String(valor)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/_/g, " ")
+      .trim()
+      .toUpperCase();
+  }
+
+  isTipoOrcamentoAgendamento(tipo = "") {
+    const tipoNorm = this.normalizarEtapaOuStatus(tipo);
+    return tipoNorm.includes("ORC") || tipoNorm.includes("VISTORIA");
+  }
+
+  isTipoServicoAgendamento(tipo = "") {
+    return !this.isTipoOrcamentoAgendamento(tipo);
+  }
+
+  etapaServicoEhObrigatoriaPorAgendamento(servico) {
+    if (!servico) return false;
+
+    return (servico.agendamentos || []).some((ag) => {
+      const statusNorm = this.normalizarEtapaOuStatus(
+        ag?.statusAgendamento?.nome,
+      );
+      return (
+        statusNorm &&
+        statusNorm !== "CANCELADO" &&
+        statusNorm !== "INATIVO" &&
+        statusNorm !== "CONCLUIDO"
+      );
+    });
+  }
+
+  calcularEtapaServicoPorAgendamentos(servico, etapaBase = "PENDENTE") {
+    if (!servico) return etapaBase;
+
+    const agendamentosAtivos = (servico.agendamentos || []).filter((ag) => {
+      const statusNorm = this.normalizarEtapaOuStatus(
+        ag?.statusAgendamento?.nome,
+      );
+      return (
+        statusNorm &&
+        statusNorm !== "CANCELADO" &&
+        statusNorm !== "INATIVO" &&
+        statusNorm !== "CONCLUIDO"
+      );
+    });
+
+    if (agendamentosAtivos.length === 0) {
+      return etapaBase;
     }
+
+    const agendamentoServico = agendamentosAtivos.find((ag) =>
+      this.isTipoServicoAgendamento(ag?.tipoAgendamento),
+    );
+    const agendamentoOrcamento = agendamentosAtivos.find((ag) =>
+      this.isTipoOrcamentoAgendamento(ag?.tipoAgendamento),
+    );
+
+    if (agendamentoServico) {
+      const statusServico = this.normalizarEtapaOuStatus(
+        agendamentoServico.statusAgendamento?.nome,
+      );
+
+      if (statusServico === "CONCLUIDO") {
+        return "CONCLU\u00cdDO";
+      }
+      if (statusServico === "EM ANDAMENTO" || statusServico === "EM EXECUCAO") {
+        return "SERVI\u00c7O EM EXECU\u00c7\u00c3O";
+      }
+      return "SERVI\u00c7O AGENDADO";
+    }
+
+    if (agendamentoOrcamento) {
+      const statusOrcamento = this.normalizarEtapaOuStatus(
+        agendamentoOrcamento.statusAgendamento?.nome,
+      );
+      if (statusOrcamento === "CONCLUIDO") {
+        return "OR\u00c7AMENTO APROVADO";
+      }
+      return "AGUARDANDO OR\u00c7AMENTO";
+    }
+
+    const orcamentoConcluido = (servico.agendamentos || []).find((ag) => {
+      const statusNorm = this.normalizarEtapaOuStatus(ag?.statusAgendamento?.nome);
+      return this.isTipoOrcamentoAgendamento(ag?.tipoAgendamento) && statusNorm === "CONCLUIDO";
+    });
+    if (orcamentoConcluido) return "OR\u00c7AMENTO APROVADO";
+
+    return etapaBase;
+  }
+
+  async buscarTodos() {
+    const result = await this.get("/pedidos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
-  async buscarPedidosDeServico({ page = 0, size = 20 } = {}) {
-    const result = await this.get("/pedidos/servicos", { params: { page, size } });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+  async buscarPedidosDeServico() {
+    const result = await this.get("/pedidos/servicos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
-  async buscarPedidosDeProduto({ page = 0, size = 20 } = {}) {
-    const result = await this.get("/pedidos/produtos", { params: { page, size } });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+  async buscarServicosEndpoint() {
+    const result = await this.get("/servicos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
+    return result;
+  }
+
+  mapearServicoSimples(servico) {
+    const progresso = Array.isArray(servico.progresso)
+      ? servico.progresso
+      : [1, 6];
+    return {
+      id: servico.id,
+      clienteNome: servico.clienteNome || "Não informado",
+      clienteId: servico.clienteId,
+      clienteInfo: { nome: servico.clienteNome || "Não informado" },
+      produtosDesc: servico.descricao || "Serviço não especificado",
+      descricao: servico.descricao || "",
+      dataCompra: servico.data || new Date().toISOString().slice(0, 10),
+      data: servico.data || new Date().toISOString().slice(0, 10),
+      formaPagamento: servico.formaPagamento || "Não informado",
+      itensCount: 1,
+      valorTotal: servico.valorTotal || 0,
+      status: servico.status || "Ativo",
+      ativo: servico.ativo !== false,
+      tipoPedido: "servico",
+      etapa: servico.etapa || "Aguardando orçamento",
+      etapaOriginal: servico.etapa || null,
+      progresso,
+      servicoNome: servico.descricao || null,
+      produtos: [],
+      servico: {
+        id: servico.id,
+        nome: servico.descricao || "Serviço",
+        descricao: servico.descricao || "",
+        etapa: servico.etapa || "Aguardando orçamento",
+        agendamentos: [],
+      },
+      observacoes: servico.observacoes || "",
+      statusOriginal: null,
+      _origem: "servicos",
+    };
+  }
+
+  async buscarPedidosDeProduto() {
+    const result = await this.get("/pedidos/produtos");
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
@@ -37,14 +164,11 @@ class PedidosService extends BaseService {
     return this.get(`/pedidos/${id}`);
   }
 
-  async buscarPorTipoAndEtapa(nomeEtapa, { page = 0, size = 20 } = {}) {
+  async buscarPorTipoAndEtapa(nomeEtapa) {
     const result = await this.get("/pedidos/findAllBy", {
-      params: { nome: nomeEtapa, page, size },
+      params: { nome: nomeEtapa },
     });
-    if (result.success) {
-      const raw = result.data?.content ?? result.data;
-      result.data = Array.isArray(raw) ? raw : [];
-    }
+    if (result.success) result.data = result.data?.content ?? result.data ?? [];
     return result;
   }
 
@@ -131,20 +255,22 @@ class PedidosService extends BaseService {
   }
 
   mapearParaFrontend(dadosBackend) {
+    const tipoPedidoNorm = dadosBackend.tipoPedido?.toLowerCase().replace(/[çc]/g, "c") ?? "";
     const isProduto =
-      dadosBackend.tipoPedido === "produto" &&
+      tipoPedidoNorm === "produto" &&
       dadosBackend.produtos &&
       dadosBackend.produtos.length > 0;
     const isServico =
-      dadosBackend.tipoPedido === "serviço" && dadosBackend.servico;
+      dadosBackend.servico != null &&
+      (tipoPedidoNorm.includes("servi") || !tipoPedidoNorm.includes("produto"));
 
     let produtosDesc = "";
     let itensCount = 0;
     let produtos = [];
 
-    if (isProduto && dadosBackend.produtos) {
+    if (dadosBackend.produtos && dadosBackend.produtos.length > 0) {
       produtos = dadosBackend.produtos.map((produto) => ({
-        nome: produto.nomeProduto || "Produto",
+        nome: produto.nomeProduto || produto.nome || "Produto",
         quantidade: produto.quantidadeSolicitada || 0,
         preco: produto.precoUnitarioNegociado || 0,
         estoqueId: produto.estoqueId,
@@ -152,14 +278,17 @@ class PedidosService extends BaseService {
         observacao: produto.observacao || "",
       }));
 
-      produtosDesc = produtos.map((p) => p.nome).join(", ");
-      itensCount = produtos.length;
+      if (isProduto) {
+        produtosDesc = produtos.map((p) => p.nome).join(", ");
+        itensCount = produtos.length;
+      }
     }
 
     let servicoInfo = null;
     let etapaAtual = "Aguardando orçamento";
     let progressoValor = 1;
     let progressoTotal = 7;
+    let temAgendamentoAtivo = false;
 
     let etapaCalculada = "PENDENTE";
 
@@ -175,6 +304,7 @@ class PedidosService extends BaseService {
           ag.statusAgendamento.nome !== "CANCELADO" &&
           ag.statusAgendamento.nome !== "INATIVO",
       );
+      temAgendamentoAtivo = agendamentosAtivos.length > 0;
 
       if (agendamentosAtivos.length > 0) {
         const agendamentoOrcamento = agendamentosAtivos.find(
@@ -193,25 +323,21 @@ class PedidosService extends BaseService {
         }
 
         else if (agendamentoOrcamento) {
-          const statusOrcamento = agendamentoOrcamento.statusAgendamento?.nome;
-
-          if (statusOrcamento === "CONCLUÍDO") {
-            if (etapaNome === "ORÇAMENTO APROVADO") {
-              etapaCalculada = "ORÇAMENTO APROVADO";
-            } else {
-              etapaCalculada = "ANÁLISE DO ORÇAMENTO";
-            }
-          } else if (
-            statusOrcamento === "EM ANDAMENTO" ||
-            statusOrcamento === "PENDENTE"
-          ) {
-            etapaCalculada = "AGUARDANDO ORÇAMENTO";
+          const statusOrcamento = this.normalizarEtapaOuStatus(agendamentoOrcamento.statusAgendamento?.nome);
+          if (statusOrcamento === "CONCLUIDO") {
+            etapaCalculada = "OR\u00c7AMENTO APROVADO";
+          } else {
+            etapaCalculada = "AGUARDANDO OR\u00c7AMENTO";
           }
         }
       } else {
- 
-        etapaCalculada = "PENDENTE";
+        etapaCalculada = etapaNome;
       }
+
+      etapaCalculada = this.calcularEtapaServicoPorAgendamentos(
+        dadosBackend.servico,
+        etapaCalculada,
+      );
 
       servicoInfo = {
         id: dadosBackend.servico.id,
@@ -219,7 +345,7 @@ class PedidosService extends BaseService {
         nome: dadosBackend.servico.nome || "Serviço sem nome",
         descricao: dadosBackend.servico.descricao || "",
         precoBase: dadosBackend.servico.precoBase || 0,
-        ativo: dadosBackend.servico.ativo,
+        ativo: temAgendamentoAtivo ? true : dadosBackend.servico.ativo,
         etapa: etapaCalculada, 
         agendamentos: agendamentosTodos, 
       };
@@ -227,33 +353,34 @@ class PedidosService extends BaseService {
       produtosDesc = servicoInfo.nome;
       itensCount = 1;
 
-      switch (etapaCalculada.toUpperCase()) {
+      const etapaNorm = this.normalizarEtapaOuStatus(etapaCalculada);
+      switch (etapaNorm) {
         case "PENDENTE":
           etapaAtual = "Pendente";
           progressoValor = 1;
           break;
-        case "AGUARDANDO ORÇAMENTO":
-          etapaAtual = "Aguardando Orçamento";
+        case "AGUARDANDO ORCAMENTO":
+          etapaAtual = "Aguardando Or\u00e7amento";
           progressoValor = 2;
           break;
-        case "ANÁLISE DO ORÇAMENTO":
-          etapaAtual = "Análise do Orçamento";
+        case "ANALISE DO ORCAMENTO":
+          etapaAtual = "An\u00e1lise do Or\u00e7amento";
           progressoValor = 3;
           break;
-        case "ORÇAMENTO APROVADO":
-          etapaAtual = "Orçamento Aprovado";
+        case "ORCAMENTO APROVADO":
+          etapaAtual = "Or\u00e7amento Aprovado";
           progressoValor = 4;
           break;
-        case "SERVIÇO AGENDADO":
-          etapaAtual = "Serviço Agendado";
+        case "SERVICO AGENDADO":
+          etapaAtual = "Servi\u00e7o Agendado";
           progressoValor = 5;
           break;
-        case "SERVIÇO EM EXECUÇÃO":
-          etapaAtual = "Serviço em Execução";
+        case "SERVICO EM EXECUCAO":
+          etapaAtual = "Servi\u00e7o em Execu\u00e7\u00e3o";
           progressoValor = 6;
           break;
-        case "CONCLUÍDO":
-          etapaAtual = "Concluído";
+        case "CONCLUIDO":
+          etapaAtual = "Conclu\u00eddo";
           progressoValor = 7;
           break;
         case "CANCELADO":
@@ -284,6 +411,10 @@ class PedidosService extends BaseService {
         break;
       default:
         statusMapeado = statusNome;
+    }
+
+    if (isServico && temAgendamentoAtivo) {
+      statusMapeado = "Ativo";
     }
 
     let dataCompra = dadosBackend.dataCompra;
@@ -321,7 +452,7 @@ class PedidosService extends BaseService {
       itensCount: itensCount,
       valorTotal: dadosBackend.valorTotal || 0,
       status: statusMapeado,
-      ativo: dadosBackend.ativo !== false,
+      ativo: isServico && temAgendamentoAtivo ? true : dadosBackend.ativo !== false,
       tipoPedido:
         dadosBackend.tipoPedido || (isProduto ? "produto" : "servico"),
 
@@ -442,14 +573,7 @@ class PedidosService extends BaseService {
     if (filtros.busca && filtros.busca.trim()) {
       const termoBusca = filtros.busca.toLowerCase().trim();
       servicosFiltrados = servicosFiltrados.filter((servico) =>
-        [
-          servico.id?.toString().padStart(3, "0"),
-          servico.clienteNome,
-          servico.descricao,
-          servico.etapa,
-          servico.servicoNome,
-          servico.produtosDesc,
-        ]
+        [servico.clienteNome, servico.servicoNome, servico.produtosDesc]
           .join(" ")
           .toLowerCase()
           .includes(termoBusca),
