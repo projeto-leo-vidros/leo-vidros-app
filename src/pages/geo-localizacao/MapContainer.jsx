@@ -297,10 +297,10 @@ export default function RotasResponsivoCompacto() {
       googleMapsApiKey={MAPS_KEY}
       onLoad={() => setGoogleLoaded(true)}
     >
-      <div className="flex h-screen bg-[#f8fafc] font-sans overflow-hidden">
+      <div className="app-page flex min-h-screen bg-[#f8fafc] font-sans overflow-x-hidden">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-        <div className="flex-1 flex flex-col w-full relative">
+        <div className="app-content flex-1 flex flex-col w-full relative">
           <Header
             ref={headerRef}
             toggleSidebar={toggleSidebar}
@@ -349,7 +349,7 @@ export default function RotasResponsivoCompacto() {
                     />
                     <UniversalInput
                       ref={numeroInputRef}
-                      wrapperClassName="w-10 sm:w-24"
+                      wrapperClassName="w-16 sm:w-24"
                       placeholder="Nº"
                     />
                     <Button
@@ -368,39 +368,33 @@ export default function RotasResponsivoCompacto() {
                 </div>
 
                 {/* Métricas da rota */}
-                <div className="flex-1 p-2 grid grid-cols-3 gap-2 items-center bg-white text-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="text-[#002B4E] mb-0.5 flex flex-row items-center gap-2">
-                      <Clock size={16} />
-                      <span className="text-md font-bold text-gray-800">
-                        Tempo Estimado
-                      </span>
-                    </div>
-                    <span className="text-md font-bold text-gray-400">
+                <div className="flex-1 p-3 grid grid-cols-3 divide-x divide-gray-100 bg-white">
+                  <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+                    <Clock size={18} className="text-[#002B4E] shrink-0" />
+                    <span className="text-xs font-semibold text-gray-500 leading-tight">
+                      Tempo<br className="hidden sm:block" /><span className="sm:hidden"> </span>Estimado
+                    </span>
+                    <span className="text-sm sm:text-base font-bold text-gray-800">
                       {totalTime}
                     </span>
                   </div>
 
-                  <div className="flex flex-col items-center border-l border-gray-100 gap-1">
-                    <div className="text-[#002B4E] mb-0.5 flex flex-row items-center gap-2">
-                      <Navigation size={16} />
-                      <span className="text-md font-bold text-gray-800">
-                        Distância Total
-                      </span>
-                    </div>
-                    <span className="text-md font-bold text-gray-400">
+                  <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+                    <Navigation size={18} className="text-[#002B4E] shrink-0" />
+                    <span className="text-xs font-semibold text-gray-500 leading-tight">
+                      Distância<br className="hidden sm:block" /><span className="sm:hidden"> </span>Total
+                    </span>
+                    <span className="text-sm sm:text-base font-bold text-gray-800">
                       {totalDistance}
                     </span>
                   </div>
 
-                  <div className="flex flex-col items-center gap-1 border-l border-gray-100">
-                    <div className="text-[#002B4E] mb-0.5 flex flex-row items-center gap-2">
-                      <Flag size={16} />
-                      <span className="text-md font-bold text-gray-800">
-                        Destino Final
-                      </span>
-                    </div>
-                    <span className="text-md font-bold text-gray-400 truncate max-w-[1600px]">
+                  <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+                    <Flag size={18} className="text-[#002B4E] shrink-0" />
+                    <span className="text-xs font-semibold text-gray-500 leading-tight">
+                      Destino<br className="hidden sm:block" /><span className="sm:hidden"> </span>Final
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-gray-800 truncate w-full">
                       {finalPoint}
                     </span>
                   </div>

@@ -479,10 +479,10 @@ export default function Estoque() {
   }, [paginationData.items, formatCurrency]);
 
   return (
-    <div className="flex bg-[#f7f9fa] min-h-screen">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="app-content flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20" />
 
@@ -501,28 +501,26 @@ export default function Estoque() {
             {/* Tabela de Estoque */}
             <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
               {/* Barra de ações */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
-                <div className="flex gap-2 w-full md:w-auto">
-                  <Button
-                    onClick={openNewItemModal}
-                    startIcon={<Plus size={24} />}
-                    className="bg-[#007EA7] text-white font-semibold py-2 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
-                  >
-                    Novo Item
-                  </Button>
-                  <Button
-                    onClick={openEntradaSaidaModal}
-                    disabled={selectedItems.length === 0}
-                    className="bg-blue-600 text-white font-medium py-2.5 px-5 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center whitespace-nowrap gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowRightLeft className="w-4 h-4" />
-                    Registrar Movimento
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-3 w-full justify-end">
-                  {/* Busca */}
-                  <div className="relative w-full max-w-lg">
+              <div className="flex flex-col gap-3 mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={openNewItemModal}
+                      startIcon={<Plus size={24} />}
+                      className="bg-[#007EA7] text-white font-semibold py-2 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
+                    >
+                      Novo Item
+                    </Button>
+                    <Button
+                      onClick={openEntradaSaidaModal}
+                      disabled={selectedItems.length === 0}
+                      className="bg-blue-600 text-white font-medium py-2.5 px-5 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center whitespace-nowrap gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Registrar Movimento
+                    </Button>
+                  </div>
+                  <div className="relative w-full sm:max-w-lg">
                     <UniversalInput
                       variant="search"
                       placeholder="Busque Por Nome ou Descrição..."
@@ -531,44 +529,40 @@ export default function Estoque() {
                       startIcon={<Search className="w-5 h-5" />}
                     />
                   </div>
-
-                  {/* Filtros */}
-                  <div className="flex gap-2 w-auto whitespace-nowrap">
-                    {/* Filtros avançados */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className={`flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors ${
-                          hasActiveFilters
-                            ? "border-[#003d6b] text-[#003d6b] bg-[#e6f0f5]"
-                            : ""
-                        }`}
-                      >
-                        <Filter className="w-4 h-4" />
-                        Filtrar
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform ${
-                            isFilterOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                      <FilterDropdown
-                        isOpen={isFilterOpen}
-                        onClose={() => setIsFilterOpen(false)}
-                        selectedFilters={activeFilters}
-                        onFilterChange={handleFilterChange}
-                      />
-                    </div>
-                    {/* Exportar */}{" "}
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={openExportModal}
-                      startIcon={<Download className="w-4 h-4" />}
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsFilterOpen(!isFilterOpen)}
+                      className={`flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors ${
+                        hasActiveFilters
+                          ? "border-[#003d6b] text-[#003d6b] bg-[#e6f0f5]"
+                          : ""
+                      }`}
                     >
-                      Exportar
-                    </Button>
+                      <Filter className="w-4 h-4" />
+                      Filtrar
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          isFilterOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                    <FilterDropdown
+                      isOpen={isFilterOpen}
+                      onClose={() => setIsFilterOpen(false)}
+                      selectedFilters={activeFilters}
+                      onFilterChange={handleFilterChange}
+                    />
                   </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={openExportModal}
+                    startIcon={<Download className="w-4 h-4" />}
+                  >
+                    Exportar
+                  </Button>
                 </div>
               </div>
 
@@ -581,6 +575,7 @@ export default function Estoque() {
 
               {/* Tabela */}
               <div className="overflow-x-auto">
+                <div className="min-w-[640px]">
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-48px rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4 pr-1">
@@ -590,15 +585,15 @@ export default function Estoque() {
                       onChange={handleSelectAllChange}
                     />
                   </div>
-                  <div className="py-3 w-[15%] pl-2 pr-1">Nome</div>
-                  <div className="py-3 w-[10%] text-center">Preço</div>
-                  <div className="py-3 w-[15%] px-4">Unidade de Medida</div>
+                  <div className="py-3 w-[20%] sm:w-[15%] pl-2 pr-1">Nome</div>
+                  <div className="py-3 w-[12%] sm:w-[10%] text-center">Preço</div>
+                  <div className="hidden md:block py-3 w-[15%] px-4">Unidade de Medida</div>
                   <div className="py-3 w-[20%] text-center">
-                    Quantidade em estoque
+                    Qtd. Estoque
                   </div>
-                  <div className="py-3 w-[10%] text-center">Status</div>
-                  <div className="py-3 w-[10%] text-center">Situação</div>
-                  <div className="py-3 w-[15%] text-right pr-8">Ações</div>
+                  <div className="py-3 w-[13%] sm:w-[10%] text-center">Status</div>
+                  <div className="hidden sm:block py-3 w-[10%] text-center">Situação</div>
+                  <div className="py-3 w-[30%] sm:w-[15%] text-right pr-8">Ações</div>
                 </div>
 
                 {/* Linhas da tabela */}
@@ -636,11 +631,12 @@ export default function Estoque() {
                     ))
                   )}
                 </div>
+                </div>{/* /min-w */}
               </div>
 
               {/* Paginação */}
               {!loading && paginationData.total > 0 && (
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 mt-4">
                   <p className="text-sm text-gray-600">
                     Mostrando{" "}
                     <span className="font-medium">

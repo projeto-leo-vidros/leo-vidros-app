@@ -401,9 +401,9 @@ export default function ProductDetailPage() {
   const totalValue = (estoque?.quantidadeTotal ?? 0) * (produto?.preco ?? 0);
 
   return (
-    <div className="flex bg-[#f7f9fa] min-h-screen">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="app-content flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20 lg:pt-20" />
 

@@ -156,7 +156,7 @@ export default function ClienteFormModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-start px-10 py-20 overflow-y-auto z-50"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
       onClick={handleClose}
     >
       <div

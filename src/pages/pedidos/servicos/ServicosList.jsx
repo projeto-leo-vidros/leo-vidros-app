@@ -264,53 +264,57 @@ export default function ServicosList({
               className={`flex flex-col gap-3 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${isGrayCard ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}
             >
               {/* HEADER DO CARD */}
-              <header className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 rounded-md ${isGrayCard ? "text-gray-400 bg-gray-200" : "text-slate-400 bg-slate-100"}`}
-                  >
-                    <Wrench size={16} />
-                  </div>
-                  <div>
-                    <h3
-                      className={`font-semibold text-sm md:text-base ${isGrayCard ? "text-gray-600" : "text-slate-800"}`}
+              <header className="flex flex-col gap-2 pb-3 border-b border-slate-100 md:flex-row md:items-center md:justify-between">
+                {/* Título + status */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-2 rounded-md ${isGrayCard ? "text-gray-400 bg-gray-200" : "text-slate-400 bg-slate-100"}`}
                     >
-                      Serviço #{formatServicoId(item.id)}
-                    </h3>
-                    <span
-                      className={`text-xs block md:hidden ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
-                    >
-                      {formatDate(item.data)}
-                    </span>
+                      <Wrench size={16} />
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-semibold text-sm md:text-base ${isGrayCard ? "text-gray-600" : "text-slate-800"}`}
+                      >
+                        Serviço #{formatServicoId(item.id)}
+                      </h3>
+                      <span
+                        className={`text-xs block md:hidden ${isGrayCard ? "text-gray-400" : "text-slate-500"}`}
+                      >
+                        {formatDate(item.data)}
+                      </span>
+                    </div>
                   </div>
+                  <StatusPill status={item.status} />
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <StatusPill status={item.status} />
+                {/* Ações */}
+                <div className="flex items-center gap-1">
                   <div className="hidden md:block h-4 w-px bg-slate-200 mx-1"></div>
                   <button
                     type="button"
-                    className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-blue-600 transition-colors"
+                    className="p-2 rounded-md text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-blue-600 transition-colors"
                     title="Editar"
                     onClick={() => abrirEditar(item)}
                   >
-                    <Pencil size={18} />
+                    <Pencil size={20} />
                   </button>
                   <button
                     type="button"
-                    className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                    className="p-2 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                     title="Ver Orçamentos"
                     onClick={() => navigate(`/Servicos/${item.id}/orcamentos`)}
                   >
-                    <FileText size={17} />
+                    <FileText size={20} />
                   </button>
                   <button
                     type="button"
-                    className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                    className="p-2 rounded-md text-slate-500 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors"
                     title="Excluir"
                     onClick={() => abrirConfirmarExclusao(item.id)}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={20} />
                   </button>
                 </div>
               </header>

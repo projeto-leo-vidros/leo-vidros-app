@@ -55,8 +55,8 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-t from-[#dff0f5] via-[#edf6f9] to-white p-4">
-      <div className="w-full max-w-6xl flex items-center justify-center gap-12">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-t from-[#dff0f5] via-[#edf6f9] to-white p-4 sm:p-6">
+      <div className="w-full max-w-6xl flex items-center justify-center gap-6 lg:gap-12">
         {/* Imagem lateral com overlay */}
         <div className="hidden lg:flex flex-1 h-[620px] rounded-2xl overflow-hidden shadow-2xl relative">
           <div
@@ -71,7 +71,7 @@ function Login() {
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md bg-white border border-gray-100 shadow-xl px-10 py-10 rounded-2xl"
+          className="w-full max-w-md bg-white border border-gray-100 shadow-xl px-6 py-8 sm:px-10 sm:py-10 rounded-2xl"
         >
           <div className="flex flex-col gap-8">
             <div className="text-center flex flex-col items-center gap-3">

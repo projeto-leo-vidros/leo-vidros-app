@@ -76,7 +76,8 @@ const WeekView = ({
   );
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-gray-200 bg-white shrink-0">
+      <div className="overflow-x-auto">
+      <div className="grid grid-cols-[60px_repeat(7,minmax(80px,1fr))] sm:grid-cols-[80px_repeat(7,1fr)] border-b border-gray-200 bg-white shrink-0 min-w-[560px]">
         <div className="border-r border-gray-100"></div>
         {weekDays.map((day) => (
           <div
@@ -84,21 +85,22 @@ const WeekView = ({
             className={`py-3 text-center border-r border-gray-100 flex flex-col items-center justify-center ${isToday(day) ? "bg-blue-50/30" : ""}`}
           >
             <div
-              className={`text-xs font-bold uppercase tracking-wider mb-1 ${isToday(day) ? "text-blue-600" : "text-gray-400"}`}
+              className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1 ${isToday(day) ? "text-blue-600" : "text-gray-400"}`}
             >
               {format(day, "EEE", { locale: ptBR })}
             </div>
             <div
-              className={`text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full ${isToday(day) ? "bg-blue-600 text-white" : "text-gray-900"}`}
+              className={`text-lg sm:text-2xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full ${isToday(day) ? "bg-blue-600 text-white" : "text-gray-900"}`}
             >
               {format(day, "d")}
             </div>
           </div>
         ))}
       </div>
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-[80px_repeat(7,1fr)] relative min-h-[1000px]">
-          <div className="flex flex-col border-r border-gray-100 bg-white sticky left-0 z-10">
+      </div>
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-auto">
+        <div className="grid grid-cols-[60px_repeat(7,minmax(80px,1fr))] sm:grid-cols-[80px_repeat(7,1fr)] relative min-h-[1000px] min-w-[560px]">
+          <div className="flex flex-col border-r border-gray-100 bg-white sticky left-0 z-10 min-w-[60px] sm:min-w-[80px]">
             {timeSlots.map((t) => (
               <div
                 key={t}

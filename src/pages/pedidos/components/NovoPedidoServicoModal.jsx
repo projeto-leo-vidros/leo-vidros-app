@@ -336,7 +336,7 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-[9999] px-10 py-20 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1300] px-3 sm:px-10 py-4 overflow-y-auto" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         
         <div className="flex items-center px-8 py-4 border-b border-gray-200">
@@ -400,7 +400,7 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess, clienteInicial }) 
               {formData.tipoCliente === "novo" && (
                 <div className="grid gap-4">
                   <UniversalInput name="clienteNome" label="Nome Completo" placeholder="Nome Completo" value={formData.clienteNome} onChange={handleChange} />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <UniversalInput name="clienteCpf" label="CPF" placeholder="CPF" value={formData.clienteCpf} onChange={handleChange} />
                     <UniversalInput name="clienteTelefone" label="Telefone" placeholder="Telefone" value={formData.clienteTelefone} onChange={handleChange} />
                   </div>

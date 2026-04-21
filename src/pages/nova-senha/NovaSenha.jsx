@@ -73,7 +73,7 @@ export default function NovaSenha() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white border border-gray-100 shadow-xl rounded-2xl px-10 py-10 w-full max-w-md"
+        className="bg-white border border-gray-100 shadow-xl rounded-2xl px-6 py-8 sm:px-10 sm:py-10 w-full max-w-md"
       >
         <div className="flex flex-col items-center text-center">
           <img src={Logo} alt="Logo Léo Vidros" className="h-12 w-auto mb-6" />

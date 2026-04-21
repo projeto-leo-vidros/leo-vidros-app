@@ -383,14 +383,14 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-start z-[9999] px-10 py-20 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1300] px-3 sm:px-10 py-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[10000vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center px-8 py-4 border-b border-gray-200">
+        <div className="flex items-center px-4 sm:px-8 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="bg-[#eeeeee] p-2.5 rounded-lg">
               <ShoppingCart className="w-6 h-6 text-[#828282]" />
@@ -401,7 +401,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
         </div>
 
-        <div className="px-8 pt-6 pb-4">
+        <div className="px-4 sm:px-8 pt-6 pb-4">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <Fragment key={step.id}>
@@ -450,7 +450,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
           )}
         </div>
 
-        <div className="flex flex-col px-8 py-4">
+        <div className="flex flex-col px-4 sm:px-8 py-4">
           {currentStep === 0 && (
             <div className="flex flex-col gap-4">
               <div className="text-left">
@@ -462,11 +462,11 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                 </p>
               </div>
 
-              <div className="flex gap-10">
+              <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => handleTipoClienteChange("nenhum")}
-                  className={`px-10 py-5 rounded-md border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
+                  className={`flex-1 min-w-[120px] px-4 sm:px-8 py-4 rounded-md border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
                     formData.tipoCliente === "nenhum"
                       ? "border-[#007EA7] bg-blue-50"
                       : "border-gray-200 bg-white hover:border-gray-300"
@@ -481,7 +481,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                 <button
                   type="button"
                   onClick={() => handleTipoClienteChange("existente")}
-                  className={`px-10 py-5 rounded-md border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
+                  className={`flex-1 min-w-[120px] px-4 sm:px-8 py-4 rounded-md border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
                     formData.tipoCliente === "existente"
                       ? "border-[#007EA7] bg-blue-50"
                       : "border-gray-200 bg-white hover:border-gray-300"
@@ -496,7 +496,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                 <button
                   type="button"
                   onClick={() => handleTipoClienteChange("novo")}
-                  className={`px-10 py-5 rounded-md border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
+                  className={`flex-1 min-w-[120px] px-4 sm:px-8 py-4 rounded-md border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
                     formData.tipoCliente === "novo"
                       ? "border-[#007EA7] bg-blue-50"
                       : "border-gray-200 bg-white hover:border-gray-300"
@@ -549,7 +549,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleChange}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <UniversalInput
                       label="CPF"
                       required

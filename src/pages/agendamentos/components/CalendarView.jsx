@@ -411,8 +411,8 @@ const CalendarView = ({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="relative flex h-full flex-col overflow-hidden border border-gray-200 bg-white"
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-2">
-        <div className="flex items-center gap-6">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-white px-3 sm:px-6 py-2">
+        <div className="flex items-center gap-3 sm:gap-6">
           <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-1">
             <button
               onClick={handlePrev}
@@ -428,7 +428,7 @@ const CalendarView = ({
             </button>
           </div>
           <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 capitalize">
+            <h2 className="text-base sm:text-xl md:text-2xl font-bold tracking-tight text-gray-900 capitalize truncate max-w-[160px] sm:max-w-none">
               {renderHeaderTitle()}
             </h2>
             <button
@@ -439,7 +439,7 @@ const CalendarView = ({
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-7 bg-white p-1">
+        <div className="flex items-center gap-3 sm:gap-7 bg-white p-1">
           <Button
             variant="primary"
             onClick={handleCreateClick}
