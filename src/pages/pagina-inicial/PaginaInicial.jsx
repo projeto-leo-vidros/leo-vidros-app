@@ -1,22 +1,21 @@
-import { useState, useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  Calendar,
+  CircleDollarSign,
+  ExternalLink,
+  FileText,
+  PackageSearch,
+} from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
-import {
-  CircleDollarSign,
-  Calendar,
-  PackageSearch,
-  FileText,
-  AlertTriangle,
-  ExternalLink
-} from "lucide-react";
 import Kpis from "../../components/kpis/Kpis";
 import { useDashboardKpis } from "../../hooks/queries/useDashboard";
 
 export default function PaginaInicial() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const headerRef = useRef(null);
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const {
@@ -32,157 +31,223 @@ export default function PaginaInicial() {
     isLoading: loading,
   } = useDashboardKpis();
 
-  const handleEstoqueItemClick = (itemId) => navigate(`/estoque/${itemId}`);
-  const handleAgendamentoItemClick = (agendamentoId) => navigate(`/agendamentos?id=${agendamentoId}`);
+  const handleAgendamentoItemClick = (agendamentoId) => {
+    navigate(`/agendamentos?id=${agendamentoId}`);
+  };
 
-  const calculatedKpiData = useMemo(() => [
-    {
-      title: "Faturamento do mês",
-      value: faturamentoMes ? `R$ ${faturamentoMes.toLocaleString('pt-BR')}` : "R$ 0",
-      icon: CircleDollarSign,
-      caption: `Maio 2026`, // Ajuste conforme a lógica de data do seu sistema
-      trend: percentualFaturamento ? `${percentualFaturamento > 0 ? '+' : ''}${percentualFaturamento}%` : "",
-      color: "blue"
-    },
-    {
-      title: "Agendamentos de Hoje",
-      value: qtdAgendamentosHoje || 0,
-      icon: Calendar,
-      caption: `${qtdAgendamentosFuturos || 0} agendamentos futuros`,
-      color: "green"
-    },
-    {
-      title: "Itens em Baixo Estoque",
-      value: qtdItensCriticos || 0,
-      icon: PackageSearch,
-      caption: `${qtdItensCriticos || 0} itens requerem atenção`,
-      color: "orange"
-    },
-    {
-      title: "Orçamentos em Aberto",
-      value: orcamentosAberto || 0,
-      icon: FileText,
-      caption: valorOrcamentosAberto ? `R$ ${valorOrcamentosAberto.toLocaleString('pt-BR')} em negociação` : "R$ 0 em negociação",
-      color: "purple"
-    }
-  ], [faturamentoMes, percentualFaturamento, qtdAgendamentosHoje, qtdAgendamentosFuturos, qtdItensCriticos, orcamentosAberto, valorOrcamentosAberto]);
+  const handleEstoqueItemClick = (itemId) => {
+    navigate("/estoque", {
+      state: {
+        focusItemId: itemId,
+        openMovimentacaoForItemId: itemId,
+      },
+    });
+  };
+
+  const calculatedKpiData = useMemo(
+    () => [
+      {
+        title: "Faturamento do mes",
+        value: faturamentoMes ? `R$ ${faturamentoMes.toLocaleString("pt-BR")}` : "R$ 0",
+        icon: CircleDollarSign,
+        caption: "Maio 2026",
+        trend: percentualFaturamento
+          ? `${percentualFaturamento > 0 ? "+" : ""}${percentualFaturamento}%`
+          : "",
+        color: "blue",
+      },
+      {
+        title: "Agendamentos de Hoje",
+        value: qtdAgendamentosHoje || 0,
+        icon: Calendar,
+        caption: `${qtdAgendamentosFuturos || 0} agendamentos futuros`,
+        color: "green",
+      },
+      {
+        title: "Itens em Baixo Estoque",
+        value: qtdItensCriticos || 0,
+        icon: PackageSearch,
+        caption: `${qtdItensCriticos || 0} itens requerem atencao`,
+        color: "orange",
+      },
+      {
+        title: "Orcamentos em Aberto",
+        value: orcamentosAberto || 0,
+        icon: FileText,
+        caption: valorOrcamentosAberto
+          ? `R$ ${valorOrcamentosAberto.toLocaleString("pt-BR")} em negociacao`
+          : "R$ 0 em negociacao",
+        color: "purple",
+      },
+    ],
+    [
+      faturamentoMes,
+      percentualFaturamento,
+      qtdAgendamentosHoje,
+      qtdAgendamentosFuturos,
+      qtdItensCriticos,
+      orcamentosAberto,
+      valorOrcamentosAberto,
+    ],
+  );
 
   return (
-    <div className="flex min-h-screen font-[Inter] bg-[#f0f4f8]">
+    <div className="flex min-h-screen bg-[#f7f9fa]">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col">
-        <Header ref={headerRef} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+      <div className="flex min-h-screen flex-1 flex-col">
+        <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+        <div className="pt-20" />
 
-        {/* Container Centralizado */}
-        <main className="flex-1 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-8 gap-6 mt-[60px] mx-auto w-full max-w-[1280px]">
-          
-          {/* Título e Subtítulo */}
-          <div className="text-center w-full">
-            <h1 className="text-2xl font-bold text-[#1a2b3b]">Painel de Controle</h1>
-            <p className="text-gray-500 text-sm">Visualize todas as informações importantes em um só lugar</p>
+        <main className="flex-1 flex flex-col items-center px-4 pt-6 pb-10 gap-6 md:px-8">
+          <div className="mx-auto w-full max-w-[1380px] text-center">
+            <h1 className="mb-2 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
+              Painel de Controle
+            </h1>
+            <p className="text-sm text-gray-500 sm:text-base">
+              Visualize todas as informacoes importantes em um so lugar
+            </p>
           </div>
 
-          {/* Banner de Alerta (Só aparece se houver itens críticos) */}
-          {qtdItensCriticos > 0 && (
-            <div className="w-full bg-[#fff9e6] border border-[#ffeeba] rounded-lg p-3 flex items-start gap-3 shadow-sm transition-all">
-              <AlertTriangle className="text-[#856404] w-5 h-5 flex-shrink-0" />
-              <p className="text-[#856404] text-sm">
-                <strong>Atenção:</strong> {qtdItensCriticos} produtos precisam de reposição no estoque.
-              </p>
-            </div>
-          )}
-
-          {/* Grid de KPIs */}
-          <div className="w-full">
-            {loading ? (
-              <div className="h-32 flex items-center justify-center bg-white rounded-xl border border-gray-100">
-                <span className="text-gray-400 animate-pulse">Carregando indicadores...</span>
+          <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
+            {qtdItensCriticos > 0 && (
+              <div className="flex w-full items-center justify-between gap-4 rounded-xl border border-[#ffe08a] bg-[#fff7db] px-5 py-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-6 w-6 flex-shrink-0 text-[#856404]" />
+                  <p className="text-sm text-[#856404]">
+                    <strong>Atencao:</strong> {qtdItensCriticos} produtos precisam de
+                    reposicao no estoque.
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#856404] px-3 py-1 text-sm font-semibold text-white">
+                  {qtdItensCriticos}
+                </span>
               </div>
-            ) : (
-              <Kpis stats={calculatedKpiData} />
             )}
-          </div>
 
-          {/* Cards de Detalhes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-            
-            {/* Próximos Agendamentos */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-              <div className="bg-[#0f2439] text-white px-5 py-3 flex justify-between items-center">
-                <h2 className="font-semibold text-base">Próximos Agendamentos</h2>
-                <span className="bg-blue-900/50 px-2 py-0.5 rounded text-xs">Total: {agendamentosFuturos.length}</span>
-              </div>
-              
-              <div className="flex-1 divide-y divide-gray-50 min-h-[180px]">
-                {agendamentosFuturos.length === 0 ? (
-                  <div className="h-full flex items-center justify-center">
-                    <p className="text-gray-400 text-sm italic">Nenhum agendamento futuro.</p>
-                  </div>
-                ) : (
-                  agendamentosFuturos.map((ag) => (
-                    <div key={ag.idAgendamento} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-blue-50 text-[#003d6b] rounded-lg p-2 min-w-[55px] text-center border border-blue-100">
-                          <span className="block text-lg font-bold leading-none">
-                            {ag.inicioAgendamento?.split('/')[0] || '--'}
-                          </span>
-                          <span className="text-[9px] uppercase font-bold text-blue-400">ABR</span>
+            <div className="w-full">
+              {loading ? (
+                <div className="flex h-32 items-center justify-center rounded-xl border border-gray-100 bg-white">
+                  <span className="animate-pulse text-gray-400">
+                    Carregando indicadores...
+                  </span>
+                </div>
+              ) : (
+                <Kpis stats={calculatedKpiData} />
+              )}
+            </div>
+
+            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
+                  <h2 className="text-base font-semibold">Proximos Agendamentos</h2>
+                  <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
+                    Total: {agendamentosFuturos.length}
+                  </span>
+                </div>
+
+                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
+                  {agendamentosFuturos.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      <p className="text-sm italic text-gray-400">
+                        Nenhum agendamento futuro.
+                      </p>
+                    </div>
+                  ) : (
+                    agendamentosFuturos.map((ag) => (
+                      <button
+                        key={ag.idAgendamento}
+                        type="button"
+                        onClick={() => handleAgendamentoItemClick(ag.idAgendamento)}
+                        className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="min-w-[55px] rounded-lg border border-blue-100 bg-blue-50 p-2 text-center text-[#003d6b]">
+                            <span className="block text-lg font-bold leading-none">
+                              {ag.inicioAgendamento?.split("/")[0] || "--"}
+                            </span>
+                            <span className="text-[9px] font-bold uppercase text-blue-400">
+                              AG
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-[#1a2b3b] md:text-lg">
+                              {ag.agendamentoObservacao || "Servico"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {ag.clienteNome} • {ag.inicioAgendamento}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-[#1a2b3b] text-sm">{ag.agendamentoObservacao || "Serviço"}</p>
-                          <p className="text-xs text-gray-500">
-                            {ag.clienteNome} • {ag.inicioAgendamento}
-                          </p>
-                        </div>
-                      </div>
-                      <button onClick={() => handleAgendamentoItemClick(ag.idAgendamento)} className="text-gray-400 hover:text-blue-600">
-                        <ExternalLink size={16} />
+                        <span className="text-gray-400 transition-colors hover:text-blue-600">
+                          <ExternalLink size={16} />
+                        </span>
                       </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
+                  <h2 className="text-base font-semibold">Itens em Estoque Critico</h2>
+                  <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
+                    Total: {itensCriticos.length}
+                  </span>
+                </div>
+
+                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
+                  {itensCriticos.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      <p className="text-sm italic text-gray-400">Estoque em dia.</p>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Itens em Estoque Crítico */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-              <div className="bg-[#0f2439] text-white px-5 py-3 flex justify-between items-center">
-                <h2 className="font-semibold text-base">Itens em Estoque Crítico</h2>
-                <span className="bg-blue-900/50 px-2 py-0.5 rounded text-xs">Total: {itensCriticos.length}</span>
-              </div>
-
-              <div className="flex-1 divide-y divide-gray-50 min-h-[180px]">
-                {itensCriticos.length === 0 ? (
-                  <div className="h-full flex items-center justify-center">
-                    <p className="text-gray-400 text-sm italic">Estoque em dia.</p>
-                  </div>
-                ) : (
-                  itensCriticos.map((item) => (
-                    <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2.5 h-2.5 rounded-full ${item.status === 'Crítico' ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                        <div>
-                          <p className="font-medium text-[#1a2b3b] text-sm">{item.nomeProduto}</p>
-                          <p className="text-[10px] text-gray-400">Cód: {String(item.id)}</p>
+                  ) : (
+                    itensCriticos.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleEstoqueItemClick(item.id)}
+                        className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`h-2.5 w-2.5 rounded-full ${
+                              item.status === "Critico" ? "bg-red-500" : "bg-yellow-500"
+                            }`}
+                          />
+                          <div>
+                            <p className="text-base font-semibold text-[#1a2b3b] md:text-lg">
+                              {item.nomeProduto}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`font-bold text-sm ${item.status === 'Crítico' ? 'text-red-600' : 'text-orange-600'}`}>
-                          {item.quantidadeTotal} {item.unidadeMedida || 'un'}
-                        </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                          item.status === 'Crítico' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
-                        }`}>
-                          {item.status || 'Baixo'}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
+                        <div className="flex items-center gap-4">
+                          <span
+                            className={`text-sm font-bold ${
+                              item.status === "Critico" ? "text-red-600" : "text-orange-600"
+                            }`}
+                          >
+                            {item.quantidadeTotal} {item.unidadeMedida || "un"}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              item.status === "Critico"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-orange-50 text-orange-600"
+                            }`}
+                          >
+                            {item.status || "Baixo"}
+                          </span>
+                          <span className="text-gray-400">
+                            <ExternalLink size={16} />
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-
           </div>
         </main>
       </div>
