@@ -320,9 +320,9 @@ export default function PedidoDetalhe() {
   const valorTotal = calcularValorTotal();
 
   return (
-    <div className="flex bg-[#f7f9fa] min-h-screen">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="app-content flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20 lg:pt-20" />
 
@@ -369,12 +369,12 @@ export default function PedidoDetalhe() {
             {/* ── KPIs ── */}
             {sectionsOpen.kpis && (
               <div className="mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-4 sm:p-6">
+                    <p className="text-sm sm:text-lg text-white font-bold mb-1 sm:mb-2">
                       Valor Total
                     </p>
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-xl sm:text-3xl font-bold text-white">
                       {formatCurrency(valorTotal)}
                     </p>
                     <p className="text-md text-blue-100 mt-2">
@@ -383,8 +383,8 @@ export default function PedidoDetalhe() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-4 sm:p-6">
+                    <p className="text-sm sm:text-lg text-white font-bold mb-1 sm:mb-2">
                       Forma de Pagamento
                     </p>
                     <p className="text-xl font-bold text-white">
@@ -395,8 +395,8 @@ export default function PedidoDetalhe() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-4 sm:p-6">
+                    <p className="text-sm sm:text-lg text-white font-bold mb-1 sm:mb-2">
                       Data do Pedido
                     </p>
                     <p className="text-xl font-bold text-white">
@@ -410,7 +410,7 @@ export default function PedidoDetalhe() {
                   <div
                     className={`flex flex-col gap-2 bg-gradient-to-br ${statusGradient} rounded-lg border-2 p-6`}
                   >
-                    <p className="text-lg text-white font-bold mb-2">Status</p>
+                    <p className="text-sm sm:text-lg text-white font-bold mb-1 sm:mb-2">Status</p>
                     <p className="text-xl font-bold text-white">
                       {pedido.status}
                     </p>
@@ -636,7 +636,7 @@ export default function PedidoDetalhe() {
                             className="w-full px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                           />
                         </div>
-                        <div className="col-span-10 md:col-span-1 flex flex-col justify-end">
+                        <div className="col-span-8 md:col-span-1 flex flex-col justify-end">
                           <label className="block text-left text-xs font-bold text-gray-600 mb-1">
                             Subtotal
                           </label>
@@ -647,7 +647,7 @@ export default function PedidoDetalhe() {
                             )}
                           </p>
                         </div>
-                        <div className="col-span-2 md:col-span-1 flex flex-col justify-end items-end">
+                        <div className="col-span-4 md:col-span-1 flex flex-col justify-end items-end">
                           <button
                             onClick={() => handleRemoverProduto(index)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors mt-5"

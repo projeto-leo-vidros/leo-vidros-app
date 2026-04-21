@@ -140,7 +140,7 @@ const EditarAgendamentoSimples = ({
 
   return (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4 shadow-xl backdrop-blur-sm"
+      className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/50 px-4 shadow-xl backdrop-blur-sm"
       onClick={handleCancel}
     >
         <div

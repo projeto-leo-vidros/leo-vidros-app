@@ -759,14 +759,14 @@ export default function OrcamentoPage() {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col items-center bg-[#f7f9fa]">
+      <div className="app-page flex min-h-screen bg-[#f7f9fa]">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="flex w-full flex-1 flex-col items-center">
+        <div className="app-content flex w-full flex-1 flex-col items-center">
           <Header
             toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             sidebarOpen={sidebarOpen}
           />
-          <div className="flex w-full max-w-[1400px] flex-col gap-3 px-6 py-20">
+          <div className="flex w-full max-w-[1400px] flex-col gap-3 px-4 py-20 sm:px-6">
             {isLoadingOrcamento ? (
               <div className="flex flex-col items-center justify-center gap-4 py-20">
                 <Loader2 size={48} className="animate-spin text-slate-400" />
@@ -784,10 +784,7 @@ export default function OrcamentoPage() {
                   Voltar
                 </Button>
                 <OrcamentoHeader isEdicao={!!orcamentoId} />
-                <div
-                  className="grid items-start gap-8"
-                  style={{ gridTemplateColumns: "1fr 320px" }}
-                >
+                <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
                   <div className="flex flex-col gap-8">
                     <OrcamentoInformacoes
                       dados={dadosGerais}
@@ -812,13 +809,13 @@ export default function OrcamentoPage() {
                     onDescontoChange={setDescontoGeral}
                   />
                 </div>
-                <div className="mt-15 flex items-center justify-between rounded-2xl border bg-white p-6 shadow-sm">
+                <div className="mt-15 flex flex-col gap-4 rounded-2xl border bg-white p-4 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between">
                   <span className="text-xs text-slate-400">
                     {lastSaved
                       ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
                       : "Nenhuma alteração salva ainda"}
                   </span>
-                  <div className="flex gap-4">
+                  <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-end">
                     <Button variant="ghost" onClick={() => navigate(-1)}>
                       Cancelar
                     </Button>

@@ -46,16 +46,16 @@ const EstoqueItemRow = ({
       </div>
 
       <div
-        className="py-3 w-[15%] pl-2 pr-1 truncate font-medium text-gray-800"
+        className="py-3 w-[20%] sm:w-[15%] pl-2 pr-1 truncate font-medium text-gray-800"
         title={nome}
       >
         {nome}
       </div>
-      <div className="py-3 w-[10%] text-center text-gray-700 font-medium">
+      <div className="py-3 w-[12%] sm:w-[10%] text-center text-gray-700 font-medium">
         {preco}
       </div>
 
-      <div className="py-3 w-[15%] px-4 text-gray-600 truncate">
+      <div className="hidden md:block py-3 w-[15%] px-4 text-gray-600 truncate">
         {unidadeMedida}
       </div>
 
@@ -64,16 +64,16 @@ const EstoqueItemRow = ({
       </div>
 
       <div
-        className={`py-3 w-[10%] text-center ${ativo === true ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}`}
+        className={`py-3 w-[13%] sm:w-[10%] text-center ${ativo === true ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}`}
       >
         {ativo === true ? "Ativo" : "Inativo"}
       </div>
 
-      <div className={`py-3 w-[10%] text-center ${situacaoClasse}`}>
+      <div className={`hidden sm:block py-3 w-[10%] text-center ${situacaoClasse}`}>
         {item.situacao}
       </div>
 
-      <div className="py-3 w-[15%] text-right pr-4 flex justify-end gap-2">
+      <div className="py-3 w-[30%] sm:w-[15%] text-right pr-4 flex justify-end gap-2">
         <button
           onClick={onViewDetails}
           className="p-2 rounded-md hover:bg-blue-50 text-[#007EA7] transition-colors duration-150 cursor-pointer"

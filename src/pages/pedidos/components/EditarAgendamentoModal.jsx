@@ -202,7 +202,7 @@ const EditarAgendamentoModal = ({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center px-4 z-50"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center px-4 z-[1300]"
         onClick={handleCancel}
       >
         <div

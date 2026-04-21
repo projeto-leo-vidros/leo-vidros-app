@@ -48,7 +48,7 @@ const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center px-4 z-50"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center px-4 z-[1300]"
       onClick={onClose}
     >
       <div

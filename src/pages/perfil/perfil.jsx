@@ -411,7 +411,7 @@ export default function Perfil() {
   };
 
   return (
-    <div className="flex h-screen font-sans overflow-hidden">
+    <div className="app-page flex min-h-screen font-sans overflow-x-hidden">
       <input
         type="file"
         ref={fileInputRef}
@@ -422,10 +422,10 @@ export default function Perfil() {
 
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col">
+      <div className="app-content flex-1 flex flex-col">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
 
-        <main className="flex-1 overflow-hidden">
+        <main className="app-scroll-area flex-1">
           <div className="h-full pt-15">
             <div className="bg-white h-full border-t border-gray-200">
               <div className="flex flex-col lg:flex-row h-full">

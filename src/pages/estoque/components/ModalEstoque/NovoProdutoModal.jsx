@@ -195,7 +195,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 px-10 py-20 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1300] px-3 sm:px-10 py-4 overflow-y-auto"
       onClick={onClose}
     >
       <div

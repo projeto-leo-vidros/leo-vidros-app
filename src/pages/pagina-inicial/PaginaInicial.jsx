@@ -145,10 +145,10 @@ export default function PaginaInicial() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f7f9fa]">
+    <div className="app-page flex min-h-screen bg-[#f7f9fa]">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="app-content flex min-h-screen flex-1 flex-col">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20" />
 

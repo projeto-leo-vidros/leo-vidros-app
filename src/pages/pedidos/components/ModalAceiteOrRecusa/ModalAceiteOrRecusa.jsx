@@ -35,7 +35,7 @@ export default function ModalConfirmacao({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1300] p-4"
           onClick={onCancelar}
         >
           <motion.div

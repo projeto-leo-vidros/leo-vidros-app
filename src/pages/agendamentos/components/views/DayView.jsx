@@ -60,26 +60,26 @@ const DayView = ({
   const currentTimePos = getCurrentTimePosition();
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="grid grid-cols-[100px_1fr] border-b border-gray-200 bg-white py-4 shrink-0">
+      <div className="grid grid-cols-[64px_1fr] sm:grid-cols-[100px_1fr] border-b border-gray-200 bg-white py-4 shrink-0">
         <div className="flex items-end justify-center pb-1 text-gray-900 text-xs font-bold uppercase tracking-widest pl-3">
           Horário
         </div>
-        <div className="pl-6">
-          <div className="text-sm font-bold text-[#134074ff] uppercase tracking-widest mb-1">
+        <div className="pl-3 sm:pl-6">
+          <div className="text-xs sm:text-sm font-bold text-[#134074ff] uppercase tracking-widest mb-1">
             {format(currentDay, "EEEE", { locale: ptBR })}
           </div>
-          <div className="text-2xl font-normal text-gray-900">
+          <div className="text-lg sm:text-2xl font-normal text-gray-900">
             {format(currentDay, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </div>
         </div>
       </div>
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-[100px_1fr] relative">
+        <div className="grid grid-cols-[64px_1fr] sm:grid-cols-[100px_1fr] relative">
           <div className="border-r border-gray-100 bg-white">
             {timeSlots.map((t) => (
               <div
                 key={t}
-                className="h-20 border-b border-gray-50 text-sm text-gray-900 font-medium text-center pt-3"
+                className="h-20 border-b border-gray-50 text-xs sm:text-sm text-gray-900 font-medium text-center pt-3"
               >
                 {t}
               </div>

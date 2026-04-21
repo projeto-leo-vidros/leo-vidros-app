@@ -81,23 +81,23 @@ export default function OrcamentosServico() {
   };
 
   return (
-    <div className="flex bg-[#f7f9fa] h-screen overflow-hidden">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen overflow-x-hidden">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="app-content flex-1 flex flex-col">
         <Header
           toggleSidebar={() => setSidebarOpen((p) => !p)}
           sidebarOpen={sidebarOpen}
         />
 
-        <main className="flex-1 overflow-y-auto px-6 pt-20 pb-6 flex justify-center">
+        <main className="app-scroll-area flex-1 px-4 pt-20 pb-6 sm:px-6 flex justify-center">
           <div className="w-full max-w-[1000px] flex flex-col gap-5">
 
             {/* Topbar */}
-            <div className="relative py-5 min-h-[106px] flex items-center justify-center">
+            <div className="flex flex-col gap-4 py-4 sm:py-5 lg:relative lg:min-h-[106px] lg:items-center lg:justify-center">
               <button
                 onClick={() => navigate("/pedidos?tab=servico")}
-                className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5"
+                className="flex w-full items-center justify-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5 sm:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar ao Serviço
@@ -119,7 +119,7 @@ export default function OrcamentosServico() {
 
               <button
                 onClick={() => navigate(`/Pedidos/${pedidoId}/orcamento`, { state: { fromApp: true } })}
-                className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2.5 bg-[#007EA7] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer"
+                className="flex w-full items-center justify-center gap-2 px-4 py-2.5 bg-[#007EA7] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer sm:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2"
               >
                 <Plus className="w-4 h-4" />
                 Novo Orçamento

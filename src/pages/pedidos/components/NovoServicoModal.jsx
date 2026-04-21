@@ -410,7 +410,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-start px-10 py-20 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
       onClick={onClose}
     >
       <div
@@ -555,7 +555,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                     required
                   />
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <UniversalInput
                       label="CPF"
                       name="clienteCpf"
@@ -649,7 +649,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleChange}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <UniversalInput
                   label="Bairro"
                   name="bairro"
