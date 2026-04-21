@@ -25,7 +25,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate required secrets
+        run: |
+          if [[ -z "${{ secrets.VITE_MAPS_KEY }}" ]]; then
+            echo "Missing required secret: VITE_MAPS_KEY"
+            exit 1
+          fi
+
       - name: Build frontend
+        env:
+          VITE_BACKEND_URL: /api
+          VITE_MAPS_KEY: ${{ secrets.VITE_MAPS_KEY }}
         run: npm run build
       
       - name: Login to Docker Hub
@@ -58,3 +68,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             VITE_BACKEND_URL=/api
+            VITE_MAPS_KEY=${{ secrets.VITE_MAPS_KEY }}
