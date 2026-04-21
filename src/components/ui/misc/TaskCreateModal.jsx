@@ -686,7 +686,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         inicioAgendamento: formatTimeToHHmmss(formData.startTime),
         fimAgendamento: formatTimeToHHmmss(formData.endTime),
         statusAgendamento: { tipo: "AGENDAMENTO", nome: "PENDENTE" },
-        observacao: formData.observacao || "",
+        observacao: formData.observacao || null,
         endereco: {
           rua: formData.rua || "",
           complemento: formData.complemento || null,
