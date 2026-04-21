@@ -573,15 +573,15 @@ export default function PedidoDetalhe() {
       const mensagemApi = err.response?.data?.message;
       
       if (err.response?.status === 401 || err.response?.status === 403) {
-        mensagemErro = "❌ Acesso negado. Você precisa estar logado para realizar alterações.";
+        mensagemErro = " Acesso negado. Você precisa estar logado para realizar alterações.";
       } else if (err.response?.status === 404) {
-        mensagemErro = `❌ ${mensagemApi || "Recurso não encontrado na API."}`;
+        mensagemErro = `${mensagemApi || "Recurso não encontrado na API."}`;
       } else if (err.response?.status === 400) {
-        mensagemErro = `❌ Dados inválidos: ${mensagemApi || "Verifique os dados preenchidos."}`;
+        mensagemErro = `Dados inválidos: ${mensagemApi || "Verifique os dados preenchidos."}`;
       } else if (mensagemApi) {
-        mensagemErro = `❌ ${mensagemApi}`;
+        mensagemErro = ` ${mensagemApi}`;
       } else if (err.message) {
-        mensagemErro = `❌ ${err.message}`;
+        mensagemErro = `${err.message}`;
       }
       
       setError(mensagemErro);

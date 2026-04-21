@@ -15,7 +15,10 @@ class OrcamentosService extends BaseService {
 
   async buscarTodos() {
     const result = await this.get("/orcamentos");
-    if (result.success) result.data = result.data || [];
+    if (result.success) {
+      const raw = result.data;
+      result.data = Array.isArray(raw?.content) ? raw.content : (Array.isArray(raw) ? raw : []);
+    }
     return result;
   }
 
