@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "@mui/material";
 import PropTypes from "prop-types"; // Lembre-se que agora seu linter pode pedir isso
+import { User } from "lucide-react";
 import api from "../../../api/client/Api";
 import { formatCurrency } from "../../../utils/formatters";
 import Button from "../../../components/ui/Button/Button.component";
@@ -65,7 +66,12 @@ export default function ClienteDetailsModal({
                       space-y-8 overflow-hidden rounded-xl bg-white p-8 shadow-sm"
       >
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Detalhes do Cliente</h2>
+          <div className="flex items-center gap-3">
+            <div className="bg-gray-100 p-2 rounded">
+              <User className="h-5 w-5 text-gray-700" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Detalhes do Cliente</h2>
+          </div>
           <Button
             variant="ghost"
             onClick={onClose}

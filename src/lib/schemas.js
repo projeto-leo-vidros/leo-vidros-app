@@ -1,35 +1,50 @@
 import { z } from "zod";
 
-const cpfRaw = z
+const cpfRequired = z
   .string()
-  .optional()
-  .transform((v) => (v ? v.replace(/\D/g, "") : ""))
-  .refine((v) => v === "" || v.length === 11, { message: "CPF inválido" });
+  .transform((v) => v.replace(/\D/g, ""))
+  .refine((v) => v.length > 0, { message: "CPF e obrigatorio" })
+  .refine((v) => v.length === 11, { message: "CPF invalido" });
 
-const telefoneRaw = z
+const telefoneRequired = z
   .string()
-  .optional()
-  .transform((v) => (v ? v.replace(/\D/g, "") : ""));
+  .transform((v) => v.replace(/\D/g, ""))
+  .refine((v) => v.length > 0, { message: "Telefone e obrigatorio" })
+  .refine((v) => v.length === 10 || v.length === 11, {
+    message: "Telefone invalido",
+  });
 
 const cepRaw = z
   .string()
   .optional()
   .transform((v) => (v ? v.replace(/\D/g, "") : ""))
-  .refine((v) => v === "" || v.length === 8, { message: "CEP inválido" });
+  .refine((v) => v === "" || v.length === 8, { message: "CEP invalido" });
+
+const cepRequired = z
+  .string()
+  .transform((v) => v.replace(/\D/g, ""))
+  .refine((v) => v.length > 0, { message: "CEP e obrigatorio" })
+  .refine((v) => v.length === 8, { message: "CEP invalido" });
 
 const ufField = z
   .string()
-  .max(2, "UF deve ter no máximo 2 caracteres")
+  .max(2, "UF deve ter no maximo 2 caracteres")
   .optional()
   .default("");
 
+const ufRequired = z
+  .string()
+  .trim()
+  .min(1, "UF e obrigatoria")
+  .max(2, "UF deve ter no maximo 2 caracteres");
+
 export const enderecoSchema = z.object({
   cep: cepRaw,
-  rua: z.string().min(1, "Rua é obrigatória"),
+  rua: z.string().min(1, "Rua e obrigatoria"),
   numero: z.union([z.string(), z.number()]).optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
-  cidade: z.string().min(1, "Cidade é obrigatória"),
+  cidade: z.string().min(1, "Cidade e obrigatoria"),
   uf: ufField,
   pais: z.string().optional().default("Brasil"),
 });
@@ -50,22 +65,21 @@ export const clienteSchema = z.object({
     .string()
     .min(2, "Nome deve ter pelo menos 2 caracteres")
     .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras"),
-  cpf: cpfRaw,
-  contato: telefoneRaw,
+  cpf: cpfRequired,
+  contato: telefoneRequired,
   email: z
     .string()
-    .email("Email inválido")
-    .or(z.literal(""))
-    .optional()
-    .default(""),
+    .trim()
+    .min(1, "Email e obrigatorio")
+    .email("Email invalido"),
   status: z.enum(["Ativo", "Inativo"]).default("Inativo"),
-  cep: cepRaw,
-  rua: z.string().optional().default(""),
+  cep: cepRequired,
+  rua: z.string().trim().min(1, "Rua e obrigatoria"),
   numero: z.union([z.string(), z.number()]).optional().default(""),
   complemento: z.string().optional().default(""),
-  bairro: z.string().optional().default(""),
-  cidade: z.string().optional().default(""),
-  uf: ufField,
+  bairro: z.string().trim().min(1, "Bairro e obrigatorio"),
+  cidade: z.string().trim().min(1, "Cidade e obrigatoria"),
+  uf: ufRequired,
 });
 
 export const clientePayloadSchema = clienteSchema.transform((data) => ({
@@ -108,14 +122,14 @@ export const pedidoProdutoEtapa0Schema = z
         ctx.addIssue({
           path: ["clienteNome"],
           code: z.ZodIssueCode.custom,
-          message: "Nome do cliente é obrigatório",
+          message: "Nome do cliente e obrigatorio",
         });
       }
       if (!data.clienteTelefone?.trim()) {
         ctx.addIssue({
           path: ["clienteTelefone"],
           code: z.ZodIssueCode.custom,
-          message: "Telefone do cliente é obrigatório",
+          message: "Telefone do cliente e obrigatorio",
         });
       }
     }
@@ -131,7 +145,7 @@ const itemProdutoSchema = z.object({
   quantidade: z
     .number({ coerce: true })
     .min(1, "Quantidade deve ser maior que zero"),
-  preco: z.number({ coerce: true }).min(0, "Preço inválido"),
+  preco: z.number({ coerce: true }).min(0, "Preco invalido"),
   subtotal: z.number({ coerce: true }).optional().default(0),
 });
 
@@ -163,14 +177,14 @@ export const pedidoServicoEtapa0Schema = z
         ctx.addIssue({
           path: ["clienteNome"],
           code: z.ZodIssueCode.custom,
-          message: "Nome do cliente é obrigatório",
+          message: "Nome do cliente e obrigatorio",
         });
       }
       if (!data.clienteTelefone?.trim()) {
         ctx.addIssue({
           path: ["clienteTelefone"],
           code: z.ZodIssueCode.custom,
-          message: "Telefone do cliente é obrigatório",
+          message: "Telefone do cliente e obrigatorio",
         });
       }
     }
@@ -178,15 +192,15 @@ export const pedidoServicoEtapa0Schema = z
       ctx.addIssue({
         path: ["clienteNome"],
         code: z.ZodIssueCode.custom,
-        message: "Nome para identificação é obrigatório",
+        message: "Nome para identificacao e obrigatorio",
       });
     }
   });
 
 export const pedidoServicoEtapa1Schema = z.object({
   endereco: z.object({
-    rua: z.string().min(1, "Endereço é obrigatório"),
-    cidade: z.string().min(1, "Cidade é obrigatória"),
+    rua: z.string().min(1, "Endereco e obrigatorio"),
+    cidade: z.string().min(1, "Cidade e obrigatoria"),
     cep: z.string().optional().default(""),
     numero: z.union([z.string(), z.number()]).optional().default(""),
     complemento: z.string().optional().default(""),
@@ -196,15 +210,15 @@ export const pedidoServicoEtapa1Schema = z.object({
 });
 
 const itemServicoSchema = z.object({
-  nome: z.string().min(1, "Nome do serviço é obrigatório"),
+  nome: z.string().min(1, "Nome do servico e obrigatorio"),
   descricao: z.string().optional().default(""),
   precoEstimado: z.number({ coerce: true }).min(0).optional().default(0),
   observacoes: z.string().optional().default(""),
 });
 
 export const pedidoServicoEtapa2Schema = z.object({
-  servicos: z.array(itemServicoSchema).min(1, "Adicione pelo menos um serviço"),
+  servicos: z.array(itemServicoSchema).min(1, "Adicione pelo menos um servico"),
 });
 
 export const zodFirstError = (zodError) =>
-  zodError.errors[0]?.message ?? "Dados inválidos";
+  zodError.errors[0]?.message ?? "Dados invalidos";

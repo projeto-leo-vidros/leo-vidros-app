@@ -41,9 +41,14 @@ export const EventHeader = ({ title, badges, onClose }) => {
   return (
     <div className="flex flex-row items-center justify-between border-b border-gray-100 px-6 pt-5 pb-4">
       <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-bold text-gray-900">
-          {title || "Detalhes do Agendamento"}
-        </h2>
+        <div className="flex items-center gap-3">
+          <div className="bg-gray-100 p-2 rounded">
+            <Calendar size={20} className="text-gray-700" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {title || "Detalhes do Agendamento"}
+          </h2>
+        </div>
         {badges && badges.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {badges.map((badge, index) => (
@@ -60,13 +65,6 @@ export const EventHeader = ({ title, badges, onClose }) => {
           </div>
         )}
       </div>
-
-      <button
-        onClick={onClose}
-        className="cursor-pointer rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-      >
-        <X size={20} />
-      </button>
     </div>
   );
 };

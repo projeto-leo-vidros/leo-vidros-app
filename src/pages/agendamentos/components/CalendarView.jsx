@@ -181,10 +181,10 @@ const EventDetailsModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] bg-black/50"
             onClick={onClose}
           >
-            <div className="flex min-h-screen items-center justify-center px-4 pb-10">
+            <div className="flex min-h-screen items-center justify-center p-4">
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}

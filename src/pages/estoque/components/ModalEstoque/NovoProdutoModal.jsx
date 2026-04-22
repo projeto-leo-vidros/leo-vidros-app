@@ -4,6 +4,7 @@ import { Package, Plus, X, AlertCircle } from "lucide-react";
 import Api from "../../../../api/client/Api";
 import Button from "../../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../../components/ui/Input/UniversalInput";
+import { modalClasses } from "../../../../components/ui/modal/modalStyles";
 
 const useProductAPI = () => {
   const salvarProduto = async (produtoData) => {
@@ -106,6 +107,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
       ...prev,
       atributos: [...prev.atributos, { tipo: "", valor: "" }],
     }));
+    setError(null);
   };
 
   const handleRemoveAtributo = (index) => {
@@ -113,6 +115,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
       ...prev,
       atributos: prev.atributos.filter((_, i) => i !== index),
     }));
+    setError(null);
   };
 
   const handleAtributoChange = (index, field, value) => {
@@ -122,12 +125,17 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
         i === index ? { ...attr, [field]: value } : attr,
       ),
     }));
+    setError(null);
   };
 
-  const validateStep = () => {
+  const hasIncompleteAtributo = formData.atributos.some(
+    (attr) => !attr.tipo?.trim() || !attr.valor?.trim(),
+  );
+
+  const validateStep = (step = currentStep) => {
     setError(null);
 
-    if (currentStep === 0) {
+    if (step === 0) {
       if (!formData.nome.trim()) {
         setError("Nome do produto é obrigatório");
         return false;
@@ -138,7 +146,14 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
       }
     }
 
-    if (currentStep === 2) {
+    if (step === 1 && hasIncompleteAtributo) {
+      setError(
+        "Preencha todos os atributos adicionados ou remova os que nÃ£o for usar",
+      );
+      return false;
+    }
+
+    if (step === 2) {
       const min = parseInt(formData.nivelMinimo) || 0;
       const max = parseInt(formData.nivelMaximo) || 0;
 
@@ -148,7 +163,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
       }
     }
 
-    if (currentStep === 3) {
+    if (step === 3) {
       if (formData.qtdTotal > 0 && !formData.localizacao.trim()) {
         setError("Localização é obrigatória quando há quantidade em estoque");
         return false;
@@ -159,7 +174,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
   };
 
   const handleSave = async () => {
-    if (!validateStep()) return;
+    if (!steps.every((step) => validateStep(step.id))) return;
 
     setLoading(true);
     setError(null);
@@ -195,27 +210,29 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1300] px-3 sm:px-10 py-4 overflow-y-auto"
+      className={modalClasses.overlay}
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+        className={`${modalClasses.panel} flex max-h-[92vh] max-w-3xl flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-center px-8 py-6 border-b border-gray-200">
+        <div className={modalClasses.header}>
           <div className="flex items-center gap-3">
-            <div className="bg-blue-50 p-2.5 rounded-lg">
-              <Package className="w-6 h-6 text-[#007EA7]" />
+            <div className={modalClasses.headerIcon}>
+              <Package className="h-6 w-6" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 text-center">
-              {isEditing ? "Editar Produto" : "Novo Produto"}
-            </h2>
+            <div>
+              <h2 className={modalClasses.headerTitle}>
+                {isEditing ? "Editar Um Produto" : "Adicionar Novo Produto"}
+              </h2>
+            </div>
           </div>
         </div>
 
         {/* Stepper */}
-        <div className="px-8 pt-8 pb-6">
+        <div className={modalClasses.stepperSection}>
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <React.Fragment key={step.id}>
@@ -254,7 +271,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
         {/* Error Alert */}
         {error && (
-          <div className="mx-8 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <div className={`${modalClasses.errorAlert} mx-6 mb-4 mt-5 sm:mx-8`}>
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800">Erro</p>
@@ -264,10 +281,10 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
         )}
 
         {/* Conteúdo */}
-        <div className="px-8 py-8 space-y-6 overflow-y-auto flex-1">
+        <div className={`${modalClasses.body} space-y-6 py-6`}>
           {/* Etapa 0 - Informações Básicas */}
           {currentStep === 0 && (
-            <div className="space-y-6">
+            <div className="space-y-8 flex flex-col gap-3">
               <UniversalInput
                 label="Nome do produto"
                 required
@@ -333,7 +350,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                 as="textarea"
                 label="Descrição do produto"
                 name="descricao"
-                placeholder="Adicione uma descrição detalhada do produto"
+                placeholder="Digite a descrição do produto"
                 rows={5}
                 value={formData.descricao}
                 onChange={handleChange}
@@ -351,8 +368,8 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
           {/* Etapa 1 - Atributos */}
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6 flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <h3 className="text-base font-semibold text-gray-900 text-left">
                     Atributos do Produto
@@ -364,16 +381,16 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="md"
                   onClick={handleAddAtributo}
                   startIcon={<Plus className="w-4 h-4" />}
                 >
-                  Adicionar
+                  Adicionar Atributo
                 </Button>
               </div>
 
               {formData.atributos.length === 0 ? (
-                <div className="text-center py-16 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-200 flex flex-row items-center justify-center gap-4">
                   <Plus className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                   <p className="text-sm text-gray-600">
                     Clique em "Adicionar" para criar atributos
@@ -388,8 +405,8 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                     >
                       <div className="flex-1">
                         <UniversalInput
-                          label="Tipo"
-                          placeholder="Cor, Tamanho..."
+                          label="Característica"
+                          placeholder="Digite a característica"
                           value={attr.tipo}
                           onChange={(e) =>
                             handleAtributoChange(index, "tipo", e.target.value)
@@ -399,8 +416,8 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
                       <div className="flex-1">
                         <UniversalInput
-                          label="Valor"
-                          placeholder="Ex: Azul, Grande"
+                          label="Detalhe"
+                          placeholder="Digite o detalhe"
                           value={attr.valor}
                           onChange={(e) =>
                             handleAtributoChange(index, "valor", e.target.value)
@@ -410,9 +427,9 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
                       <button
                         onClick={() => handleRemoveAtributo(index)}
-                        className="p-3 text-red-500 hover:bg-red-50 rounded-lg mt-6 transition-colors"
+                        className="p-1 text-black hover:bg-red-600 rounded-lg mt-1 transition-colors cursor-pointer"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-2 h-2" />
                       </button>
                     </div>
                   ))}
@@ -487,7 +504,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                 <UniversalInput
                   label="Localização"
                   name="localizacao"
-                  placeholder="Ex: Prateleira A3"
+                    placeholder="Digite a localização"
                   value={formData.localizacao}
                   onChange={handleChange}
                 />
@@ -497,7 +514,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-5 border-t bg-gray-50 flex justify-between">
+        <div className={modalClasses.footer}>
           <Button
             variant="ghost"
             onClick={onClose}

@@ -2,12 +2,17 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { ArrowRightLeft, Hash, AlertCircle, AlertTriangle } from "lucide-react";
 import Api from "../../../../api/client/Api";
-import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../../components/ui/Input/UniversalInput";
+import { modalClasses } from "../../../../components/ui/modal/modalStyles";
 
-const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
-  const navigate = useNavigate();
+const EntradaSaidaEstoque = ({
+  isOpen,
+  onClose,
+  itemIds,
+  estoque,
+  onMovementComplete,
+}) => {
   const [tipoMovimento, setTipoMovimento] = useState("entrada");
   const [quantidade, setQuantidade] = useState(1);
   const [itemsInfo, setItemsInfo] = useState([]);
@@ -54,8 +59,8 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
   const handleCancel = () => {
     onClose();
-    if (processedItems.length > 0) {
-      navigate(0);
+    if (processedItems.length > 0 && onMovementComplete) {
+      onMovementComplete();
     }
   };
 
@@ -88,7 +93,9 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
         setSuccess(true);
         setTimeout(() => {
           onClose();
-          navigate(0);
+          if (onMovementComplete) {
+            onMovementComplete();
+          }
         }, 1500);
       }
     } catch (err) {
@@ -115,25 +122,28 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/50 p-4"
+      className={modalClasses.overlay}
       onClick={handleCancel}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-xl"
+        className={`${modalClasses.panel} flex max-h-[92vh] max-w-lg flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 p-5">
-          <div className="flex items-center gap-2">
-            <div className="rounded bg-blue-100 p-2">
-              <ArrowRightLeft className="h-5 w-5 text-blue-700" />
+        <div className={modalClasses.header}>
+          <div className="flex items-center gap-3">
+            <div className={modalClasses.headerIcon}>
+              <ArrowRightLeft className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Movimentar Estoque
-            </h2>
+            <div>
+              <h2 className={modalClasses.headerTitle}>Movimentar Estoque</h2>
+              <p className={modalClasses.headerSubtitle}>
+                Controle entradas e saidas com contexto do item.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-5 overflow-y-auto p-6">
+        <div className={`${modalClasses.body} space-y-5 flex flex-col gap-5`}>
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-900">
               Item {currentItemIndex + 1} de {itemsInfo.length}
@@ -164,7 +174,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
           {bloqueadoPorReserva && (
             <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-red-500 bg-red-50 p-4">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+              <AlertTriangle className={`${modalClasses.alertIcon} text-red-600`} />
               <p className="text-sm text-red-800">
                 <strong>Saida bloqueada.</strong> A quantidade solicitada
                 ultrapassa o disponivel para retirada. Disponivel:{" "}
@@ -182,7 +192,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
           {itemReservado && !bloqueadoPorReserva && (
             <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-amber-500 bg-amber-50 p-4">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <AlertTriangle className={`${modalClasses.alertIcon} text-amber-600`} />
               <p className="text-sm text-amber-800">
                 Este item possui <strong>{currentItem?.reservado}</strong>{" "}
                 {unidadeMedida.toLowerCase()}(s) reservada(s), mas ainda ha saldo
@@ -193,7 +203,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
           {error && (
             <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-red-500 bg-red-50 p-4 shadow-sm">
-              <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
+              <AlertCircle className={`${modalClasses.alertIcon} text-red-600`} />
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
@@ -206,7 +216,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col gap-4">
             <UniversalInput
               as="select"
               label="Tipo"
@@ -231,7 +241,7 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+        <div className={modalClasses.footer}>
           <Button variant="ghost" onClick={handleCancel}>
             Cancelar
           </Button>
@@ -257,6 +267,7 @@ EntradaSaidaEstoque.propTypes = {
   onClose: PropTypes.func.isRequired,
   itemIds: PropTypes.array.isRequired,
   estoque: PropTypes.array.isRequired,
+  onMovementComplete: PropTypes.func,
 };
 
 export default EntradaSaidaEstoque;

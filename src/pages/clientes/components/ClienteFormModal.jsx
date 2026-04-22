@@ -1,15 +1,28 @@
-﻿import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
-import { User, X, Save } from "lucide-react";
-import { cn } from "../../../utils/cn";
+import { User } from "lucide-react";
 import { clienteSchema } from "../../../lib/schemas";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import Button from "../../../components/ui/Button/Button.component";
+import { modalClasses } from "../../../components/ui/modal/modalStyles";
+import { cepMask, cpfMask, phoneMask } from "../../../utils/masks";
 
-//  Valores padrão do formulário
+const normalizeClienteStatus = (status) => {
+  const normalized = String(status ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+  if (normalized === "ATIVO") return "Ativo";
+  if (normalized === "INATIVO") return "Inativo";
+  if (normalized === "FINALIZADO") return "Finalizado";
+
+  return "Inativo";
+};
+
 const DEFAULT_VALUES = {
   nome: "",
   cpf: "",
@@ -25,12 +38,6 @@ const DEFAULT_VALUES = {
   uf: "",
 };
 
-//  Helper para gerar classes adicionais específicas de máscara.
-//  O estilo base (bordas, foco, erro, desabilitado, etc.) vem do UniversalInput.
-const getMaskedInputClasses = () => "";
-
-
-
 export default function ClienteFormModal({
   open,
   onClose,
@@ -42,11 +49,9 @@ export default function ClienteFormModal({
   const [cepApiError, setCepApiError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  //  React Hook Form
   const {
     register,
     handleSubmit,
-    control,
     reset,
     setValue,
     watch,
@@ -58,8 +63,10 @@ export default function ClienteFormModal({
   });
 
   const statusAtual = watch("status");
+  const cpfValue = watch("cpf");
+  const contatoValue = watch("contato");
+  const cepValue = watch("cep");
 
-  // Popula o formulário ao abrir no modo edição
   useEffect(() => {
     if (!open) return;
 
@@ -67,11 +74,11 @@ export default function ClienteFormModal({
       const endereco = clienteInicial.enderecos?.[0] || {};
       reset({
         nome: clienteInicial.nome ?? "",
-        cpf: clienteInicial.cpf ?? "",
-        contato: clienteInicial.telefone ?? "",
+        cpf: cpfMask(clienteInicial.cpf ?? ""),
+        contato: phoneMask(clienteInicial.telefone ?? ""),
         email: clienteInicial.email ?? "",
-        status: clienteInicial.status ?? "Inativo",
-        cep: endereco.cep ?? "",
+        status: normalizeClienteStatus(clienteInicial.status),
+        cep: cepMask(endereco.cep ?? ""),
         rua: endereco.rua ?? "",
         numero: String(endereco.numero ?? ""),
         complemento: endereco.complemento ?? "",
@@ -82,10 +89,10 @@ export default function ClienteFormModal({
     } else {
       reset(DEFAULT_VALUES);
     }
+
     setCepApiError("");
   }, [open, modoEdicao, clienteInicial, reset]);
 
-  //  Lookup de CEP via ViaCEP
   const buscarCep = async (cepMasked) => {
     const cepLimpo = cepMasked.replace(/\D/g, "");
     if (cepLimpo.length !== 8) return;
@@ -101,13 +108,19 @@ export default function ClienteFormModal({
         setCepApiError("CEP nao encontrado");
         return;
       }
-      if (data.logradouro)
+
+      if (data.logradouro) {
         setValue("rua", data.logradouro, { shouldValidate: true });
-      if (data.bairro)
+      }
+      if (data.bairro) {
         setValue("bairro", data.bairro, { shouldValidate: true });
-      if (data.localidade)
+      }
+      if (data.localidade) {
         setValue("cidade", data.localidade, { shouldValidate: true });
-      if (data.uf) setValue("uf", data.uf, { shouldValidate: true });
+      }
+      if (data.uf) {
+        setValue("uf", data.uf, { shouldValidate: true });
+      }
     } catch {
       setCepApiError("Erro ao buscar CEP");
     } finally {
@@ -115,10 +128,9 @@ export default function ClienteFormModal({
     }
   };
 
-  //  Submit
-  // Zod ja remove mascaras via .transform()  data aqui ja tem digitos puros
   const onFormSubmit = async (data) => {
     setSubmitting(true);
+
     try {
       const payload = {
         nome: data.nome,
@@ -141,7 +153,9 @@ export default function ClienteFormModal({
       };
 
       const result = onSubmit(payload);
-      if (result && typeof result.then === "function") await result;
+      if (result && typeof result.then === "function") {
+        await result;
+      }
     } finally {
       setSubmitting(false);
     }
@@ -155,44 +169,33 @@ export default function ClienteFormModal({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
-      onClick={handleClose}
-    >
+    <div className={modalClasses.overlay} onClick={handleClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[130vh] flex flex-col overflow-hidden"
+        className={`${modalClasses.panel} flex max-h-[92vh] max-w-4xl flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className={modalClasses.header}>
           <div className="flex items-center gap-3">
-            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-              <User className="w-6 h-6 text-[#828282]" />
+            <div className={modalClasses.headerIcon}>
+              <User className="h-6 w-6" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className={modalClasses.headerTitle}>
               {modoEdicao ? "Editar Cliente" : "Adicionar novo cliente"}
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit(onFormSubmit)}
-          className="flex flex-col flex-1 overflow-hidden"
+          className="flex flex-1 flex-col overflow-hidden"
           noValidate
         >
-          <div className="flex flex-col gap-9 px-6 py-4 space-y-6 flex-1 overflow-y-auto">
-            {/* Informacoes Basicas */}
+          <div
+            className={`${modalClasses.body} flex flex-1 flex-col gap-9 space-y-6`}
+          >
             <section className="flex flex-col gap-5">
-              <h3 className="text-lg font-bold text-gray-700">
-                Informacoes Basicas
+              <h3 className="text-left text-lg font-bold text-gray-700">
+                Informacoes basicas
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
@@ -201,44 +204,42 @@ export default function ClienteFormModal({
                   required
                   registration={register("nome")}
                   error={errors.nome}
-                  placeholder="Ex: Tiago Mendes"
+                  placeholder="Digite o nome completo"
                 />
 
-                <UniversalInput label="CPF" required error={errors.cpf}>
-                  <Controller
-                    name="cpf"
-                    control={control}
-                    render={({ field }) => (
-                      <IMaskInput
-                        {...field}
-                        mask="000.000.000-00"
-                        placeholder="Ex: 123.456.789-00"
-                        className={getMaskedInputClasses(!!errors.cpf)}
-                        onAccept={(value) => field.onChange(value)}
-                      />
-                    )}
-                  />
-                </UniversalInput>
+                <UniversalInput
+                  label="CPF"
+                  required
+                  error={errors.cpf}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={14}
+                  placeholder="000.000.000-00"
+                  value={cpfValue}
+                  onChange={(e) =>
+                    setValue("cpf", cpfMask(e.target.value), {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                />
 
                 <UniversalInput
                   label="Telefone"
                   required
                   error={errors.contato}
-                >
-                  <Controller
-                    name="contato"
-                    control={control}
-                    render={({ field }) => (
-                      <IMaskInput
-                        {...field}
-                        mask="(00) 00000-0000"
-                        placeholder="Ex: (11) 91234-5678"
-                        className={getMaskedInputClasses(!!errors.contato)}
-                        onAccept={(value) => field.onChange(value)}
-                      />
-                    )}
-                  />
-                </UniversalInput>
+                  type="text"
+                  inputMode="tel"
+                  maxLength={15}
+                  placeholder="(00) 00000-0000"
+                  value={contatoValue}
+                  onChange={(e) =>
+                    setValue("contato", phoneMask(e.target.value), {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                />
 
                 <UniversalInput
                   label="Email"
@@ -246,14 +247,15 @@ export default function ClienteFormModal({
                   type="email"
                   registration={register("email")}
                   error={errors.email}
-                  placeholder="Ex: tiago.mendes@email.com"
+                  placeholder="nome@exemplo.com"
                 />
               </div>
             </section>
 
-            {/* Endereco */}
             <section className="flex flex-col gap-4">
-              <h3 className="text-lg font-bold text-gray-700">Endereco</h3>
+              <h3 className="text-left text-lg font-bold text-gray-700">
+                Endereço
+              </h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <UniversalInput
@@ -265,37 +267,34 @@ export default function ClienteFormModal({
                   }
                   endIcon={
                     loadingCep && (
-                      <div className="w-4 h-4 border-2 border-[#007EA7] border-t-transparent rounded-full animate-spin" />
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#007EA7] border-t-transparent" />
                     )
                   }
-                >
-                  <Controller
-                    name="cep"
-                    control={control}
-                    render={({ field }) => (
-                      <IMaskInput
-                        {...field}
-                        mask="00000-000"
-                        placeholder="Ex: 80035-010"
-                        className={cn(
-                          getMaskedInputClasses(!!errors.cep || !!cepApiError),
-                          loadingCep && "pr-10"
-                        )}
-                        onAccept={(value) => {
-                          field.onChange(value);
-                          buscarCep(value);
-                        }}
-                      />
-                    )}
-                  />
-                </UniversalInput>
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="00000-000"
+                  value={cepValue}
+                  onChange={(e) => {
+                    const maskedValue = cepMask(e.target.value);
+
+                    setValue("cep", maskedValue, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+
+                    if (maskedValue.replace(/\D/g, "").length === 8) {
+                      buscarCep(maskedValue);
+                    }
+                  }}
+                />
 
                 <UniversalInput
                   label="Rua"
                   required
                   registration={register("rua")}
                   error={errors.rua}
-                  placeholder="Ex: Rua das Flores"
+                  placeholder="Digite a rua"
                 />
 
                 <UniversalInput
@@ -303,14 +302,14 @@ export default function ClienteFormModal({
                   required
                   registration={register("bairro")}
                   error={errors.bairro}
-                  placeholder="Ex: Centro"
+                  placeholder="Digite o bairro"
                 />
 
                 <UniversalInput
                   label="Complemento"
                   registration={register("complemento")}
                   error={errors.complemento}
-                  placeholder="Ex: Bloco B, apto 13"
+                  placeholder="Digite o complemento"
                 />
 
                 <UniversalInput
@@ -318,7 +317,7 @@ export default function ClienteFormModal({
                   required
                   registration={register("cidade")}
                   error={errors.cidade}
-                  placeholder="Ex: Sao Paulo"
+                  placeholder="Digite a cidade"
                 />
 
                 <UniversalInput
@@ -326,14 +325,13 @@ export default function ClienteFormModal({
                   required
                   registration={register("uf")}
                   error={errors.uf}
-                  placeholder="Ex: SP"
+                  placeholder="Digite a UF"
                   maxLength={2}
                   className="uppercase"
                 />
               </div>
             </section>
 
-            {/* Status */}
             <section className="flex flex-col gap-3">
               <h3 className="text-md font-semibold text-gray-700">Status</h3>
               <UniversalInput
@@ -341,33 +339,19 @@ export default function ClienteFormModal({
                 label={`Possui servico em andamento (Status: ${statusAtual})`}
                 checked={statusAtual === "Ativo"}
                 onChange={(e) =>
-                  setValue(
-                    "status",
-                    e.target.checked ? "Ativo" : "Inativo",
-                    {
-                      shouldValidate: true,
-                    },
-                  )
+                  setValue("status", e.target.checked ? "Ativo" : "Inativo", {
+                    shouldValidate: true,
+                  })
                 }
               />
             </section>
           </div>
 
-          {/* Footer */}
-          <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleClose}
-            >
+          <div className={modalClasses.footer}>
+            <Button type="button" variant="ghost" onClick={handleClose}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submitting}
-              startIcon={<Save className="w-4 h-4" />}
-            >
+            <Button type="submit" variant="primary" disabled={submitting}>
               {submitting
                 ? "Salvando..."
                 : modoEdicao

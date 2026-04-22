@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ShoppingCart, X, Edit, Save, Plus, Trash2 } from "lucide-react";
+import { ShoppingCart, Edit, Save, Plus, Trash2 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import { onlyLetters } from "../../../utils/masks";
 import Button from "../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
 import ProdutoSearchSelect from "../../../components/ui/misc/ProdutoSearchSelect";
+import { modalClasses } from "../../../components/ui/modal/modalStyles";
 
 const METODOS_COM_PARCELA = ["Cartão de crédito"];
 
@@ -186,21 +187,21 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
+        className={modalClasses.overlay}
         onClick={onClose}
       >
         <div
-          className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[130vh] flex flex-col overflow-hidden"
+          className={`${modalClasses.panel} flex max-h-[92vh] max-w-3xl flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className={modalClasses.header}>
             <div className="flex items-center gap-3">
-              <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-[#828282]" />
+                <div className={modalClasses.headerIcon}>
+                  <ShoppingCart className="h-6 w-6" />
               </div>
               <div className="flex items-center gap-4">
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className={modalClasses.headerTitle}>
                   Pedido #{pedido.id?.toString().padStart(3, "0")}
                 </h2>
                 <p className="text-md text-gray-500">
@@ -212,23 +213,17 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className={`${modalClasses.errorAlert} mx-6 mt-4`}>
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
           {/* Informações Pedido */}
-          <div className="px-6 py-4 space-y-4 flex flex-col gap-6">
+          <div className={`${modalClasses.body} space-y-4 flex flex-col gap-6`}>
             {/* Cliente */}
             <div className="flex flex-row gap-10 items-start">
               <UniversalInput
@@ -281,7 +276,7 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                           produtos={produtosDisponiveis}
                           value={produto.nome ? { id: produto.estoqueId, nome: produto.nome } : null}
                           onChange={(p) => handleProdutoSelect(index, p)}
-                          placeholder="Pesquisar produto..."
+                          placeholder="Pesquise um produto"
                         />
                       ) : (
                         <span className="px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-md bg-gray-50">
@@ -363,7 +358,7 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                     setFormData((prev) => ({ ...prev, parcelas: 1 }));
                 }}
                 disabled={!modoEdicao}
-                placeholder="Selecione..."
+                placeholder="Selecione uma forma de pagamento"
                 options={[
                   { value: "Dinheiro", label: "Dinheiro" },
                   { value: "Pix", label: "Pix" },
@@ -404,7 +399,7 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
+          <div className={modalClasses.footer}>
             <Button variant="ghost" onClick={onClose}>
               Fechar
             </Button>

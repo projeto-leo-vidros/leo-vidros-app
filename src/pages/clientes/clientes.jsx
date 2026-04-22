@@ -15,6 +15,20 @@ import { formatCurrency, formatPhone } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 
+const normalizeClienteStatus = (status) => {
+  const normalized = String(status ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+  if (normalized === "ATIVO") return "Ativo";
+  if (normalized === "INATIVO") return "Inativo";
+  if (normalized === "FINALIZADO") return "Finalizado";
+
+  return status || "Inativo";
+};
+
 const getPrimaryAddress = (cliente) => {
   if (
     !cliente.enderecos ||
@@ -96,7 +110,14 @@ export default function Clientes() {
     try {
       const response = await Api.get("/clientes");
       const data = response.data?.content ?? response.data;
-      setClientes(Array.isArray(data) ? data : []);
+      setClientes(
+        Array.isArray(data)
+          ? data.map((cliente) => ({
+              ...cliente,
+              status: normalizeClienteStatus(cliente.status),
+            }))
+          : [],
+      );
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       setClientes([]);
@@ -167,7 +188,10 @@ export default function Clientes() {
           clienteAtualizado,
         );
 
-        const clienteRetornado = response.data;
+        const clienteRetornado = {
+          ...response.data,
+          status: normalizeClienteStatus(response.data?.status),
+        };
 
         setClientes((prev) =>
           prev.map((c) =>
@@ -196,7 +220,10 @@ export default function Clientes() {
 
         const response = await Api.post("/clientes", novoClienteComId);
 
-        const novoCliente = response.data;
+        const novoCliente = {
+          ...response.data,
+          status: normalizeClienteStatus(response.data?.status),
+        };
         setClientes((prev) => [novoCliente, ...prev]);
 
         setOpenForm(false);
@@ -293,21 +320,20 @@ export default function Clientes() {
             </p>
           </div>
 
-          <div className="w-full max-w-[1380px] mx-auto flex flex-col gap-6">
+          <div className="w-full max-w-[1380px] mx-auto">
             {/* Tabela de Clientes */}
-            <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-6">
               {/* Barra de ações */}
-              <div className="flex flex-col gap-3 mb-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                   <Button
                     variant="primary"
-                    size="sm"
                     onClick={abrirModalCriar}
                     startIcon={<Plus className="w-6 h-6" />}
                   >
                     Novo Cliente
                   </Button>
-                  <div className="relative w-full sm:max-w-lg">
+                  <div className="relative w-full md:max-w-md">
                     <UniversalInput
                       variant="search"
                       placeholder="Busque por nome..."
@@ -317,7 +343,7 @@ export default function Clientes() {
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 justify-end">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <UniversalInput
                     as="select"
                     value={ordenar}
@@ -342,7 +368,6 @@ export default function Clientes() {
                   />
                   <Button
                     variant="secondary"
-                    size="sm"
                     onClick={() => setOpenImportModal(true)}
                     startIcon={<Upload className="w-4 h-4" />}
                   >

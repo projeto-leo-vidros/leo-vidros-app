@@ -222,7 +222,7 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
         onClick={onClose}
       >
         <motion.div
@@ -234,8 +234,8 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
         >
           <div className="p-6">
             <div className="mb-4 flex items-center gap-4">
-              <div className="rounded-full bg-red-100 p-3">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="bg-gray-100 p-2 rounded">
+                <AlertTriangle className="h-6 w-6 text-gray-700" />
               </div>
               <h3 className="text-lg font-bold text-gray-900">
                 Excluir Agendamento?

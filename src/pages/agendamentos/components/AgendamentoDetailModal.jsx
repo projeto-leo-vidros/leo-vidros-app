@@ -9,7 +9,6 @@ import {
   MapPin,
   ExternalLink,
   Edit3,
-  X,
   Package,
   FileText,
 } from "lucide-react";
@@ -61,7 +60,7 @@ export default function AgendamentoDetailModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
         onClick={onClose}
       >
         <motion.div
@@ -73,11 +72,8 @@ export default function AgendamentoDetailModal({
         >
           <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-4">
             <div className="flex items-center gap-3">
-              <div
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
-                style={{ backgroundColor: tipoCfg.dotColor }}
-              >
-                {agendamento.tipoAgendamento === "ORCAMENTO" ? "OR" : "SV"}
+              <div className="bg-gray-100 p-2 rounded">
+                <CalendarIcon className="h-5 w-5 text-gray-700" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">{fullTitle}</h3>
@@ -86,12 +82,6 @@ export default function AgendamentoDetailModal({
                 </p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-gray-200"
-            >
-              <X className="h-5 w-5 text-gray-500" />
-            </button>
           </div>
 
           <div className="max-h-[60vh] space-y-4 overflow-y-auto px-6 py-5">

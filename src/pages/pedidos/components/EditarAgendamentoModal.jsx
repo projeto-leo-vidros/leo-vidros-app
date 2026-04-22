@@ -202,7 +202,7 @@ const EditarAgendamentoModal = ({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center px-4 z-[1300]"
+        className="fixed inset-0 bg-black/50 flex justify-center items-center px-4 z-[1300]"
         onClick={handleCancel}
       >
         <div
@@ -212,8 +212,8 @@ const EditarAgendamentoModal = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-linear-to-r from-blue-600 to-blue-700">
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-xl">
-                <Calendar className="w-6 h-6 text-white" />
+              <div className="bg-gray-100 p-2 rounded">
+                <Calendar className="w-6 h-6 text-gray-700" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">
@@ -345,7 +345,7 @@ const EditarAgendamentoModal = ({
                     label="Observações"
                     name="observacao"
                     rows={4}
-                    placeholder="Adicione informações adicionais sobre o agendamento..."
+                    placeholder="Digite as observações do agendamento"
                     value={formData.observacao}
                     onChange={handleChange}
                   />
@@ -508,7 +508,7 @@ const EditarAgendamentoModal = ({
 
       {/* Modal de Confirmação de Cancelamento */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center px-4 z-60">
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center px-4 z-60">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">

@@ -390,6 +390,12 @@ export default function Estoque() {
     setIsEntradaSaidaModalOpen(false);
   }, []);
 
+  const handleMovementComplete = useCallback(async () => {
+    await fetchEstoque();
+    setSelectedItems([]);
+    setIsEntradaSaidaModalOpen(false);
+  }, [fetchEstoque]);
+
   const openExportModal = useCallback(() => {
     setIsExportModalOpen(true);
   }, []);
@@ -509,16 +515,24 @@ export default function Estoque() {
                       startIcon={<Plus size={24} />}
                       className="bg-[#007EA7] text-white font-semibold py-2 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
                     >
-                      Novo Item
+                      Novo Produto
                     </Button>
-                    <Button
-                      onClick={openEntradaSaidaModal}
-                      disabled={selectedItems.length === 0}
-                      className="bg-blue-600 text-white font-medium py-2.5 px-5 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center whitespace-nowrap gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ArrowRightLeft className="w-4 h-4" />
-                      Registrar Movimento
-                    </Button>
+                    <div className="relative inline-flex group">
+                      <Button
+                        onClick={openEntradaSaidaModal}
+                        disabled={selectedItems.length === 0}
+                        className="bg-blue-600 text-white font-medium py-2.5 px-5 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center whitespace-nowrap gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ArrowRightLeft className="w-4 h-4" />
+                        Registrar Movimento
+                      </Button>
+
+                      {selectedItems.length === 0 && (
+                        <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max max-w-64 -translate-x-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-900 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                          Selecione um produto para registrar a movimentação
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="relative w-full sm:max-w-lg">
                     <UniversalInput
@@ -696,6 +710,7 @@ export default function Estoque() {
         onSave={handleSaveMovement}
         itemIds={selectedItems}
         estoque={estoque}
+        onMovementComplete={handleMovementComplete}
       />
 
       <InativarProdutoModal
