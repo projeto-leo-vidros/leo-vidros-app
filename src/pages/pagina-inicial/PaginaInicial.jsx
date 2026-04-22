@@ -102,7 +102,7 @@ export default function PaginaInicial() {
         title: "Itens em Baixo Estoque",
         value: qtdItensCriticos || 0,
         icon: PackageSearch,
-        caption: `${qtdItensCriticos || 0} itens requerem atencao`,
+        caption: `${qtdItensCriticos || 0} itens requerem atenção`,
         color: "orange",
       },
       {
@@ -149,7 +149,7 @@ export default function PaginaInicial() {
               Painel de Controle
             </h1>
             <p className="text-sm text-gray-500 sm:text-base">
-              Visualize todas as informacoes importantes em um so lugar
+              Visualize todas as informações importantes em um só lugar
             </p>
           </div>
 
@@ -159,8 +159,8 @@ export default function PaginaInicial() {
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="mt-0.5 h-6 w-6 flex-shrink-0 text-[#856404]" />
                   <p className="text-sm text-[#856404]">
-                    <strong>Atencao:</strong> {qtdItensCriticos} produtos precisam de
-                    reposicao no estoque.
+                    <strong>Atenção:</strong> {qtdItensCriticos} produtos precisam de
+                    reposição no estoque.
                   </p>
                 </div>
                 <span className="rounded-full bg-[#856404] px-3 py-1 text-sm font-semibold text-white">
@@ -184,7 +184,7 @@ export default function PaginaInicial() {
             <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
-                  <h2 className="text-base font-semibold">Proximos Agendamentos</h2>
+                  <h2 className="text-base font-semibold">Próximos Agendamentos</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
                     Total: {agendamentosFuturos.length}
                   </span>
@@ -232,15 +232,15 @@ export default function PaginaInicial() {
                 </div>
               </div>
 
-              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm self-start">
+              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
-                  <h2 className="text-base font-semibold">Itens em Estoque Critico</h2>
+                  <h2 className="text-base font-semibold">Itens em Estoque Crítico</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
                     Total: {itensCriticos.length}
                   </span>
                 </div>
 
-                <div className="divide-y divide-gray-50">
+                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
                   {itensCriticos.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                       <p className="text-sm italic text-gray-400">Estoque em dia.</p>

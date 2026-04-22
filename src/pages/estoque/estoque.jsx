@@ -25,6 +25,7 @@ import EntradaSaidaEstoque from "./components/ModalEstoque/EntradaSaidaEstoque";
 import InativarProdutoModal from "./components/ModalEstoque/InativarProdutoModal";
 import { formatCurrency, parseCurrency } from "../../utils/formatters";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
+import { repairEncoding } from "../../utils/fixEncoding";
 
 const ITENS_POR_PAGINA = 6;
 
@@ -78,7 +79,7 @@ export default function Estoque() {
         id: item.produto.id,
         nome: item.produto.nome,
         descricao: item.produto.descricao || "",
-        unidademedida: item.produto.unidademedida || "unidade",
+        unidademedida: repairEncoding(item.produto.unidademedida) || "unidade",
         preco: item.produto.preco ?? 0,
         ativo: item.produto.ativo ?? true,
 
@@ -390,6 +391,12 @@ export default function Estoque() {
     setIsEntradaSaidaModalOpen(false);
   }, []);
 
+  const handleMovementComplete = useCallback(async () => {
+    await fetchEstoque();
+    setSelectedItems([]);
+    setIsEntradaSaidaModalOpen(false);
+  }, [fetchEstoque]);
+
   const openExportModal = useCallback(() => {
     setIsExportModalOpen(true);
   }, []);
@@ -501,16 +508,16 @@ export default function Estoque() {
             {/* Tabela de Estoque */}
             <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
               {/* Barra de ações */}
-              <div className="flex flex-col gap-3 mb-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={openNewItemModal}
-                      startIcon={<Plus size={24} />}
-                      className="bg-[#007EA7] text-white font-semibold py-2 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
-                    >
-                      Novo Item
-                    </Button>
+              <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={openNewItemModal}
+                    startIcon={<Plus size={24} />}
+                    className="bg-[#007EA7] text-white font-semibold py-2 px-5 rounded-md hover:bg-[#006891] transition-colors flex items-center justify-center whitespace-nowrap gap-2 cursor-pointer"
+                  >
+                    Novo Produto
+                  </Button>
+                  <div className="relative inline-flex group">
                     <Button
                       onClick={openEntradaSaidaModal}
                       disabled={selectedItems.length === 0}
@@ -519,18 +526,24 @@ export default function Estoque() {
                       <ArrowRightLeft className="w-4 h-4" />
                       Registrar Movimento
                     </Button>
+
+                    {selectedItems.length === 0 && (
+                      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max max-w-64 -translate-x-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-900 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                        Selecione um produto para registrar a movimentacao
+                      </div>
+                    )}
                   </div>
-                  <div className="relative w-full sm:max-w-lg">
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2 lg:ml-auto">
+                  <div className="relative w-full sm:w-[320px] sm:max-w-md">
                     <UniversalInput
                       variant="search"
-                      placeholder="Busque Por Nome ou Descrição..."
+                      placeholder="Busque Por Nome ou Descricao..."
                       value={busca}
                       onChange={(e) => setBusca(e.target.value)}
                       startIcon={<Search className="w-5 h-5" />}
                     />
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-end">
                   <div className="relative">
                     <button
                       onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -557,7 +570,6 @@ export default function Estoque() {
                   </div>
                   <Button
                     variant="secondary"
-                    size="sm"
                     onClick={openExportModal}
                     startIcon={<Download className="w-4 h-4" />}
                   >
@@ -636,8 +648,8 @@ export default function Estoque() {
 
               {/* Paginação */}
               {!loading && paginationData.total > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 mt-4">
-                  <p className="text-sm text-gray-600">
+                <div className="mt-6 flex flex-col items-center justify-between gap-4 text-sm text-gray-600 sm:flex-row">
+                  <p>
                     Mostrando{" "}
                     <span className="font-medium">
                       {paginationData.total > 0
@@ -696,6 +708,7 @@ export default function Estoque() {
         onSave={handleSaveMovement}
         itemIds={selectedItems}
         estoque={estoque}
+        onMovementComplete={handleMovementComplete}
       />
 
       <InativarProdutoModal

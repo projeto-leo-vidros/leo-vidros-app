@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import {
-  X,
   Upload,
   FileSpreadsheet,
   CheckCircle,
@@ -9,6 +8,7 @@ import {
 } from "lucide-react";
 import clientesService from "../../../api/services/clientesService";
 import Button from "../../../components/ui/Button/Button.component";
+import { modalClasses } from "../../../components/ui/modal/modalStyles";
 
 export default function ClienteImportModal({ open, onClose, onSuccess }) {
   const [file, setFile] = useState(null);
@@ -72,26 +72,28 @@ export default function ClienteImportModal({ open, onClose, onSuccess }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1300]"
+      className={modalClasses.overlay}
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
+        className={`${modalClasses.panel} w-full max-w-md`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Importar Clientes
-          </h3>
-          <button
-            onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
+        <div className={modalClasses.header}>
+          <div className="flex items-center gap-3">
+            <div className={modalClasses.headerIcon}>
+              <Upload className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className={modalClasses.headerTitle}>Importar Clientes</h3>
+              <p className={modalClasses.headerSubtitle}>
+                Envie uma planilha para cadastrar em lote.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="p-6">
+        <div className={modalClasses.body}>
           {!success ? (
             <>
               <div
@@ -141,7 +143,7 @@ export default function ClienteImportModal({ open, onClose, onSuccess }) {
                 </div>
               )}
 
-              <div className="mt-6 flex justify-end gap-3">
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-5">
                 <Button
                   variant="ghost"
                   onClick={handleClose}

@@ -24,7 +24,7 @@ export default function NovaSenha() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [userName, setUserName] = useState("Usuário");
+  const [userName, setUserName] = useState("Usu\u00e1rio");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function NovaSenha() {
       }
     } catch (err) {
       console.error("Erro na API:", err);
-      setError(err.response?.data?.message || "Falha na comunicação com o servidor. Verifique sua conexão.");
+      setError(err.response?.data?.message || "Falha na comunica\u00e7\u00e3o com o servidor. Verifique sua conex\u00e3o.");
     } finally {
       setIsLoading(false);
     }
@@ -76,13 +76,13 @@ export default function NovaSenha() {
         className="bg-white border border-gray-100 shadow-xl rounded-2xl px-6 py-8 sm:px-10 sm:py-10 w-full max-w-md"
       >
         <div className="flex flex-col items-center text-center">
-          <img src={Logo} alt="Logo Léo Vidros" className="h-12 w-auto mb-6" />
+          <img src={Logo} alt={"Logo L\u00e9o Vidros"} className="h-12 w-auto mb-6" />
 
           <div className="flex flex-col gap-1 mb-8">
             <p className="text-gray-400 text-sm">Seja bem-vindo,</p>
             <h1 className="text-3xl font-bold text-gray-800">{userName}</h1>
             <p className="text-gray-400 text-sm mt-2">
-              Defina sua senha para começar a usar o sistema
+              {"Defina sua senha para come\u00e7ar a usar o sistema"}
             </p>
           </div>
 
@@ -109,15 +109,15 @@ export default function NovaSenha() {
                 value={confirmaSenha}
                 onChange={(e) => setConfirmaSenha(e.target.value)}
                 required
-                error={confirmaSenha.length > 0 && !passwordsMatch ? "As senhas não coincidem" : null}
+                error={confirmaSenha.length > 0 && !passwordsMatch ? "As senhas n\u00e3o coincidem" : null}
                 startIcon={<Lock size={20} />}
               />
             </div>
 
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col gap-2 text-left">
               <PasswordRequirement text="Pelo menos 8 caracteres" isValid={is8Chars} />
-              <PasswordRequirement text="Pelo menos 1 letra maiúscula" isValid={isUppercase} />
-              <PasswordRequirement text="Pelo menos 1 número" isValid={isNumber} />
+              <PasswordRequirement text={"Pelo menos 1 letra mai\u00fascula"} isValid={isUppercase} />
+              <PasswordRequirement text={"Pelo menos 1 n\u00famero"} isValid={isNumber} />
               <PasswordRequirement text="As senhas coincidem" isValid={passwordsMatch} />
             </div>
 

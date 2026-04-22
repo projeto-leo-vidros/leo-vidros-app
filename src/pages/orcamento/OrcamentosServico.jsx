@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
+import Api from "../../api/client/Api";
 import { useOrcamentosPorPedido } from "../../hooks/queries/useOrcamentos";
 import OrcamentosService from "../../api/services/orcamentosService";
 import { OrcamentoStatusOptions } from "../../types/enums";
@@ -47,6 +48,8 @@ export default function OrcamentosServico() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadError, setDownloadError] = useState(null);
+  const [isPedidoServico, setIsPedidoServico] = useState(null);
+  const [isCheckingPedidoTipo, setIsCheckingPedidoTipo] = useState(true);
 
   const {
     data: orcamentos = [],
@@ -54,6 +57,29 @@ export default function OrcamentosServico() {
     isError,
     refetch,
   } = useOrcamentosPorPedido(pedidoId);
+
+  useEffect(() => {
+    let ativo = true;
+    setIsCheckingPedidoTipo(true);
+
+    Api.get(`/pedidos/${pedidoId}`)
+      .then((response) => {
+        if (!ativo) return;
+        setIsPedidoServico(Boolean(response?.data?.servico));
+      })
+      .catch(() => {
+        if (!ativo) return;
+        // Em caso de falha, não bloqueia a tela para evitar falso negativo.
+        setIsPedidoServico(true);
+      })
+      .finally(() => {
+        if (ativo) setIsCheckingPedidoTipo(false);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [pedidoId]);
 
   const handleDownload = async (orcamento) => {
     setDownloadingId(orcamento.id);
@@ -104,26 +130,32 @@ export default function OrcamentosServico() {
               </button>
 
               <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-2">
-                <p className="text-xl font-bold text-gray-800 leading-tight flex items-center justify-center gap-3">
+                <p className="text-2xl font-semibold text-gray-800 leading-tight flex items-center justify-center gap-3">
                   <span className="inline-flex items-center justify-center bg-[#e0f2fa] p-1.5 rounded-md shadow-sm">
                     <ClipboardList className="w-[18px] h-[18px] text-[#007EA7]" />
                   </span>
                   Orçamentos do Pedido #{String(pedidoId).padStart(3, "0")}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  {isLoading
+                  {isCheckingPedidoTipo
+                    ? "Verificando tipo de pedido..."
+                    : isPedidoServico === false
+                    ? "Pedido de produto não possui orçamento"
+                    : isLoading
                     ? "Carregando..."
                     : `${orcamentos.length} orçamento${orcamentos.length !== 1 ? "s" : ""} encontrado${orcamentos.length !== 1 ? "s" : ""}`}
                 </p>
               </div>
 
-              <button
-                onClick={() => navigate(`/Pedidos/${pedidoId}/orcamento`, { state: { fromApp: true } })}
-                className="flex w-full items-center justify-center gap-2 px-4 py-2.5 bg-[#007EA7] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer sm:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2"
-              >
-                <Plus className="w-4 h-4" />
-                Novo Orçamento
-              </button>
+              {isPedidoServico !== false && (
+                <button
+                  onClick={() => navigate(`/Pedidos/${pedidoId}/orcamento`, { state: { fromApp: true } })}
+                  className="flex w-full items-center justify-center gap-2 px-4 py-2.5 bg-[#002A4B] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer sm:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Novo Orçamento
+                </button>
+              )}
             </div>
 
             {/* Erro de download */}
@@ -140,8 +172,24 @@ export default function OrcamentosServico() {
               </div>
             )}
 
-            {/* Card principal */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            {isPedidoServico === false && !isCheckingPedidoTipo ? (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-[#002A4B] px-5 py-4 flex items-center gap-3">
+                  <AlertCircle className="w-4 h-4 text-white/80" />
+                  <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+                    Orçamento indisponível
+                  </h3>
+                </div>
+
+                <div className="px-6 py-8 flex flex-col items-center text-center gap-4">
+                  <p className="text-sm text-gray-600 max-w-xl">
+                    Pedidos de produto não possuem orçamento. Essa funcionalidade é exclusiva para pedidos de serviço.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Card principal */
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
               <div className="bg-[#002A4B] px-5 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileText className="w-4 h-4 text-white/80" />
@@ -200,7 +248,7 @@ export default function OrcamentosServico() {
                   </div>
                   <button
                     onClick={() => navigate(`/Pedidos/${pedidoId}/orcamento`, { state: { fromApp: true } })}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-[#007EA7] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#002A4B] text-white rounded-md text-sm font-semibold shadow-sm hover:bg-[#006891] transition-colors cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     Criar Orçamento
@@ -225,6 +273,7 @@ export default function OrcamentosServico() {
                 </div>
               )}
             </div>
+            )}
 
             <div className="h-4" />
           </div>

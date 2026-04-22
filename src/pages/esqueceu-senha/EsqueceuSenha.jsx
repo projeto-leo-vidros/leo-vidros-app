@@ -27,8 +27,8 @@ const EsqueceuSenha = () => {
           setModalOpen(false);
           Swal.fire({
             icon: "success",
-            title: "Senha temporária enviada!",
-            text: "Verifique seu email e use a senha temporária para fazer login.",
+            title: "Senha tempor\u00e1ria enviada!",
+            text: "Verifique seu email e use a senha tempor\u00e1ria para fazer login.",
             timer: 3000,
             showConfirmButton: false,
           });
@@ -38,11 +38,26 @@ const EsqueceuSenha = () => {
     } catch (error) {
       console.error("Erro ao recuperar senha:", error);
       if (error.response?.status === 404) {
-        Swal.fire({ icon: "error", title: "Email não encontrado", text: "O email informado não está cadastrado no sistema.", confirmButtonColor: "#007EA7" });
+        Swal.fire({
+          icon: "error",
+          title: "Email n\u00e3o encontrado",
+          text: "O email informado n\u00e3o est\u00e1 cadastrado no sistema.",
+          confirmButtonColor: "#007EA7",
+        });
       } else if (error.response?.status === 400) {
-        Swal.fire({ icon: "error", title: "Email inválido", text: "Por favor, digite um email válido.", confirmButtonColor: "#007EA7" });
+        Swal.fire({
+          icon: "error",
+          title: "Email inv\u00e1lido",
+          text: "Por favor, digite um email v\u00e1lido.",
+          confirmButtonColor: "#007EA7",
+        });
       } else {
-        Swal.fire({ icon: "error", title: "Erro no servidor", text: "Ocorreu um erro interno. Tente novamente mais tarde.", confirmButtonColor: "#007EA7" });
+        Swal.fire({
+          icon: "error",
+          title: "Erro no servidor",
+          text: "Ocorreu um erro interno. Tente novamente mais tarde.",
+          confirmButtonColor: "#007EA7",
+        });
       }
     } finally {
       setLoading(false);
@@ -57,8 +72,7 @@ const EsqueceuSenha = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-t from-[#dff0f5] via-[#edf6f9] to-white p-4 sm:p-6">
-      <div className="w-full max-w-6xl flex items-center justify-center gap-6 lg:gap-12">
-        {/* Imagem lateral com overlay */}
+      <div className="w-full max-w-6xl flex items-center justify-center gap-6 lg:items-stretch lg:gap-12">
         <div className="hidden lg:flex flex-1 h-[620px] rounded-2xl overflow-hidden shadow-2xl relative">
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -67,29 +81,19 @@ const EsqueceuSenha = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-[#003d5b]/70 via-[#007EA7]/20 to-transparent" />
         </div>
 
-        {/* Formulário */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md bg-white border border-gray-100 shadow-xl px-6 py-8 sm:px-10 sm:py-10 rounded-2xl"
+          className="w-full max-w-md rounded-2xl border border-gray-100 bg-white px-6 py-8 shadow-xl sm:px-10 sm:py-10 lg:h-[620px]"
         >
-          <div className="flex flex-col gap-8">
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className="flex items-center gap-2 text-[#007EA7] hover:text-[#005f73] transition-colors w-fit cursor-pointer"
-            >
-              <ArrowLeft size={18} />
-              <span className="text-sm font-semibold">Voltar ao login</span>
-            </button>
-
-            <div className="text-center flex flex-col items-center gap-3">
+          <div className="mx-auto flex h-full w-full max-w-[366px] flex-col justify-center gap-8">
+            <div className="flex flex-col items-center gap-5 text-center">
               <img src={Logo} alt="Logo" className="h-12 w-auto" />
-              <div className="flex flex-col gap-1 mt-2">
+              <div className="mt-2 flex flex-col gap-1">
                 <h1 className="text-3xl font-bold text-[#111827]">Esqueceu sua senha?</h1>
-                <p className="text-[#6b7280] text-sm">
-                  Digite seu e-mail e enviaremos uma senha temporária
+                <p className="text-sm text-[#6b7280]">
+                  {"Digite seu e-mail e enviaremos uma senha tempor\u00e1ria"}
                 </p>
               </div>
             </div>
@@ -119,31 +123,39 @@ const EsqueceuSenha = () => {
                 </motion.div>
               </AnimatePresence>
 
-              <div className="pt-1">
+              <div className="mt-2 flex w-full flex-col-reverse items-center gap-3 pt-2 sm:flex-row">
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
                   disabled={loading || !email.trim()}
-                  className="w-full bg-gradient-to-r from-[#007EA7] to-[#005f73] hover:from-[#006d93] hover:to-[#004d5e] text-white font-semibold py-4 rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="flex-1 cursor-pointer rounded-xl bg-gradient-to-r from-[#007EA7] to-[#005f73] py-4 font-semibold text-white shadow-md transition-all hover:from-[#006d93] hover:to-[#004d5e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading ? "Verificando..." : "Enviar senha temporária"}
+                  {loading ? "Verificando..." : "Enviar email"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="flex cursor-pointer items-center justify-center gap-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#6b7280] shadow-sm transition-all hover:border-gray-300"
+                >
+                  <ArrowLeft size={15} />
+                  Voltar para login
+                </button>
               </div>
             </form>
 
-            <div className="flex items-center gap-3">
-              <div className="h-px bg-gray-200 flex-1" />
-              <span className="text-xs text-gray-400 font-medium">ou</span>
-              <div className="h-px bg-gray-200 flex-1" />
+            <div className="flex items-center gap-3 pt-1">
+              <div className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs font-medium text-gray-400">ou</span>
+              <div className="h-px flex-1 bg-gray-200" />
             </div>
 
-            <p className="text-sm text-[#6b7280] text-center">
-              Ainda não tem uma conta?{" "}
+            <p className="text-center text-sm text-[#6b7280]">
+              {"Ainda n\u00e3o tem uma conta? "}
               <button
                 type="button"
                 onClick={() => navigate("/cadastro")}
-                className="text-[#007EA7] hover:text-[#005f73] font-semibold transition-colors cursor-pointer"
+                className="cursor-pointer font-semibold text-[#007EA7] transition-colors hover:text-[#005f73]"
               >
                 Cadastre-se
               </button>
@@ -157,7 +169,7 @@ const EsqueceuSenha = () => {
         onClose={() => setModalOpen(false)}
         type="success"
         title="Email verificado!"
-        description="Senha temporária sendo enviada para seu e-mail. Redirecionando para o login..."
+        description={"Senha tempor\u00e1ria sendo enviada para seu e-mail. Redirecionando para o login..."}
         duration={2000}
       />
     </div>

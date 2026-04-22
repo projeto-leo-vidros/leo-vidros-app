@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Calendar, Clock, X, Save } from "lucide-react";
+import { Calendar, Clock, Save } from "lucide-react";
 import Button from "../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
+import { modalClasses } from "../../../components/ui/modal/modalStyles";
 
 const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -18,104 +19,92 @@ const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
     }));
   };
 
+  const resetForm = () => {
+    setFormData({
+      dataAgendamento: "",
+      horaAgendamento: "",
+      observacoes: "",
+    });
+  };
+
   const handleSave = () => {
-    // Validação básica
     if (!formData.dataAgendamento || !formData.horaAgendamento) {
       alert("Por favor, preencha a data e hora do agendamento.");
       return;
     }
 
     onSave(formData);
+    resetForm();
     onClose();
-    // Limpar formulário
-    setFormData({
-      dataAgendamento: "",
-      horaAgendamento: "",
-      observacoes: "",
-    });
   };
 
   const handleCancel = () => {
-    setFormData({
-      dataAgendamento: "",
-      horaAgendamento: "",
-      observacoes: "",
-    });
+    resetForm();
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center px-4 z-[1300]"
-      onClick={onClose}
-    >
+    <div className={modalClasses.overlay} onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+        className={`${modalClasses.panel} w-full max-w-md`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-[#007EA7]">
+        <div className={modalClasses.header}>
           <div className="flex items-center gap-3">
-            <div className="bg-white p-2 rounded-lg">
-              <Calendar className="w-5 h-5 text-[#007EA7]" />
+            <div className={modalClasses.headerIcon}>
+              <Calendar className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-semibold text-white">
-              Agendar Serviço
-            </h2>
+            <div>
+              <h2 className={modalClasses.headerTitle}>Agendar Servico</h2>
+              <p className={modalClasses.headerSubtitle}>
+                Defina a data e hora para prosseguir.
+              </p>
+            </div>
           </div>
-          <button
-            onClick={handleCancel}
-            className="p-1.5 hover:bg-[#006891] rounded-md transition-colors"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
         </div>
 
-        {/* Conteúdo */}
-        <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-gray-600 mb-4">
-            Para continuar com o orçamento, é necessário agendar uma data para o
-            serviço.
+        <div className={modalClasses.body}>
+          <p className="mb-4 text-sm text-gray-600">
+            Para continuar com o orcamento, e necessario agendar uma data para o
+            servico.
           </p>
 
-          {/* Data do Agendamento */}
-          <UniversalInput
-            type="date"
-            label="Data do Agendamento"
-            required
-            name="dataAgendamento"
-            value={formData.dataAgendamento}
-            onChange={handleChange}
-            min={new Date().toISOString().split("T")[0]}
-          />
+          <div className="space-y-4">
+            <UniversalInput
+              type="date"
+              label="Data do Agendamento"
+              required
+              name="dataAgendamento"
+              value={formData.dataAgendamento}
+              onChange={handleChange}
+              min={new Date().toISOString().split("T")[0]}
+            />
 
-          {/* Hora do Agendamento */}
-          <UniversalInput
-            type="time"
-            label="Hora do Agendamento"
-            required
-            name="horaAgendamento"
-            startIcon={<Clock className="w-5 h-5" />}
-            value={formData.horaAgendamento}
-            onChange={handleChange}
-          />
+            <UniversalInput
+              type="time"
+              label="Hora do Agendamento"
+              required
+              name="horaAgendamento"
+              startIcon={<Clock className="w-5 h-5" />}
+              value={formData.horaAgendamento}
+              onChange={handleChange}
+            />
 
-          {/* Observações */}
-          <UniversalInput
-            as="textarea"
-            label="Observações (opcional)"
-            name="observacoes"
-            rows={3}
-            placeholder="Adicione informações adicionais sobre o agendamento..."
-            value={formData.observacoes}
-            onChange={handleChange}
-          />
+            <UniversalInput
+              as="textarea"
+              label="Observacoes (opcional)"
+              name="observacoes"
+              rows={3}
+              placeholder="Digite as observações do agendamento"
+              value={formData.observacoes}
+              onChange={handleChange}
+            />
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+        <div className={modalClasses.footer}>
           <Button variant="ghost" onClick={handleCancel}>
             Cancelar
           </Button>

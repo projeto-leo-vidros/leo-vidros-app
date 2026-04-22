@@ -6,11 +6,12 @@ import {
   AlertCircle,
   MapPin,
   User,
-  FileText,
+  FileText, 
 } from "lucide-react";
 import Api from "../../../api/client/Api";
 import axios from "axios";
 import Button from "../../../components/ui/Button/Button.component";
+import { modalClasses } from "../../../../components/ui/modal/modalStyles";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import {
   cpfMask,
@@ -419,8 +420,8 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
       >
         <div className="flex items-start px-8 py-3 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-              <Wrench className="w-6 h-6 text-[#828282]" />
+            <div className={modalClasses.headerIcon}>
+              <Wrench className="h-6 w-6" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 text-center">
               Novo Pedido de Serviço
@@ -536,7 +537,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                   name="clienteId"
                   value={formData.clienteId}
                   onChange={handleClienteExistenteChange}
-                  placeholder="Selecione um cliente..."
+                  placeholder="Selecione um cliente"
                   options={clientesExistentes.map((cliente) => ({
                     value: String(cliente.id),
                     label: cliente.nome,
@@ -549,7 +550,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                   <UniversalInput
                     label="Nome Completo"
                     name="clienteNome"
-                    placeholder="Digite o nome do cliente"
+                    placeholder="Digite o nome completo"
                     value={formData.clienteNome}
                     onChange={handleChange}
                     required
@@ -581,7 +582,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                     label="E-mail"
                     type="email"
                     name="clienteEmail"
-                    placeholder="cliente@email.com"
+                    placeholder="nome@exemplo.com"
                     value={formData.clienteEmail}
                     onChange={handleChange}
                   />
@@ -605,7 +606,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 <UniversalInput
                   label="Número"
                   name="numero"
-                  placeholder="123"
+                  placeholder="Digite o número"
                   value={formData.numero}
                   onChange={handleChange}
                   required
@@ -633,7 +634,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 <UniversalInput
                   label="Rua"
                   name="rua"
-                  placeholder="Nome da rua"
+                  placeholder="Digite a rua"
                   value={formData.rua}
                   onChange={handleChange}
                   required
@@ -644,7 +645,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
               <UniversalInput
                 label="Complemento"
                 name="complemento"
-                placeholder="Apto, bloco, etc."
+                placeholder="Digite o complemento"
                 value={formData.complemento}
                 onChange={handleChange}
               />
@@ -653,7 +654,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 <UniversalInput
                   label="Bairro"
                   name="bairro"
-                  placeholder="Nome do bairro"
+                  placeholder="Digite o bairro"
                   value={formData.bairro}
                   onChange={handleChange}
                   required
@@ -662,7 +663,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 <UniversalInput
                   label="Cidade"
                   name="cidade"
-                  placeholder="Nome da cidade"
+                  placeholder="Digite a cidade"
                   value={formData.cidade}
                   onChange={handleChange}
                   required
@@ -675,7 +676,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 name="uf"
                 value={formData.uf}
                 onChange={handleChange}
-                placeholder="Selecione..."
+                placeholder="Selecione a UF"
                 required
                 options={[
                   { value: "AC", label: "AC" },
@@ -733,7 +734,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 as="textarea"
                 label="Descrição do Serviço"
                 name="descricao"
-                placeholder="Descreva detalhadamente o serviço a ser realizado..."
+                placeholder="Digite a descrição do serviço"
                 rows={6}
                 value={formData.descricao}
                 onChange={handleChange}
@@ -744,7 +745,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 as="textarea"
                 label="O que será feito neste serviço"
                 name="observacoes"
-                placeholder="Informe de forma objetiva o que será executado neste serviço..."
+                placeholder="Digite as observações do serviço"
                 rows={4}
                 value={formData.observacoes}
                 onChange={handleChange}

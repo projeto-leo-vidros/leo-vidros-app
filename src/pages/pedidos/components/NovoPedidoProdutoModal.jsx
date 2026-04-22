@@ -23,6 +23,7 @@ import {
   pedidoProdutoEtapa2Schema,
   zodFirstError,
 } from "../../../lib/schemas";
+import { modalClasses } from "../../../components/ui/modal/modalStyles";
 
 const usePedidoAPI = () => {
   const cadastrarCliente = async (clienteData) => {
@@ -84,7 +85,8 @@ const usePedidoAPI = () => {
   const buscarClientes = async () => {
     try {
       const response = await Api.get(`/clientes`);
-      return response.data;
+      const data = response.data;
+      return Array.isArray(data) ? data : (data?.content ?? []);
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Erro ao buscar clientes",
@@ -168,15 +170,11 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
         buscarProdutos(),
       ]);
 
-      const listaClientes = Array.isArray(clientes)
-        ? clientes
-        : clientes?.content ?? [];
-
       const listaProdutos = Array.isArray(produtos)
         ? produtos
         : produtos?.content ?? [];
 
-      setClientesExistentes(listaClientes.filter((c) => c.status !== "Avulso"));
+      setClientesExistentes(Array.isArray(clientes) ? clientes : []);
       setProdutosDisponiveis(listaProdutos);
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
@@ -237,6 +235,9 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
         ...prev,
         clienteId: "",
         clienteNome: "",
+        clienteCpf: "",
+        clienteEmail: "",
+        clienteTelefone: "",
       }));
     }
     setError(null);
@@ -312,6 +313,24 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
 
   const validateStep = () => {
     setError(null);
+
+    if (currentStep === 1) {
+      if (formData.produtos.length === 0) {
+        setError("Adicione pelo menos um produto");
+        return false;
+      }
+
+      const hasIncompleteProduct = formData.produtos.some(
+        (produto) => !produto.produtoId || !String(produto.produtoId).trim(),
+      );
+
+      if (hasIncompleteProduct) {
+        setError(
+          "Preencha as informações do produto adicionado antes de avançar",
+        );
+        return false;
+      }
+    }
 
     const schemas = [
       pedidoProdutoEtapa0Schema,
@@ -422,27 +441,27 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1300] px-3 sm:px-10 py-4 overflow-y-auto"
+        className={modalClasses.overlay}
         onClick={onClose}
       >
         <div
-          className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[10000vh] flex flex-col overflow-hidden"
+          className={`${modalClasses.panel} flex max-h-[92vh] max-w-4xl flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center px-8 py-4 border-b border-gray-200">
+          <div className={modalClasses.header}>
             <div className="flex items-center gap-3">
-              <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-[#828282]" />
+                <div className={modalClasses.headerIcon}>
+                  <ShoppingCart className="h-6 w-6" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Novo Pedido de Produto
-              </h2>
+              <div>
+                <h2 className={modalClasses.headerTitle}>Novo Pedido de Produto</h2>
+              </div>
             </div>
           </div>
 
           {/* Stepper */}
-          <div className="px-8 pt-6 pb-4">
+          <div className={modalClasses.stepperSection}>
             <div className="flex items-center justify-between">
               {steps.map((step, index) => (
                 <Fragment key={step.id}>
@@ -480,9 +499,9 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Error Alert */}
-          <div className="flex justify-center w-full px-8">
+          <div className="flex w-full justify-center px-6 pt-5 sm:px-8">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 mb-4">
+              <div className={`${modalClasses.errorAlert} mb-4 w-full`}>
                 <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-red-800">Erro</p>
@@ -493,7 +512,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Conteúdo */}
-          <div className="flex flex-col px-8 py-4">
+          <div className={`${modalClasses.body} flex flex-col`}>
             {/* Etapa 0 - Cliente */}
             {currentStep === 0 && (
               <div className="flex flex-col gap-4">
@@ -566,7 +585,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     required
                     type="text"
                     name="clienteNome"
-                    placeholder="Ex: Fornecedor XYZ, Cliente Particular..."
+                    placeholder="Digite o nome para identificação"
                     value={formData.clienteNome}
                     onChange={handleChange}
                     hint="Este nome será usado apenas para identificação do pedido"
@@ -578,7 +597,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     as="select"
                     label="Selecionar Cliente"
                     name="clienteId"
-                    placeholder="Selecione um cliente..."
+                    placeholder="Selecione um cliente"
                     options={clientesExistentes.map((cliente) => ({
                       value: String(cliente.id),
                       label: cliente.nome,
@@ -595,7 +614,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                       required
                       type="text"
                       name="clienteNome"
-                      placeholder="Digite o nome do cliente"
+                      placeholder="Digite o nome completo"
                       value={formData.clienteNome}
                       onChange={handleChange}
                     />
@@ -628,7 +647,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                       label="E-mail"
                       type="email"
                       name="clienteEmail"
-                      placeholder="cliente@email.com"
+                      placeholder="nome@exemplo.com"
                       value={formData.clienteEmail}
                       onChange={handleChange}
                     />
@@ -652,7 +671,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                   <Button
                     type="button"
                     variant="primary"
-                    size="sm"
+                    size="md"
                     onClick={handleAddProduto}
                     startIcon={<Plus className="w-4 h-4" />}
                   >
@@ -682,7 +701,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                             as="select"
                             label="Produto"
                             required
-                            placeholder="Selecione..."
+                            placeholder="Selecione um produto"
                             options={produtosDisponiveis.map((p) => ({
                               value: String(p.id),
                               label: `${p.nome} - R$ ${p.preco?.toFixed(2)}`,
@@ -820,7 +839,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                   as="textarea"
                   label="Observações"
                   name="descricao"
-                  placeholder="Observações adicionais sobre o pedido..."
+                placeholder="Digite as observações do pedido"
                   rows={4}
                   value={formData.descricao}
                   onChange={handleChange}
@@ -951,7 +970,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
             )}
           </div>
 
-          <div className="px-8 py-4 border-t bg-gray-50 flex justify-between">
+          <div className={modalClasses.footer}>
             <Button
               type="button"
               variant="ghost"

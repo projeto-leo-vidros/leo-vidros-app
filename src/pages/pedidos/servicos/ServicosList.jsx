@@ -261,7 +261,7 @@ export default function ServicosList({
             return (
             <article
               key={item.id}
-              className={`flex flex-col gap-3 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${isGrayCard ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}
+              className={`flex flex-col gap-3 rounded-lg border p-5 w-full shadow-[0_10px_24px_-8px_rgba(15,23,42,0.24),-10px_0_20px_-16px_rgba(15,23,42,0.18),10px_0_20px_-16px_rgba(15,23,42,0.18)] transition-all hover:shadow-[0_16px_36px_-10px_rgba(15,23,42,0.28),-12px_0_24px_-18px_rgba(15,23,42,0.2),12px_0_24px_-18px_rgba(15,23,42,0.2)] ${isGrayCard ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}
             >
               {/* HEADER DO CARD */}
               <header className="flex flex-col gap-2 pb-3 border-b border-slate-100 md:flex-row md:items-center md:justify-between">
