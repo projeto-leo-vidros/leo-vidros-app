@@ -673,7 +673,7 @@ export default function OrcamentoPage() {
     setIsSaving(true);
     try {
       const payload = OrcamentosService.mapearParaBackend(
-        { ...dadosGerais, status_id: "RASCUNHO" },
+        dadosGerais,
         itens,
         subtotalGeral,
         descontoGeral,
@@ -684,21 +684,24 @@ export default function OrcamentoPage() {
         ? await OrcamentosService.atualizarOrcamento(savedOrcamentoId, payload)
         : await OrcamentosService.criarOrcamento(payload);
 
+      const successMsg = savedOrcamentoId ? "Alterações salvas com sucesso!" : "Rascunho salvo com sucesso!";
+      const errorMsg = savedOrcamentoId ? "Erro ao salvar alterações." : "Erro ao salvar rascunho.";
+
       if (result.success) {
         if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
         setLastSaved(new Date());
         queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-        setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
+        setToast({ message: successMsg, type: "success" });
         setTimeout(() => {
           setToast(null);
           navigate(returnTo ?? `/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
         }, 2000);
       } else {
-        setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
+        setToast({ message: result.error || errorMsg, type: "error" });
         setTimeout(() => setToast(null), 3000);
       }
     } catch (e) {
-      setToast({ message: "Erro ao salvar rascunho.", type: "error" });
+      setToast({ message: orcamentoId ? "Erro ao salvar alterações." : "Erro ao salvar rascunho.", type: "error" });
       setTimeout(() => setToast(null), 3000);
     } finally {
       setIsSaving(false);
@@ -847,7 +850,7 @@ export default function OrcamentoPage() {
                 className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-[#002A4B] border border-gray-300 text-white rounded-lg hover:bg-[#01345c] transition-colors text-sm font-medium shadow-sm cursor-pointer disabled:opacity-50"
                 type="button"
               >
-                <span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar Rascunho"}</span>
+                <span className="hidden sm:inline">{isSaving ? "Salvando..." : (orcamentoId ? "Salvar Alterações" : "Salvar Rascunho")}</span>
                 <span className="sm:hidden">Salvar</span>
               </button>
 

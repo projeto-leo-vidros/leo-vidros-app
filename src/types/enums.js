@@ -49,7 +49,7 @@ export const StatusEstoque = Object.freeze({
 export const StatusOrcamento = Object.freeze({
   RASCUNHO: "RASCUNHO",
   ENVIADO: "ENVIADO",
-  EM_ANALISE: "EM_ANALISE",
+  EM_ANALISE: "EM ANALISE",
   APROVADO: "APROVADO",
   RECUSADO: "RECUSADO",
   EXPIRADO: "EXPIRADO",

@@ -11,6 +11,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../../../context/UserContext.jsx";
 import Logo from "../../../assets/logo-sidebar.png";
 
 const menuItems = [
@@ -30,6 +31,7 @@ const menuItems = [
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useUser();
 
   const handleNavigate = (path) => {
     navigate(path);
@@ -83,7 +85,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
       <div className="mt-auto px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-6 md:pb-8">
         <button
-          onClick={() => handleNavigate("/")}
+          onClick={() => { logout(); navigate("/login", { replace: true }); setSidebarOpen(false); }}
           className="flex items-center gap-3 w-full text-gray-700 hover:bg-[#003d6b]/10 hover:text-[#003d6b] px-3 py-3 rounded-lg font-semibold text-lg transition-all duration-150 cursor-pointer"
         >
           <LogOut size={26} />

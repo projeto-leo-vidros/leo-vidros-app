@@ -7,6 +7,7 @@ import agendamentosService from "../../../api/services/agendamentosService";
 import { useAgendamentos } from "../../../hooks/queries/useAgendamentos";
 import AgendamentoNotification from "../../ui/misc/AgendamentoNotification";
 import { useAgendamentoNotifications } from "../../../pages/agendamentos/hooks/useAgendamentoNotifications";
+import { useUser } from "../../../context/UserContext.jsx";
 import Api from "../../../api/client/Api";
 
 const buildPayload = (agendamento, nomeStatus) => ({
@@ -35,9 +36,11 @@ const buildPayload = (agendamento, nomeStatus) => ({
 
 export default function AgendamentoNotificationLayer() {
   const queryClient = useQueryClient();
+  const { user } = useUser();
   const { data: agendamentos = [] } = useAgendamentos({
     refetchInterval: 60000,
     refetchOnWindowFocus: false,
+    enabled: user.isAuthenticated,
   });
 
   const { notifications, dismissNotification } =
