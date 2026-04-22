@@ -3,6 +3,7 @@ import { Download, Loader2 } from "lucide-react";
 import { EtlApi } from "../../../../api/client/Api"; // Ajuste o caminho conforme a sua estrutura de pastas
 import Swal from "sweetalert2";
 import Button from "../../../../components/ui/Button/Button.component";
+import { modalClasses } from "../../../../components/ui/modal/modalStyles";
 
 const ExportarModal = ({ isOpen, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -49,32 +50,35 @@ const ExportarModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1300] p-4"
+      className={modalClasses.overlay}
       onClick={!isExporting ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-auto"
+        className={`${modalClasses.panel} mx-auto w-full max-w-lg`}
         onClick={handleModalContentClick}
       >
-        <div className="p-5 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <div className="bg-gray-100 p-2 rounded">
-              <Download className="w-5 h-5 text-gray-700" />
+        <div className={modalClasses.header}>
+          <div className="flex items-center gap-3">
+            <div className={modalClasses.headerIcon}>
+              <Download className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-bold text-gray-900">
-              Exportar planilha
-            </h2>
+            <div>
+              <h2 className={modalClasses.headerTitle}>Exportar planilha</h2>
+              <p className={modalClasses.headerSubtitle}>
+                Gere um arquivo com a visao atual do estoque.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className={modalClasses.body}>
           <p className="text-sm text-gray-700">
             Você está prestes a exportar a visualização atual do estoque.
             Confirme para iniciar o download.
           </p>
         </div>
 
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
+        <div className={modalClasses.footer}>
           <Button
             variant="ghost"
             onClick={onClose}

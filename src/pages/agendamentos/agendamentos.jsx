@@ -222,7 +222,7 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
         onClick={onClose}
       >
         <motion.div
@@ -234,8 +234,8 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
         >
           <div className="p-6">
             <div className="mb-4 flex items-center gap-4">
-              <div className="rounded-full bg-red-100 p-3">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="bg-gray-100 p-2 rounded">
+                <AlertTriangle className="h-6 w-6 text-gray-700" />
               </div>
               <h3 className="text-lg font-bold text-gray-900">
                 Excluir Agendamento?
@@ -298,6 +298,11 @@ export default function Agendamentos() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarViewType, setCalendarViewType] = useState("month");
   const [calendarSelectedEvent, setCalendarSelectedEvent] = useState(null);
+  const [isUpcomingEventsCollapsed, setIsUpcomingEventsCollapsed] =
+    useState(false);
+  const shouldShowMiniCalendar = ["week", "day", "list"].includes(
+    calendarViewType,
+  );
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
@@ -679,24 +684,56 @@ export default function Agendamentos() {
             )}
 
             {/* ====== Area Principal do Calendário ====== */}
-            <div className="flex flex-col min-h-[600px] lg:min-h-0 lg:flex-1 lg:overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:flex-row">
+            <div className="relative flex min-h-[600px] flex-col rounded-2xl border border-gray-200 bg-white shadow-sm lg:min-h-0 lg:flex-1 lg:flex-row lg:overflow-hidden">
               {/* Right Panel */}
-              <div className="hidden lg:flex order-2 w-full shrink-0 flex-col border-t border-gray-200 bg-gray-50/50 transition-all duration-300 lg:order-none lg:w-[300px] lg:border-l lg:border-t-0 xl:w-[340px]">
-                <div className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-1 flex-col gap-3 space-y-6 overflow-y-auto p-4">
-                  <MiniCalendar
-                    selectedDate={selectedDate}
-                    onDateSelect={(date) => {
-                      setSelectedDate(date);
-                      setCalendarViewType("day");
-                    }}
-                  />
-                  <div className="my-4" />
-                  <UpcomingEvents
-                    events={calendarActiveTasks}
-                    onViewEvent={setCalendarSelectedEvent}
-                    onEditEvent={handleEdit}
-                    onViewCalendar={() => setCalendarViewType("list")}
-                  />
+              <div
+                className={cn(
+                  "order-2 hidden w-full shrink-0 flex-col bg-gray-50/50 transition-all duration-300 lg:order-none lg:flex",
+                  shouldShowMiniCalendar
+                    ? "border-t border-gray-200 lg:w-[300px] lg:border-l lg:border-t-0 xl:w-[340px]"
+                    : isUpcomingEventsCollapsed
+                      ? "lg:w-0 lg:border-l-0"
+                      : "border-t border-gray-200 lg:w-[300px] lg:border-l lg:border-t-0 xl:w-[340px]",
+                )}
+              >
+                {(!isUpcomingEventsCollapsed || shouldShowMiniCalendar) && (
+                  <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-base font-semibold text-text-primary">
+                        Próximos eventos
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  className={cn(
+                    "scrollbar-thin scrollbar-thumb-gray-200 flex flex-1 flex-col gap-3 overflow-y-auto",
+                    !isUpcomingEventsCollapsed || shouldShowMiniCalendar
+                      ? "p-4"
+                      : "overflow-hidden p-0",
+                  )}
+                >
+                  {shouldShowMiniCalendar && (
+                    <MiniCalendar
+                      selectedDate={selectedDate}
+                      onDateSelect={(date) => {
+                        setSelectedDate(date);
+                        setCalendarViewType("day");
+                      }}
+                    />
+                  )}
+                  {!isUpcomingEventsCollapsed && shouldShowMiniCalendar && (
+                    <div className="my-1 border-t border-gray-200" />
+                  )}
+                  {!isUpcomingEventsCollapsed && (
+                    <UpcomingEvents
+                      events={calendarActiveTasks}
+                      onViewEvent={setCalendarSelectedEvent}
+                      onEditEvent={handleEdit}
+                      onViewCalendar={() => setCalendarViewType("list")}
+                    />
+                  )}
                 </div>
               </div>
               {/* Main Calendar View */}
@@ -711,6 +748,10 @@ export default function Agendamentos() {
                   onEventCreate={handleNewAgendamento}
                   events={calendarActiveTasks}
                   onEventDeleted={handleEventDeleted}
+                  isUpcomingEventsCollapsed={isUpcomingEventsCollapsed}
+                  onToggleUpcomingEvents={() =>
+                    setIsUpcomingEventsCollapsed((current) => !current)
+                  }
                 />
               </div>
             </div>

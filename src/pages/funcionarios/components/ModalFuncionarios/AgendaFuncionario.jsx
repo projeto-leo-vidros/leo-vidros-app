@@ -196,7 +196,7 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="relative flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="bg-[#eeeeee] p-2.5 rounded-lg">
               <Calendar className="w-6 h-6 text-[#828282]" />
@@ -205,17 +205,14 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
               <h2 className="text-xl font-semibold text-gray-900">
                 Agenda do Funcionário
               </h2>
-              <p className="text-sm text-gray-500">{funcionario?.nome}</p>
             </div>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
+          <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
+            <p className="text-xl font-semibold text-gray-900 text-center">
+              {funcionario?.nome}
+            </p>
+          </div>
         </div>
-
         {/* ── Controles de navegação ── */}
         <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3 border-b border-gray-100 gap-3">
           {/* Seletor de período */}
@@ -336,9 +333,6 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
                       <th className="text-center py-3 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="text-center py-3 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wider">
-                        Ações
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -441,9 +435,7 @@ export default function AgendaFuncionario({ open, setOpen, funcionario }) {
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
+                            ) : null}
                           </td>
                         </tr>
                       );

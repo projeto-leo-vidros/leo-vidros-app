@@ -29,8 +29,6 @@ export default function Funcionarios() {
   const [openAgenda, setOpenAgenda] = useState(false);
   const [funcionarioAgenda, setFuncionarioAgenda] = useState(null);
 
-  const [selecionados, setSelecionados] = useState([]);
-
   const fetchFuncionarios = async () => {
     try {
       const response = await Api.get("/funcionarios");
@@ -110,37 +108,6 @@ export default function Funcionarios() {
     }
   };
 
-  const isSelected = (id) => selecionados.indexOf(id) !== -1;
-
-  const handleSelectClick = (event, id) => {
-    const selectedIndex = selecionados.indexOf(id);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selecionados, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selecionados.slice(1));
-    } else if (selectedIndex === selecionados.length - 1) {
-      newSelected = newSelected.concat(selecionados.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selecionados.slice(0, selectedIndex),
-        selecionados.slice(selectedIndex + 1),
-      );
-    }
-
-    setSelecionados(newSelected);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelected = funcionariosFiltrados.map((n) => n.id);
-      setSelecionados(newSelected);
-      return;
-    }
-    setSelecionados([]);
-  };
-
   return (
     <div className="app-page flex bg-[#f7f9fa] min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
@@ -187,16 +154,6 @@ export default function Funcionarios() {
                 <div className="min-w-[580px]">
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-12 rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  <div className="py-3 w-[5%] pl-4">
-                    <UniversalInput
-                      as="checkbox"
-                      checked={
-                        funcionariosFiltrados.length > 0 &&
-                        selecionados.length === funcionariosFiltrados.length
-                      }
-                      onChange={handleSelectAllClick}
-                    />
-                  </div>
                   <div className="py-3 w-[18%] pl-2">Nome</div>
                   <div className="py-3 w-[14%]">Telefone</div>
                   <div className="py-3 w-[14%]">Função</div>
@@ -222,24 +179,11 @@ export default function Funcionarios() {
                     </div>
                   ) : (
                     funcionariosPagina.map((f) => {
-                      const isItemSelected = isSelected(f.id);
-
                       return (
                         <div
                           key={f.id}
-                          className={`flex items-center border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                            isItemSelected ? "bg-blue-50" : ""
-                          }`}
+                          className="flex items-center border-b border-gray-200 hover:bg-gray-50 transition-colors"
                         >
-                          <div className="py-3 w-[5%] pl-4">
-                            <UniversalInput
-                              as="checkbox"
-                              checked={isItemSelected}
-                              onChange={(event) =>
-                                handleSelectClick(event, f.id)
-                              }
-                            />
-                          </div>
                           <div className="py-3 w-[18%] pl-2 text-sm text-gray-900 truncate">
                             {f.nome}
                           </div>

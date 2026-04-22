@@ -15,7 +15,15 @@ class OrcamentosService extends BaseService {
 
   async buscarTodos() {
     const result = await this.get("/orcamentos");
-    if (result.success) result.data = result.data || [];
+    if (result.success) {
+      const raw = result.data;
+      result.data = Array.isArray(raw) ? raw : (Array.isArray(raw?.content) ? raw.content : []);
+    }
+    return result;
+  }
+
+  async gerarPdf(id) {
+    const result = await this._handle(this.api.post(`/orcamentos/${id}/gerar-pdf`));
     return result;
   }
 
@@ -25,7 +33,10 @@ class OrcamentosService extends BaseService {
 
   async buscarPorPedido(pedidoId) {
     const result = await this.get(`/orcamentos/pedido/${pedidoId}`);
-    if (result.success) result.data = result.data || [];
+    if (result.success) {
+      const raw = result.data;
+      result.data = Array.isArray(raw) ? raw : (Array.isArray(raw?.content) ? raw.content : []);
+    }
     return result;
   }
 

@@ -1,7 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
-import { X, Check, Trash2, CheckCircle, Package } from "lucide-react";
+import { useState, useEffect, useCallback, Fragment } from "react";
+import {
+  Check,
+  Trash2,
+  CheckCircle,
+  Calendar,
+  Package,
+  MapPin,
+  ClipboardList,
+} from "lucide-react";
 import Api from "../../../api/client/Api";
 import { cepMask } from "../../../utils/masks";
+import { modalClasses } from "../../../components/ui/modal/modalStyles";
 import UniversalInput from "../Input/UniversalInput";
 import Button from "../Button/Button.component";
 
@@ -803,17 +812,17 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   if (isSuccess) {
     return (
       <div
-        className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        className={modalClasses.overlay}
         onClick={onClose}
       >
         <div
-          className="flex w-full max-w-md scale-100 transform flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-3 p-10 text-center shadow-2xl transition-all"
+          className={`${modalClasses.panel} flex w-full max-w-md flex-col items-center justify-center px-8 py-10 text-center`}
           onClick={(e) => e?.stopPropagation()}
         >
-          <div className="flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-green-100 pb-6">
+          <div className="flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-12 w-12 text-green-600" />
           </div>
-          <h2 className="pb-2 text-2xl font-bold text-gray-900">
+          <h2 className="pt-6 pb-2 text-2xl font-bold text-gray-900">
             Agendamento {formData.id ? "Atualizado" : "Criado"}!
           </h2>
           <p className="pb-8 text-gray-500">
@@ -836,93 +845,143 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   return (
     <div
-      className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className={modalClasses.overlay}
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-4xl flex-col gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-2xl"
+        className={`${modalClasses.panel} flex max-h-[92vh] w-full max-w-4xl flex-col`}
         onClick={(e) => e?.stopPropagation()}
       >
-        <div className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
-          <h2 className="text-lg font-bold text-gray-900">
-            {formData.id ? "Editar Agendamento" : "Novo Agendamento"}
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="cursor-pointer"
-          >
-            <X size={20} />
-          </Button>
+        <div className={modalClasses.header}>
+          <div className="flex items-center gap-3">
+            <div className={modalClasses.headerIcon}>
+              <Calendar className="h-6 w-6" />
+            </div>
+            <h2 className={modalClasses.headerTitle}>
+              {formData.id ? "Editar Agendamento" : "Novo Agendamento"}
+            </h2>
+          </div>
         </div>
 
-        {/* Steps Indicator */}
-        <div className="flex items-center justify-center gap-4">
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${step >= 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}
-            >
-              1
-            </div>
-            <span
-              className={`text-xs font-medium transition-colors ${step >= 1 ? "text-blue-600" : "text-gray-400"}`}
-            >
-              Agendamento
-            </span>
-          </div>
-          <div
-            className={`h-1 w-12 rounded ${step >= 2 ? "bg-blue-600" : "bg-gray-200"} -mt-5`}
-          ></div>
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}
-            >
-              2
-            </div>
-            <span
-              className={`text-xs font-medium transition-colors ${step >= 2 ? "text-blue-600" : "text-gray-400"}`}
-            >
-              Endereço
-            </span>
-          </div>
-          {(formData?.tipoAgendamento?.value === "SERVICO" ||
-            formData?.tipoAgendamento === "SERVICO") && (
-            <>
+        <div className={modalClasses.stepperSection}>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-1 flex-col items-center gap-2">
               <div
-                className={`h-1 w-12 rounded ${step >= 3 ? "bg-blue-600" : "bg-gray-200"} -mt-5`}
-              ></div>
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${step >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}
-                >
-                  3
-                </div>
-                <span
-                  className={`text-xs font-medium transition-colors ${step >= 3 ? "text-blue-600" : "text-gray-400"}`}
-                >
-                  Produtos
-                </span>
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all ${
+                  step >= 1
+                    ? "bg-[#007EA7] text-white shadow-md"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                1
               </div>
-            </>
-          )}
+              <span
+                className={`mt-2 text-center text-sm ${
+                  step >= 1
+                    ? "font-semibold text-gray-900"
+                    : "font-medium text-gray-500"
+                }`}
+              >
+                Agendamento
+              </span>
+            </div>
+
+            <div
+              className={`mx-3 mb-6 h-1 flex-1 rounded-full ${
+                step >= 2 ? "bg-[#007EA7]" : "bg-gray-200"
+              }`}
+            />
+
+            <div className="flex flex-1 flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all ${
+                  step >= 2
+                    ? "bg-[#007EA7] text-white shadow-md"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                2
+              </div>
+              <span
+                className={`mt-2 text-center text-sm ${
+                  step >= 2
+                    ? "font-semibold text-gray-900"
+                    : "font-medium text-gray-500"
+                }`}
+              >
+                Endereco
+              </span>
+            </div>
+
+            {(formData?.tipoAgendamento?.value === "SERVICO" ||
+              formData?.tipoAgendamento === "SERVICO") && (
+              <>
+                <div
+                  className={`mx-3 mb-6 h-1 flex-1 rounded-full ${
+                    step >= 3 ? "bg-[#007EA7]" : "bg-gray-200"
+                  }`}
+                />
+
+                <div className="flex flex-1 flex-col items-center gap-2">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all ${
+                      step >= 3
+                        ? "bg-[#007EA7] text-white shadow-md"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                  >
+                    3
+                  </div>
+                  <span
+                    className={`mt-2 text-center text-sm ${
+                      step >= 3
+                        ? "font-semibold text-gray-900"
+                        : "font-medium text-gray-500"
+                    }`}
+                  >
+                    Produtos
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-1 flex-col gap-6 overflow-y-auto px-2 pb-6"
+          className={`${modalClasses.body} flex flex-1 flex-col gap-6`}
         >
           {errors?.submit && (
-            <div className="flex items-center rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              <X size={16} className="mr-2" />
-              {errors.submit}
+            <div className={modalClasses.errorAlert}>
+              <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 rotate-45 text-red-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Erro</p>
+                <p className="text-sm text-red-700">{errors.submit}</p>
+              </div>
             </div>
           )}
 
           {/* STEP 1 */}
           {step === 1 && (
-            <>
-              <div className="grid grid-cols-2 gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="text-left">
+                <h3 className="text-base font-semibold text-gray-900">
+                  Dados do Agendamento
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Escolha o tipo, vincule o pedido e defina data, horario e equipe.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col gap-4">
+                <div className="mb-4 flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-[#007EA7]" />
+                  <span className="text-sm font-semibold text-slate-800">
+                    Informacoes principais
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Tipo de agendamento <span className="text-red-500">*</span>
@@ -995,9 +1054,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
               {/* Informações do Cliente */}
               {clienteInfo && (
-                <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-md">
+                <div className="mt-6 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                   {/* Cabeçalho: Nome + Status */}
-                  <div className="flex items-center justify-between justify-center gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <h3 className="text-lg font-bold text-gray-900">
                       {clienteInfo.nome}
                     </h3>
@@ -1036,7 +1095,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="mt-6 grid grid-cols-2 gap-6">
                 <div className="flex flex-col">
                   <label className="block pb-2 text-sm font-semibold text-gray-700">
                     Data do evento <span className="text-red-500">*</span>
@@ -1118,12 +1177,21 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   </span>
                 )}
               </div>
-            </>
+              </div>
+            </div>
           )}
 
           {/* STEP 2 */}
           {step === 2 && (
-            <>
+            <div className="flex flex-col gap-4">
+              <div className="text-left">
+                <h3 className="text-base font-semibold text-gray-900">
+                  Endereco do Agendamento
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Confirme ou ajuste o local do atendimento antes de concluir.
+                </p>
+              </div>
               {savedAddress && (
                 <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3">
                   <div className="flex items-center justify-between">
@@ -1154,6 +1222,14 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   </div>
                 </div>
               )}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="mb-4 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[#007EA7]" />
+                  <span className="text-sm font-semibold text-slate-800">
+                    Dados do local
+                  </span>
+                </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="mb-2 flex justify-between text-sm font-semibold text-gray-700">
@@ -1241,13 +1317,23 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 }
                 placeholder="Observação"
               />
-            </>
+            </div>
+            </div>
           )}
 
           {/* STEP 3 */}
           {step === 3 && (
             <div className="flex h-full flex-col gap-4">
-              <div>
+              <div className="text-left">
+                <h3 className="text-base font-semibold text-gray-900">
+                  Produtos Reservados
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Inclua os itens que serao reservados para executar o servico.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <label className="block text-sm font-semibold text-gray-700">
                     Adicionar Produtos (Opcional)
@@ -1327,16 +1413,16 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           )}
 
           {/* FOOTER */}
-          <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-            <div>
+          <div className={modalClasses.footer}>
+            <div className="flex gap-3">
               {step > 1 && (
-                <Button variant="outline" onClick={handleBack}>
+                <Button variant="secondary" onClick={handleBack}>
                   Voltar
                 </Button>
               )}
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="ghost" onClick={onClose}>
                 Cancelar
               </Button>
               <Button
@@ -1352,7 +1438,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                         formData?.tipoAgendamento === "ORCAMENTO")
                     ? "Finalizar"
                     : step < 3
-                      ? "Próximo"
+                      ? "Próxima Etapa"
                       : "Finalizar"}
               </Button>
             </div>

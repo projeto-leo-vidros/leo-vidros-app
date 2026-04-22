@@ -12,9 +12,11 @@ import {
   ArrowLeft,
   Package,
   AlertCircle,
+  Save,
   CheckCircle,
   Download,
   Loader2,
+  ClipboardList,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
@@ -22,11 +24,22 @@ import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import { OrcamentoStatusOptions } from "../../types/enums";
 
-const gerarNumeroOrcamento = (pedidoId) => {
-  const ano = new Date().getFullYear();
-  if (!pedidoId) return "";
-  return `ORC-${ano}-P${pedidoId}`;
+
+const tw = {
+  card: "bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden",
+  cardHeader: "bg-[#002A4B] px-5 py-4 flex items-center justify-between",
+  cardBody: "p-6",
+  label:
+    "text-[11px] font-semibold text-gray-500 mb-1 block uppercase tracking-[0.05em]",
+  input:
+    "w-full px-4 py-3 rounded-md border border-gray-300 text-sm text-gray-800 bg-white outline-none transition-colors box-border font-[inherit] focus:border-[#007EA7] focus:ring-2 focus:ring-[#007EA7]/15",
+  inputReadOnly: "!bg-[#f5fbfe] !text-[#004f68] cursor-default",
 };
+
+const formatCurrencyBR = (value) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+    value || 0,
+  );
 
 const calcularSubtotalItem = (quantidade, preco_unitario, desconto) => {
   const qtd = parseFloat(quantidade) || 0;
@@ -46,10 +59,11 @@ const calcularSubtotalGeral = (itens) =>
 const calcularTotalFinal = (subtotal, descontoGeral) =>
   Math.max(0, subtotal - (parseFloat(descontoGeral) || 0));
 
-const formatCurrencyBR = (value) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    value || 0,
-  );
+const gerarNumeroOrcamento = (pedidoId) => {
+  const ano = new Date().getFullYear();
+  if (!pedidoId) return "";
+  return `ORC-${ano}-P${pedidoId}`;
+};
 
 const criarItemVazio = (ordem = 1) => ({
   id: Date.now() + Math.random(),
@@ -62,23 +76,47 @@ const criarItemVazio = (ordem = 1) => ({
   ordem,
 });
 
-const tw = {
-  card: "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden",
-  cardHeader:
-    "px-8 py-5 border-b border-slate-100 flex items-center gap-3 bg-slate-50",
-  cardBody: "p-8",
-  label:
-    "text-[11px] font-semibold text-gray-700 mb-1 block uppercase tracking-[0.05em]",
-  input:
-    "w-full px-4 py-3 rounded-lg border-[1.5px] border-slate-200 text-sm text-slate-800 bg-white outline-none transition-colors box-border font-[inherit]",
-  inputReadOnly: "!bg-slate-50 !text-slate-500 cursor-default",
-};
+const SectionCard = ({ title, badge, action, children, className = "" }) => (
+  <div className={`${tw.card} ${className}`.trim()}>
+    <div className={tw.cardHeader}>
+      <div className="flex items-center gap-3 min-w-0">
+        <h2 className="m-0 text-sm font-bold text-white tracking-wide uppercase">
+          {title}
+        </h2>
+        {badge && (
+          <span className="bg-white/25 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+            {badge}
+          </span>
+        )}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+    {children}
+  </div>
+);
 
-const OrcamentoHeader = ({ isEdicao = false }) => (
-  <div className="mb-10 text-center">
-    <h1 className="pb-6 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
-      {isEdicao ? "Editar Orçamento" : "Gerar Novo Orçamento"}
-    </h1>
+const OrcamentoHeader = ({ isEdicao = false, onBack }) => (
+  <div className="flex flex-col gap-4 py-8 sm:py-5 lg:relative lg:min-h-[106px] lg:items-center lg:justify-center">
+    <button
+      type="button"
+      onClick={onBack}
+      className="flex w-full items-center justify-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5 sm:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      Voltar
+    </button>
+
+    <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-4">
+      <p className="text-2xl font-semibold text-gray-800 leading-tight flex items-center justify-center gap-3">
+        <ClipboardList className="w-[18px] h-[18px] text-[#007EA7]" />
+        {isEdicao ? "Editar Orçamento" : "Gerar Novo Orçamento"}
+      </p>
+      <p className="text-md text-gray-500 mt-6">
+        {isEdicao
+          ? "Revise os dados, itens e valores antes de salvar alterações."
+          : "Organize os itens e gere um orçamento de um serviço."}
+      </p>
+    </div>
   </div>
 );
 
@@ -89,14 +127,8 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
   const clienteNome = dados.cliente_nome;
 
   return (
-    <div className={tw.card}>
-      <div className={tw.cardHeader}>
-        <div className="h-5 w-1.5 rounded-sm bg-[var(--button-color)]" />
-        <h2 className="m-0 text-sm font-bold text-slate-800">
-          Informações Gerais
-        </h2>
-      </div>
-      <div className={tw.cardBody}>
+    <SectionCard title="Informações Gerais">
+      <div className="p-6 bg-[#f5fbfe] border-t border-[#deedf3]">
         <div
           className="grid gap-8"
           style={{
@@ -135,7 +167,7 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
             }))}
           />
 
-          <div className="flex items-end gap-2">
+          <div className="flex flex-row items-center justify-center gap-2">
             <UniversalInput
               as="select"
               label="Status"
@@ -203,7 +235,7 @@ const OrcamentoInformacoes = ({ dados, onChange, errors, pedidos = [] }) => {
           />
         </div>
       </div>
-    </div>
+    </SectionCard>
   );
 };
 
@@ -224,13 +256,13 @@ const OrcamentoItemRow = ({
   const errItem = errors[item.id] || {};
 
   return (
-    <div className={tw.card}>
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2.5">
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between border-b border-[#deedf3] bg-[#f5fbfe] px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-color)] text-[11px] font-bold text-white">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#007EA7] text-[11px] font-bold text-white">
             {String(index + 1).padStart(2, "0")}
           </div>
-          <span className="text-sm font-semibold text-slate-600">Item</span>
+          <span className="text-sm font-semibold text-[#004f68]">Item</span>
         </div>
         <Button
           variant="ghost"
@@ -242,11 +274,8 @@ const OrcamentoItemRow = ({
         </Button>
       </div>
 
-      <div className="p-7">
-        <div
-          className="mb-7 grid gap-6"
-          style={{ gridTemplateColumns: "1fr 2fr" }}
-        >
+      <div className="p-6">
+        <div className="mb-7 grid gap-6" style={{ gridTemplateColumns: "1fr 2fr" }}>
           <UniversalInput
             as="select"
             label="Produto (opcional)"
@@ -289,9 +318,7 @@ const OrcamentoItemRow = ({
           />
           <div className="flex flex-col gap-1">
             <label className={tw.label}>Subtotal</label>
-            <div
-              className={`${tw.input} ${tw.inputReadOnly} flex items-center font-bold text-[var(--button-color)]`}
-            >
+            <div className={`${tw.input} ${tw.inputReadOnly} flex items-center font-bold text-[#007EA7]`}>
               {formatCurrencyBR(subtotal)}
             </div>
           </div>
@@ -310,32 +337,22 @@ const OrcamentoItens = ({
   errors,
   produtos = [],
 }) => (
-  <div className={tw.card}>
-    <div className={`${tw.cardHeader} justify-between`}>
-      <div className="flex items-center gap-2.5">
-        <div className="h-5 w-1.5 rounded-sm bg-violet-500" />
-        <h2 className="m-0 text-sm font-bold text-slate-800">
-          Itens do Orçamento
-        </h2>
-      </div>
-      <Button
-        variant="primary"
-        onClick={onAdd}
-        startIcon={<Plus size={15} />}
-      >
+  <SectionCard
+    title="Itens do Orçamento"
+    action={
+      <Button variant="primary" onClick={onAdd} startIcon={<Plus size={15} />}>
         Adicionar Item
       </Button>
-    </div>
-
-    <div className="flex flex-col gap-7 p-8">
+    }
+  >
+    <div className="flex flex-col gap-7 p-6 bg-[#f5fbfe] border-t border-[#deedf3]">
       {itens.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-slate-200 py-10 text-center text-slate-400">
+        <div className="flex gap-4 items-center justify-center rounded-xl border-2 border-dashed border-[#b9deeb] py-10 text-center text-[#6b8a97] bg-white">
           <Package size={32} className="mx-auto mb-2.5 opacity-40" />
-          <p className="m-0 text-sm">Nenhum item adicionado.</p>
-        
-          <p className="mt-1 text-xs">
-            Clique em &quot;Adicionar Item&quot; para começar.
-          </p>
+          <div className="flex flex-col" >
+            <p className="m-0 text-sm">Nenhum item adicionado.</p>
+            <p className="mt-1 text-xs">Clique em &quot;Adicionar Item&quot; para começar.</p>
+           </div>
         </div>
       ) : (
         itens.map((item, index) => (
@@ -352,7 +369,7 @@ const OrcamentoItens = ({
         ))
       )}
     </div>
-  </div>
+  </SectionCard>
 );
 
 const OrcamentoResumo = ({
@@ -361,32 +378,26 @@ const OrcamentoResumo = ({
   totalFinal,
   onDescontoChange,
 }) => (
-  <div className={`${tw.card} sticky top-24`}>
-    <div className={tw.cardHeader}>
-      <div className="h-5 w-1.5 rounded-sm bg-emerald-500" />
-      <h2 className="m-0 text-sm font-bold text-slate-800">
-        Resumo Financeiro
-      </h2>
-    </div>
-    <div className="flex flex-col gap-8 p-8">
+  <SectionCard title="Resumo Financeiro" className="sticky top-24">
+    <div className="flex flex-col gap-8 p-6 bg-[#f5fbfe] border-t border-[#deedf3]">
       <UniversalInput
         label="Desconto Geral (R$)"
         type="number"
-        className="!border-yellow-400 !bg-amber-50"
+        className="!border-[#b9deeb] !bg-white"
         value={descontoGeral}
         onChange={(e) => onDescontoChange(e.target.value)}
         placeholder="0"
       />
-      <div className="flex items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-5 py-4">
+      <div className="flex items-center justify-between rounded-md border border-[#b9deeb] bg-white px-5 py-4">
         <span className={tw.label}>Subtotal Geral</span>
-        <span className="text-base font-bold text-slate-700">{formatCurrencyBR(subtotalGeral)}</span>
+        <span className="text-base font-bold text-[#004f68]">{formatCurrencyBR(subtotalGeral)}</span>
       </div>
-      <div className="flex items-center justify-between rounded-lg bg-[var(--button-color)] px-5 py-5">
+      <div className="flex items-center justify-between rounded-md bg-[#002A4B] px-5 py-5 shadow-sm">
         <span className="text-sm font-bold uppercase tracking-wide text-white">Total Final</span>
         <span className="text-2xl font-extrabold text-white">{formatCurrencyBR(totalFinal)}</span>
       </div>
     </div>
-  </div>
+  </SectionCard>
 );
 
 const Toast = ({ message, type, onClose }) => {
@@ -458,9 +469,15 @@ export default function OrcamentoPage() {
   const [produtos, setProdutos] = useState([]);
 
   useEffect(() => {
+    const extrairLista = (data) => {
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.content)) return data.content;
+      return [];
+    };
+
     Api.get("/pedidos")
       .then((res) => {
-        const lista = Array.isArray(res.data) ? res.data : [];
+        const lista = extrairLista(res.data);
         setPedidos(
           lista.map((p) => ({
             id: p.id,
@@ -477,7 +494,7 @@ export default function OrcamentoPage() {
 
     Api.get("/estoques")
       .then((res) => {
-        const lista = Array.isArray(res.data) ? res.data : [];
+        const lista = extrairLista(res.data);
         setProdutos(
           lista
             .map((e) => ({
@@ -506,7 +523,7 @@ export default function OrcamentoPage() {
             cliente_id: String(orc.clienteId || ""),
             cliente_nome: orc.clienteNome || "",
             pedido_id: String(orc.pedidoId || ""),
-            status_id: orc.statusId || "RASCUNHO",
+            status_id: orc.statusNome || orc.statusId || "RASCUNHO",
             data_orcamento: orc.dataOrcamento?.split("T")[0] || "",
             prazo_instalacao: orc.prazoInstalacao?.split("T")[0] || "",
             garantia: orc.garantia || "",
@@ -708,47 +725,46 @@ export default function OrcamentoPage() {
         totalFinal,
       );
 
-      const tempId = `temp_${Date.now()}`;
-      
-      let sseConnection = null;
-      const ssePromise = new Promise((resolve) => {
-        sseConnection = OrcamentosService.monitorarProgresso(tempId, (eventData) => {
-          resolve(eventData);
-        });
-      });
+      let orcId = savedOrcamentoId ? parseInt(savedOrcamentoId) : null;
+      let numeroOrcamento = dadosGerais.numero_orcamento;
 
-      const result = await OrcamentosService.criarOrcamento(payload);
-
-      if (result.success && result.data) {
-        const orcId = result.data.id;
+      if (!orcId) {
+        const createResult = await OrcamentosService.criarOrcamento(payload);
+        if (!createResult.success || !createResult.data) {
+          setToast({ message: createResult.error || "Erro ao salvar orçamento.", type: "error" });
+          setTimeout(() => setToast(null), 4000);
+          return;
+        }
+        orcId = createResult.data.id;
+        numeroOrcamento = createResult.data.numeroOrcamento || numeroOrcamento;
         setSavedOrcamentoId(orcId);
         setLastSaved(new Date());
-        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
-        
-        if (sseConnection) {
-          sseConnection.close();
-        }
-        
-        startProgress(
-          orcId,
-          result.data.numeroOrcamento || dadosGerais.numero_orcamento
-        );
-        setToast({ message: "Orçamento enviado para geração!", type: "success" });
-        setTimeout(() => {
-          setToast(null);
-          navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
-        }, 2000);
       } else {
-        setToast({
-          message: result.error || "Erro ao gerar orçamento.",
-          type: "error",
-        });
-        if (sseConnection) {
-          sseConnection.close();
+        const updateResult = await OrcamentosService.atualizarOrcamento(orcId, payload);
+        if (!updateResult.success) {
+          setToast({ message: updateResult.error || "Erro ao atualizar orçamento.", type: "error" });
+          setTimeout(() => setToast(null), 4000);
+          return;
         }
-        setTimeout(() => setToast(null), 4000);
+        setLastSaved(new Date());
       }
+
+      const pdfResult = await OrcamentosService.gerarPdf(orcId);
+      if (!pdfResult.success) {
+        setToast({ message: pdfResult.error || "Erro ao iniciar geração do PDF.", type: "error" });
+        setTimeout(() => setToast(null), 4000);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
+
+      startProgress(orcId, numeroOrcamento);
+      setToast({ message: "Orçamento enviado para geração!", type: "success" });
+      setTimeout(() => {
+        setToast(null);
+        navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
+      }, 2000);
     } catch (e) {
       setToast({ message: "Erro ao gerar orçamento.", type: "error" });
       setTimeout(() => setToast(null), 4000);
@@ -759,14 +775,15 @@ export default function OrcamentoPage() {
 
   return (
     <>
-      <div className="app-page flex min-h-screen bg-[#f7f9fa]">
+      <div className="app-page flex min-h-screen bg-[#f7f9fa] overflow-x-hidden">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="app-content flex w-full flex-1 flex-col items-center">
+        <div className="app-content flex-1 flex flex-col">
           <Header
             toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             sidebarOpen={sidebarOpen}
           />
-          <div className="flex w-full max-w-[1400px] flex-col gap-3 px-4 py-20 sm:px-6">
+          <main className="app-scroll-area flex-1 px-4 pt-20 pb-24 sm:px-6 flex justify-center">
+            <div className="w-full max-w-[1400px] flex flex-col gap-5">
             {isLoadingOrcamento ? (
               <div className="flex flex-col items-center justify-center gap-4 py-20">
                 <Loader2 size={48} className="animate-spin text-slate-400" />
@@ -774,16 +791,10 @@ export default function OrcamentoPage() {
               </div>
             ) : (
               <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(-1)}
-                  className="mt-6 mb-4 self-start"
-                  startIcon={<ArrowLeft size={16} />}
-                >
-                  Voltar
-                </Button>
-                <OrcamentoHeader isEdicao={!!orcamentoId} />
+                <OrcamentoHeader
+                  isEdicao={!!orcamentoId}
+                  onBack={() => (returnTo ? navigate(returnTo) : navigate(-1))}
+                />
                 <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
                   <div className="flex flex-col gap-8">
                     <OrcamentoInformacoes
@@ -809,41 +820,56 @@ export default function OrcamentoPage() {
                     onDescontoChange={setDescontoGeral}
                   />
                 </div>
-                <div className="mt-15 flex flex-col gap-4 rounded-2xl border bg-white p-4 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-                  <span className="text-xs text-slate-400">
-                    {lastSaved
-                      ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
-                      : "Nenhuma alteração salva ainda"}
-                  </span>
-                  <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-end">
-                    <Button variant="ghost" onClick={() => navigate(-1)}>
-                      Cancelar
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleSaveDraft}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? "Salvando..." : "Salvar Rascunho"}
-                    </Button>
-                    <Button
-                      variant="primary"
-                      onClick={handleSaveAndDownload}
-                      disabled={isSaving}
-                      startIcon={
-                        isSaving ? (
-                          <Loader2 size={15} className="animate-spin" />
-                        ) : (
-                          <Download size={15} />
-                        )
-                      }
-                    >
-                      {isSaving ? "Gerando..." : "Gerar PDF"}
-                    </Button>
-                  </div>
-                </div>
               </>
             )}
+            </div>
+          </main>
+          <div className="shrink-0 border-t-2 bg-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 shadow-[0_-2px_12px_rgba(0,0,0,0.1)]" style={{ borderColor: "#e5e7eb" }}>
+            <p className="text-sm text-gray-400 hidden sm:block">
+              {lastSaved
+                ? `Última atualização: ${lastSaved.toLocaleTimeString("pt-BR")}`
+                : `Orçamento #${String(pedidoId || dadosGerais.pedido_id || "").padStart(3, "0")} · ${dadosGerais.cliente_nome || "Cliente não selecionado"}`}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 ml-auto">
+              <button
+                onClick={() => navigate(returnTo ?? -1)}
+                className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+                type="button"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Cancelar</span>
+              </button>
+
+              <button
+                onClick={handleSaveDraft}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-[#002A4B] border border-gray-300 text-white rounded-lg hover:bg-[#01345c] transition-colors text-sm font-medium shadow-sm cursor-pointer disabled:opacity-50"
+                type="button"
+              >
+                <span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar Rascunho"}</span>
+                <span className="sm:hidden">Salvar</span>
+              </button>
+
+              <button
+                onClick={handleSaveAndDownload}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg text-sm font-semibold shadow-md cursor-pointer transition-all bg-[#007EA7] hover:bg-[#006891] disabled:opacity-50"
+                type="button"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Gerando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Gerar PDF</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

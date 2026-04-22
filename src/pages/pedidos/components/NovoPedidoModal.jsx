@@ -90,6 +90,21 @@ const DEFAULT_FORM_DATA = {
   data: new Date().toISOString().split("T")[0],
 };
 
+const EMPTY_CLIENTE_ENDERECO = {
+  clienteId: "",
+  clienteNome: "",
+  clienteCpf: "",
+  clienteEmail: "",
+  clienteTelefone: "",
+  clienteRua: "",
+  clienteNumero: "",
+  clienteBairro: "",
+  clienteCidade: "",
+  clienteUf: "",
+  clienteCep: "",
+  clienteComplemento: "",
+};
+
 const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
@@ -155,18 +170,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
     setFormData((prev) => ({
       ...prev,
       tipoCliente: tipo,
-      clienteId: "",
-      clienteNome: "",
-      clienteCpf: "",
-      clienteEmail: "",
-      clienteTelefone: "",
-      clienteRua: "",
-      clienteNumero: "",
-      clienteBairro: "",
-      clienteCidade: "",
-      clienteUf: "",
-      clienteCep: "",
-      clienteComplemento: "",
+      ...EMPTY_CLIENTE_ENDERECO,
     }));
     setError(null);
   };
@@ -198,8 +202,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
     } else {
       setFormData((prev) => ({
         ...prev,
-        clienteId: "",
-        clienteNome: "",
+        ...EMPTY_CLIENTE_ENDERECO,
       }));
     }
     setError(null);
@@ -392,8 +395,8 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
       >
         <div className="flex items-center px-4 sm:px-8 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-              <ShoppingCart className="w-6 h-6 text-[#828282]" />
+            <div className="bg-gray-100 p-2 rounded">
+              <ShoppingCart className="w-6 h-6 text-gray-700" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
               Novo Pedido de Compra
@@ -515,7 +518,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                   required
                   type="text"
                   name="clienteNome"
-                  placeholder="Ex: Fornecedor XYZ, Cliente Particular..."
+                  placeholder="Digite o nome para identificação"
                   value={formData.clienteNome}
                   onChange={handleChange}
                   hint="Este nome será usado apenas para identificação do pedido"
@@ -527,7 +530,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                   as="select"
                   label="Selecionar Cliente"
                   name="clienteId"
-                  placeholder="Selecione um cliente..."
+                  placeholder="Selecione um cliente"
                   options={clientesExistentes.map((cliente) => ({
                     value: String(cliente.id),
                     label: cliente.nome,
@@ -544,7 +547,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     required
                     type="text"
                     name="clienteNome"
-                    placeholder="Digite o nome do cliente"
+                    placeholder="Digite o nome completo"
                     value={formData.clienteNome}
                     onChange={handleChange}
                   />
@@ -577,7 +580,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     label="E-mail"
                     type="email"
                     name="clienteEmail"
-                    placeholder="cliente@email.com"
+                    placeholder="nome@exemplo.com"
                     value={formData.clienteEmail}
                     onChange={handleChange}
                   />
@@ -629,7 +632,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                         as="select"
                         label="Produto"
                         required
-                        placeholder="Selecione..."
+                        placeholder="Selecione um produto"
                         options={produtosDisponiveis.map((p) => ({
                           value: p.id,
                           label: `${p.nome} - R$ ${p.preco?.toFixed(2)}`,
@@ -740,7 +743,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                 as="textarea"
                 label="Observações"
                 name="descricao"
-                placeholder="Observações adicionais sobre o pedido..."
+                placeholder="Digite as observações do pedido"
                 rows={4}
                 value={formData.descricao}
                 onChange={handleChange}

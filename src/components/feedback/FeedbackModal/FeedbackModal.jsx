@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, X } from "lucide-react";
+import { modalClasses } from "../../ui/modal/modalStyles";
 
 const TYPE_CONFIG = {
   success: {
@@ -115,7 +116,7 @@ export default function FeedbackModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/25 backdrop-blur-[3px] p-4 cursor-pointer"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 cursor-pointer"
           onClick={onClose}
           role="presentation"
         >
@@ -139,7 +140,7 @@ export default function FeedbackModal({
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                className={`absolute top-3 right-3 ${modalClasses.closeButton}`}
               aria-label="Fechar"
             >
               <X size={16} />
@@ -149,9 +150,9 @@ export default function FeedbackModal({
             <div className="flex flex-col items-center text-center px-8 pt-8 pb-6 gap-3">
               {/* Icon */}
               <div
-                className={`w-14 h-14 rounded-full ${config.iconBg} ring-8 ${config.ring} flex items-center justify-center mb-1`}
+                className={modalClasses.symbolIcon}
               >
-                <Icon size={28} className={config.iconColor} strokeWidth={2} />
+                <Icon size={28} className="text-gray-700" strokeWidth={2} />
               </div>
 
               {/* Title */}

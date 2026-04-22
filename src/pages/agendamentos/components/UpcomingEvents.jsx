@@ -136,12 +136,7 @@ const UpcomingEvents = ({
 
   if (!upcomingEvents || upcomingEvents.length === 0) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-text-primary">
-            Proximos Eventos
-          </h3>
-        </div>
+      <div>
         <div className="py-8 text-center text-sm text-text-secondary">
           Nenhum evento nos proximos 7 dias
         </div>
@@ -150,14 +145,7 @@ const UpcomingEvents = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-text-primary">Proximos Eventos</h3>
-        <span className="rounded-modern bg-muted px-2 py-1 text-xs text-text-secondary">
-          {upcomingEvents.length}
-        </span>
-      </div>
-
+    <div>
       <div className="max-h-96 space-y-3 overflow-y-auto">
         {upcomingEvents?.map((event) => (
           <div

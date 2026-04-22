@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
-import { User, X, Save } from "lucide-react";
+import { User } from "lucide-react";
 import { IMaskInput } from "react-imask";
 import Button from "../../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../../components/ui/Input/UniversalInput";
+import { modalClasses } from "../../../../components/ui/modal/modalStyles";
+
+const CONTRATO_REGISTRADO = "Registrado";
+const CONTRATO_TEMPORARIO = "Temporário";
+
+const getEscalaPorContrato = (contrato) =>
+  contrato === CONTRATO_TEMPORARIO ? "Sem Escala Definida" : "5x2";
 
 const getFuncionarioInicial = () => ({
   nome: "",
   telefone: "",
   funcao: "",
-  escala: "",
-  contrato: "Registrado",
+  escala: getEscalaPorContrato(CONTRATO_REGISTRADO),
+  contrato: CONTRATO_REGISTRADO,
   status: true,
 });
 
@@ -26,12 +33,14 @@ export default function FuncionarioForm({
 
   useEffect(() => {
     if (modoEdicao && funcionario) {
+      const contrato = funcionario.contrato || CONTRATO_REGISTRADO;
+
       setNovoFuncionario({
         nome: funcionario.nome || "",
         telefone: funcionario.telefone || "",
         funcao: funcionario.funcao || "",
-        escala: funcionario.escala || "",
-        contrato: funcionario.contrato || "Registrado",
+        escala: funcionario.escala || getEscalaPorContrato(contrato),
+        contrato,
         status: funcionario.status === "Ativo" || funcionario.status === true,
       });
     } else {
@@ -41,7 +50,18 @@ export default function FuncionarioForm({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNovoFuncionario((prev) => ({ ...prev, [name]: value }));
+
+    setNovoFuncionario((prev) => {
+      if (name === "contrato") {
+        return {
+          ...prev,
+          contrato: value,
+          escala: getEscalaPorContrato(value),
+        };
+      }
+
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleSwitchChange = (e) => {
@@ -71,45 +91,32 @@ export default function FuncionarioForm({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
-      onClick={handleClose}
-    >
+    <div className={modalClasses.overlay} onClick={handleClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+        className={`${modalClasses.panel} flex max-h-[92vh] max-w-3xl flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className={modalClasses.header}>
           <div className="flex items-center gap-3">
-            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-              <User className="w-6 h-6 text-[#828282]" />
+            <div className={modalClasses.headerIcon}>
+              <User className="h-6 w-6" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className={modalClasses.headerTitle}>
               {modoEdicao ? "Editar Funcionário" : "Adicionar novo funcionário"}
             </h2>
           </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col flex-1 overflow-hidden"
-        >
-          <div className="flex flex-col gap-9 px-6 py-4 space-y-6 flex-1 overflow-y-auto">
-            {/* Informações Básicas */}
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div
+            className={`${modalClasses.body} flex flex-1 flex-col gap-9 space-y-6`}
+          >
             <div className="flex flex-col gap-5 space-y-4">
               <h3 className="flex items-start text-lg font-bold text-gray-700">
                 Informações Básicas
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <UniversalInput
                   label="Nome"
                   required
@@ -148,24 +155,22 @@ export default function FuncionarioForm({
                   value={novoFuncionario.contrato}
                   onChange={handleChange}
                   options={[
-                    { value: "Registrado", label: "Registrado" },
-                    { value: "Fixo", label: "Fixo" },
-                    { value: "Temporário", label: "Temporário" },
+                    { value: CONTRATO_REGISTRADO, label: CONTRATO_REGISTRADO },
+                    { value: CONTRATO_TEMPORARIO, label: CONTRATO_TEMPORARIO },
                   ]}
                 />
 
                 <UniversalInput
                   label="Escala"
+                  required
                   name="escala"
-                  placeholder="Ex: 6x1 - 08h00 às 17h00"
                   value={novoFuncionario.escala}
-                  onChange={handleChange}
+                  readOnly
                   wrapperClassName="col-span-2"
                 />
               </div>
             </div>
 
-            {/* Status */}
             <div className="flex flex-col gap-3 space-y-4">
               <h3 className="flex items-start text-md font-semibold text-gray-700">
                 Status do Contrato
@@ -182,16 +187,11 @@ export default function FuncionarioForm({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="px-4 sm:px-6 py-4 border-t bg-gray-50 flex flex-wrap justify-between gap-3">
+          <div className={modalClasses.footer}>
             <Button variant="ghost" onClick={handleClose}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              startIcon={<Save className="w-4 h-4" />}
-            >
+            <Button type="submit" variant="primary">
               {modoEdicao ? "Salvar Alterações" : "Criar Funcionário"}
             </Button>
           </div>

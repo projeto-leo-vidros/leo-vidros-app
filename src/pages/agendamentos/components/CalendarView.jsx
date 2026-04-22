@@ -181,10 +181,10 @@ const EventDetailsModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] bg-black/50"
             onClick={onClose}
           >
-            <div className="flex min-h-screen items-center justify-center px-4 pb-10">
+            <div className="flex min-h-screen items-center justify-center p-4">
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -258,6 +258,8 @@ const CalendarView = ({
   onEventCreate,
   events = [],
   onEventDeleted,
+  isUpcomingEventsCollapsed = false,
+  onToggleUpcomingEvents,
 }) => {
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
   const [internalViewType, setInternalViewType] = useState("month");
@@ -413,6 +415,37 @@ const CalendarView = ({
     >
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-white px-3 sm:px-6 py-2">
         <div className="flex items-center gap-3 sm:gap-6">
+          {viewType === "month" && onToggleUpcomingEvents && (
+            <button
+              type="button"
+              onClick={onToggleUpcomingEvents}
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900"
+              title={
+                isUpcomingEventsCollapsed
+                  ? "Mostrar proximos eventos"
+                  : "Ocultar proximos eventos"
+              }
+              aria-label={
+                isUpcomingEventsCollapsed
+                  ? "Mostrar proximos eventos"
+                  : "Ocultar proximos eventos"
+              }
+            >
+              {isUpcomingEventsCollapsed ? (
+                <ChevronLeft size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+              <span className="hidden sm:inline">
+                {isUpcomingEventsCollapsed
+                  ? "Mostrar proximos eventos"
+                  : "Ocultar proximos eventos"}
+              </span>
+            </button>
+          )}
+          {viewType === "month" && onToggleUpcomingEvents && (
+            <div className="h-6 w-px bg-gray-300" />
+          )}
           <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-1">
             <button
               onClick={handlePrev}
@@ -427,7 +460,7 @@ const CalendarView = ({
               <ChevronRight size={18} />
             </button>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <h2 className="text-base sm:text-xl md:text-2xl font-bold tracking-tight text-gray-900 capitalize truncate max-w-[160px] sm:max-w-none">
               {renderHeaderTitle()}
             </h2>
@@ -447,7 +480,6 @@ const CalendarView = ({
           >
             <span className="hidden md:inline">Novo Agendamento</span>
           </Button>
-          <div className="mx-2 h-6 w-px bg-gray-300 sm:mx-4"></div>
 
           <div className="relative" ref={dropdownRef}>
             <button

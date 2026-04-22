@@ -124,7 +124,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                 )}
 
                 {!loading && !isError && pagina.map((item) => (
-                    <article key={item.id} className="flex flex-col gap-4 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md bg-white border-slate-200">
+                    <article key={item.id} className="flex flex-col gap-4 rounded-lg border p-5 w-full shadow-[0_10px_24px_-8px_rgba(15,23,42,0.24),-10px_0_20px_-16px_rgba(15,23,42,0.18),10px_0_20px_-16px_rgba(15,23,42,0.18)] transition-all hover:shadow-[0_16px_36px_-10px_rgba(15,23,42,0.28),-12px_0_24px_-18px_rgba(15,23,42,0.2),12px_0_24px_-18px_rgba(15,23,42,0.2)] bg-white border-slate-200">
                         <header className="flex items-center justify-between pb-2 border-b border-slate-100">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-md text-slate-400 bg-slate-100">
@@ -141,9 +141,6 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                             <div className="flex items-center gap-2">
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-blue-600 transition-colors" title="Editar" onClick={() => abrirEditar(item)}>
                                     <Pencil size={18} />
-                                </button>
-                                <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Novo Orçamento" onClick={() => navigate(`/pedidos/${item.id}/orcamento`)}>
-                                    <FileText size={17} />
                                 </button>
                                 <button type="button" className="p-1.5 rounded-md text-slate-500 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
                                     <Trash2 size={16} />

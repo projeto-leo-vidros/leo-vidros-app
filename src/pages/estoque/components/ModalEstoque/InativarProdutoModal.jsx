@@ -15,10 +15,12 @@ const InativarProdutoModal = ({ isOpen, onClose, onConfirm }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm mx-auto text-center"
+        className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm mx-auto text-center"
         onClick={handleModalClick}
       >
-        <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-4" />
+        <div className="mx-auto mb-4 w-fit bg-gray-100 p-2 rounded">
+          <AlertTriangle className="w-6 h-6 text-gray-700" />
+        </div>
 
         <h3 className="text-lg font-bold text-gray-900 mb-2">
           Inativar Produto

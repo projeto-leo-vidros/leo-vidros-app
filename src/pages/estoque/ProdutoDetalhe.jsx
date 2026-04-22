@@ -20,16 +20,18 @@ import {
   ChevronDown,
   ChevronUp,
   Plus,
-  X,
+  Trash2,
   Eye,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
+import Kpis from "../../components/kpis/Kpis";
 import MovimentacaoDetalheModal from "./components/ModalEstoque/MovimentacaoDetalheModal";
 import Api from "../../api/client/Api";
 import { formatCurrency } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
+import { repairEncoding } from "../../utils/fixEncoding";
 
 const formatObservacao = (observacao) => {
   if (!observacao) return "N/A";
@@ -45,6 +47,7 @@ export default function ProductDetailPage() {
   const [estoque, setEstoque] = useState(null);
   const [historico, setHistorico] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editing, setEditing] = useState({});
   const [chartData, setChartData] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -73,7 +76,7 @@ export default function ProductDetailPage() {
         if (estoqueResponse.status !== 200)
           throw new Error("Produto não encontrado");
         const estoqueData = estoqueResponse.data;
-        setEstoque(estoqueData);
+        setEstoque(repairEncoding(estoqueData));
 
         const historicoResponse = await Api.get(`/historicos-estoques/${id}`);
         if (historicoResponse.status === 200) {
@@ -193,6 +196,13 @@ export default function ProductDetailPage() {
   };
 
   const handleAtributoChange = async (attrIndex, field, value) => {
+    if (typeof value === "string" && value.trim() === "") {
+      setError("O atributo não pode ficar vazio.");
+      return;
+    }
+
+    setError(null);
+
     const updatedAtributos = [...(estoque.produto.atributos || [])];
     updatedAtributos[attrIndex] = {
       ...updatedAtributos[attrIndex],
@@ -223,8 +233,8 @@ export default function ProductDetailPage() {
 
   const handleAddAtributo = async () => {
     const newAtributo = {
-      tipo: "novo_tipo",
-      valor: "novo_valor",
+      tipo: "Novo Tipo",
+      valor: "Novo Valor",
     };
 
     const updatedAtributos = [
@@ -289,6 +299,12 @@ export default function ProductDetailPage() {
     isMetric = false,
   }) => {
     const isEditing = editing[field];
+    const displayValue =
+      type === "number"
+        ? isMetric
+          ? value
+          : value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+        : value;
 
     const handleChange = (newValue) => {
       if (isMetric) {
@@ -308,33 +324,36 @@ export default function ProductDetailPage() {
     return (
       <div className="relative">
         {isEditing ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 rounded-lg border-2 border-[#007EA7] bg-sky-50 px-3 py-2 shadow-sm ring-1 ring-[#007EA7]/10">
             <UniversalInput
               type={type}
               value={value}
               onChange={(e) => handleChange(e.target.value)}
               onBlur={() => setEditing((prev) => ({ ...prev, [field]: false }))}
-              className="flex-1"
+              className="flex-1 border-0 bg-transparent px-0 text-slate-900 shadow-none focus:ring-0"
               autoFocus
             />
-            <Check className="w-4 h-4 text-green-600" />
+            <div className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm">
+              <Check className="h-3.5 w-3.5" />
+              Salvar
+            </div>
           </div>
         ) : (
-          <div
+          <button
+            type="button"
             onClick={() => setEditing((prev) => ({ ...prev, [field]: true }))}
-            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-md transition-colors group border border-gray-700"
+            className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-left transition-all duration-150 hover:border-[#007EA7] hover:bg-sky-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007EA7] focus:ring-offset-2"
           >
-            <span className="text-gray-800 text-sm">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900">
               {prefix}
-              {type === "number"
-                ? isMetric
-                  ? value
-                  : value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
-                : value}
+              {displayValue}
               {suffix}
             </span>
-            <Edit2 className="w-3 h-3 text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700 transition-colors group-hover:border-[#007EA7]/30 group-hover:bg-[#007EA7]/10 group-hover:text-[#007EA7]">
+              <Edit2 className="h-3.5 w-3.5" />
+              Editar
+            </span>
+          </button>
         )}
       </div>
     );
@@ -391,14 +410,137 @@ export default function ProductDetailPage() {
         ? "Abaixo do normal"
         : "Disponível";
 
-  const situacaoKpiColors =
-    situacao === "Fora de estoque"
-      ? "from-red-500 to-red-600 border-red-700"
-      : situacao === "Abaixo do normal"
-        ? "from-yellow-500 to-yellow-600 border-yellow-700"
-        : "from-green-500 to-green-600 border-green-700";
-
   const totalValue = (estoque?.quantidadeTotal ?? 0) * (produto?.preco ?? 0);
+  const quantidadeDisponivel = Math.max(
+    0,
+    estoque.quantidadeDisponivel - estoque.reservado,
+  );
+
+  const getStatusClasses = (status) => {
+    if (status === "ok") {
+      return {
+        cardClassName:
+          "border border-[#3B82F6]/40 bg-gradient-to-br from-[#3B82F6] to-[#2563EB] shadow-md shadow-blue-900/20",
+        iconClassName: "text-blue-50",
+        titleClassName: "text-blue-50 font-semibold",
+        valueClassName: "text-white",
+        captionClassName: "text-blue-100",
+      };
+    }
+
+    if (status === "normal") {
+      return {
+        cardClassName:
+          "border border-[#22C55E]/40 bg-gradient-to-br from-[#22C55E] to-[#16A34A] shadow-md shadow-green-900/20",
+        iconClassName: "text-green-50",
+        titleClassName: "text-green-50 font-semibold",
+        valueClassName: "text-white",
+        captionClassName: "text-green-100",
+      };
+    }
+
+    if (status === "risco") {
+      return {
+        cardClassName:
+          "border border-[#FACC15]/50 bg-gradient-to-br from-[#FACC15] to-[#EAB308] shadow-md shadow-yellow-900/20",
+        iconClassName: "text-yellow-950",
+        titleClassName: "text-yellow-950 font-semibold",
+        valueClassName: "text-yellow-950",
+        captionClassName: "text-yellow-900",
+      };
+    }
+
+    return {
+      cardClassName:
+        "border border-[#EF4444]/40 bg-gradient-to-br from-[#EF4444] to-[#DC2626] shadow-md shadow-red-900/20",
+      iconClassName: "text-red-50",
+      titleClassName: "text-red-50 font-semibold",
+      valueClassName: "text-white",
+      captionClassName: "text-red-100",
+    };
+  };
+
+  const disponibilidadeStatus =
+    quantidadeDisponivel === 0
+      ? "alerta"
+      : quantidadeDisponivel <= (metrica.nivelMinimo || 0)
+        ? "risco"
+        : quantidadeDisponivel <= (metrica.nivelMaximo || Number.MAX_SAFE_INTEGER)
+          ? "normal"
+          : "ok";
+
+  const reservadoStatus =
+    estoque.reservado === 0
+      ? "ok"
+      : estoque.reservado >= quantidadeDisponivel
+        ? "alerta"
+        : estoque.reservado >= quantidadeDisponivel * 0.6
+          ? "risco"
+          : "normal";
+
+  const situacaoStatus =
+    situacao === "Fora de estoque"
+      ? "alerta"
+      : situacao === "Abaixo do normal"
+        ? "risco"
+        : "normal";
+
+  const estoqueKpiBaseClasses = {
+    cardClassName:
+      "border border-gray-200 bg-white shadow-sm",
+    iconClassName: "text-slate-700",
+    titleClassName: "text-slate-700 font-semibold",
+    valueClassName: "text-slate-900",
+    captionClassName: "text-slate-600",
+  };
+
+  const situacaoKpiClasses =
+    getStatusClasses(situacaoStatus);
+
+  const estoqueKpiStats = [
+    {
+      title: "Quantidade Total",
+      value: estoque.quantidadeTotal,
+      caption: produto.unidademedida,
+      icon: Package,
+      ...estoqueKpiBaseClasses,
+    },
+    {
+      title: "Disponível",
+      value: quantidadeDisponivel,
+      caption: "Pronto para uso",
+      icon: TrendingUp,
+      ...getStatusClasses(disponibilidadeStatus),
+    },
+    {
+      title: "Reservado",
+      value: estoque.reservado,
+      caption: "Em separação",
+      icon: TrendingDown,
+      ...getStatusClasses(reservadoStatus),
+    },
+    {
+      title: "Situação do Estoque",
+      value: situacao,
+      caption: "Status atual",
+      icon: Eye,
+      ...situacaoKpiClasses,
+    },
+    {
+      title: "Preço Unitário",
+      value: formatCurrency(produto.preco),
+      caption: `Por ${produto.unidademedida}`,
+      icon: Package,
+      ...estoqueKpiBaseClasses,
+    },
+    {
+      title: "Valor Total",
+      value: formatCurrency(totalValue),
+      caption: "Em estoque",
+      icon: TrendingUp,
+      ...estoqueKpiBaseClasses,
+    },
+  ];
 
   return (
     <div className="app-page flex bg-[#f7f9fa] min-h-screen">
@@ -431,79 +573,10 @@ export default function ProductDetailPage() {
             {/* Seção: KPIs */}
             {sectionsOpen.kpis && (
               <div className="mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                  <div className="flex flex-col gap-1 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
-                      Quantidade Total
-                    </p>
-                    <p className="text-3xl font-bold text-white">
-                      {estoque.quantidadeTotal}
-                    </p>
-                    <p className="text-md text-blue-100 mt-2">
-                      {produto.unidademedida}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
-                      Disponível
-                    </p>
-                    <p className="text-2xl font-bold text-white">
-                      {Math.max(
-                        0,
-                        estoque.quantidadeDisponivel - estoque.reservado,
-                      )}
-                    </p>
-                    <p className="text-md text-blue-100 mt-2">
-                      Pronto para uso
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
-                      Reservado
-                    </p>
-                    <p className="text-2xl font-bold text-white">
-                      {estoque.reservado}
-                    </p>
-                    <p className="text-md text-blue-100 mt-2">Em separação</p>
-                  </div>
-
-                  {/* KPI com cor dinâmica baseada na situação */}
-                  <div
-                    className={`flex flex-col gap-3 bg-gradient-to-br ${situacaoKpiColors} rounded-lg border-2 p-6`}
-                  >
-                    <p className="text-md text-white font-bold mb-2">
-                      Situação do Estoque
-                    </p>
-                    <p className="text-lg font-bold text-white">{situacao}</p>
-                    <p className="text-md text-white opacity-90 mt-2">
-                      Status atual
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
-                      Preço Unitário
-                    </p>
-                    <p className="text-2xl font-bold text-white">
-                      {formatCurrency(produto.preco)}
-                    </p>
-                    <p className="text-md text-blue-100 mt-2">
-                      Por {produto.unidademedida}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-lg text-white font-bold mb-2">
-                      Valor Total
-                    </p>
-                    <p className="text-2xl font-bold text-white">
-                      {formatCurrency(totalValue)}
-                    </p>
-                    <p className="text-md text-blue-100 mt-2">Em estoque</p>
-                  </div>
-                </div>
+                <Kpis
+                  stats={estoqueKpiStats}
+                  gridClassName="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6"
+                />
               </div>
             )}
 
@@ -586,7 +659,7 @@ export default function ProductDetailPage() {
                 <div className="p-6 pt-0">
                   {/* Toggle Status */}
                   <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-                    <span className="text-sm font-bold text-gray-700">
+                    <span className="text-sm sm:text-base font-semibold tracking-normal text-gray-700">
                       Status do Produto:
                     </span>
                     <button
@@ -699,30 +772,81 @@ export default function ProductDetailPage() {
 
             {/* Seção: Atributos */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
-              <button
-                onClick={() => toggleSection("attributes")}
-                className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
-              >
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Atributos do Produto
-                </h2>
-                {sectionsOpen.attributes ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500 cursor-pointer" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500 cursor-pointer" />
-                )}
-              </button>
+              <div className="flex flex-col gap-4 border-b border-gray-200 p-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Atributos do Produto
+                  </h2>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection("attributes")}
+                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:border-[#007EA7] hover:bg-sky-50 hover:text-[#007EA7]"
+                    aria-label={
+                      sectionsOpen.attributes
+                        ? "Esconder atributos"
+                        : "Mostrar atributos"
+                    }
+                  >
+                    {sectionsOpen.attributes ? (
+                      <ChevronUp className="w-5 h-5" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
               {sectionsOpen.attributes && (
-                <div className="p-6 pt-0">
-                  <div className="space-y-3">
+                <div className="flex flex-col gap-5 p-6">
+                  <div className="flex justify-end">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAddAtributo}
+                      startIcon={<Plus className="w-5 h-5" />}
+                      className="whitespace-nowrap"
+                    >
+                      Adicionar Atributo
+                    </Button>
+                  </div>
+
+                  {error && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="space-y-5">
+                    {(produto.atributos || []).length === 0 && (
+                      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+                        Nenhum atributo cadastrado. Clique em "Adicionar Atributo" para incluir o primeiro.
+                      </div>
+                    )}
+
                     {(produto.atributos || []).map((attr, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 bg-gray-50 p-3 rounded-md"
+                        className="relative flex flex-col gap-5 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
                       >
-                        <div className="flex-1 grid grid-cols-2 gap-3">
-                          <div>
+                        <div className="flex items-center justify-between gap-3 pb-1">
+                          <p className="text-sm font-semibold text-gray-700">
+                            Atributo {index + 1}
+                          </p>
+
+                          <button
+                            onClick={() => handleRemoveAtributo(index)}
+                            className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Remover
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                          <div className="min-w-0">
                             <UniversalInput
                               label="Tipo"
                               value={attr.tipo}
@@ -736,7 +860,7 @@ export default function ProductDetailPage() {
                               placeholder="Ex: cor, espessura"
                             />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <UniversalInput
                               label="Valor"
                               value={attr.valor}
@@ -751,23 +875,9 @@ export default function ProductDetailPage() {
                             />
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleRemoveAtributo(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors mt-5"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
                       </div>
                     ))}
 
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleAddAtributo}
-                      startIcon={<Plus className="w-4 h-4" />}
-                    >
-                      Adicionar Atributo
-                    </Button>
                   </div>
                 </div>
               )}
