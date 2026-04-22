@@ -2,7 +2,7 @@
 FROM node:20-alpine as builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm cache clean --force && npm ci --prefer-online
 COPY . .
 
 ARG VITE_BACKEND_URL=/api
