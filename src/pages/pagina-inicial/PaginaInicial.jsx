@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -11,13 +11,18 @@ import {
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import Kpis from "../../components/kpis/Kpis";
+import FaturamentoAnualModal from "../../components/kpis/FaturamentoAnualModal";
+import OrcamentosAbertosModal from "../../components/kpis/OrcamentosAbertosModal";
 import { useDashboardKpis } from "../../hooks/queries/useDashboard";
-import { usePedidosServico } from "../../hooks/queries/usePedidos";
 
 export default function PaginaInicial() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [faturamentoModalOpen, setFaturamentoModalOpen] = useState(false);
+  const [orcamentosModalOpen, setOrcamentosModalOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const handleOpenFaturamentoModal = useCallback(() => setFaturamentoModalOpen(true), []);
+  const handleOpenOrcamentosModal = useCallback(() => setOrcamentosModalOpen(true), []);
 
   const {
     faturamentoMes,
@@ -31,7 +36,6 @@ export default function PaginaInicial() {
     valorOrcamentosAberto,
     isLoading: loading,
   } = useDashboardKpis();
-  const { data: pedidosServico = [] } = usePedidosServico();
 
   const handleAgendamentoItemClick = (agendamentoId) => {
     navigate(`/agendamentos?id=${agendamentoId}`);
@@ -72,23 +76,26 @@ export default function PaginaInicial() {
     return `${dia}/${mes}`;
   };
 
+  const mesAtual = new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" });
+
   const calculatedKpiData = useMemo(
     () => [
       {
         title: "Faturamento do mes",
-        value: faturamentoMes ? `R$ ${faturamentoMes.toLocaleString("pt-BR")}` : "R$ 0",
+        value: faturamentoMes ? `R$ ${Number(faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "R$ 0",
         icon: CircleDollarSign,
-        caption: "Maio 2026",
-        trend: percentualFaturamento
+        caption: mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1),
+        trend: percentualFaturamento != null
           ? `${percentualFaturamento > 0 ? "+" : ""}${percentualFaturamento}%`
           : "",
         color: "blue",
+        onClick: handleOpenFaturamentoModal,
       },
       {
         title: "Agendamentos de Hoje",
         value: qtdAgendamentosHoje || 0,
         icon: Calendar,
-        caption: `${qtdAgendamentosFuturos || 0} agendamentos futuros`,
+        caption: `${qtdAgendamentosFuturos || 0} agendamentos nos proximos dias`,
         color: "green",
       },
       {
@@ -103,9 +110,10 @@ export default function PaginaInicial() {
         value: orcamentosAberto || 0,
         icon: FileText,
         caption: valorOrcamentosAberto
-          ? `R$ ${valorOrcamentosAberto.toLocaleString("pt-BR")} em negociacao`
+          ? `R$ ${Number(valorOrcamentosAberto).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em negociacao`
           : "R$ 0 em negociacao",
         color: "purple",
+        onClick: handleOpenOrcamentosModal,
       },
     ],
     [
@@ -116,36 +124,19 @@ export default function PaginaInicial() {
       qtdItensCriticos,
       orcamentosAberto,
       valorOrcamentosAberto,
+      handleOpenFaturamentoModal,
+      handleOpenOrcamentosModal,
     ],
   );
 
-  const servicoNomePorAgendamento = useMemo(() => {
-    const mapa = new Map();
-
-    pedidosServico.forEach((pedido) => {
-      const nomeServico =
-        pedido?.servico?.nome || pedido?.servicoNome || pedido?.produtosDesc || "";
-
-      (pedido?.servico?.agendamentos || []).forEach((agendamento) => {
-        if (agendamento?.id) {
-          mapa.set(agendamento.id, nomeServico);
-        }
-      });
-    });
-
-    return mapa;
-  }, [pedidosServico]);
-
-  const getServicoNomeAgendamento = (agendamento) => {
-    return (
-      agendamento?.servicoNome ||
-      servicoNomePorAgendamento.get(agendamento?.idAgendamento) ||
-      "Nao informado"
-    );
-  };
-
   return (
-    <div className="app-page flex min-h-screen bg-[#f7f9fa]">
+    <div className="flex min-h-screen bg-[#f7f9fa]">
+      {faturamentoModalOpen && (
+        <FaturamentoAnualModal onClose={() => setFaturamentoModalOpen(false)} />
+      )}
+      {orcamentosModalOpen && (
+        <OrcamentosAbertosModal onClose={() => setOrcamentosModalOpen(false)} />
+      )}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="app-content flex min-h-screen flex-1 flex-col">
@@ -222,7 +213,7 @@ export default function PaginaInicial() {
                           </div>
                           <div>
                             <p className="text-base font-bold text-[#1a2b3b] md:text-lg">
-                              Servico: {getServicoNomeAgendamento(ag)}
+                              Servico: {ag.servicoNome || "Nao informado"}
                             </p>
                             <p className="text-xs text-gray-500">
                               {formatHorarioAgendamento(
