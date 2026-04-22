@@ -25,6 +25,7 @@ import EntradaSaidaEstoque from "./components/ModalEstoque/EntradaSaidaEstoque";
 import InativarProdutoModal from "./components/ModalEstoque/InativarProdutoModal";
 import { formatCurrency, parseCurrency } from "../../utils/formatters";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
+import { repairEncoding } from "../../utils/fixEncoding";
 
 const ITENS_POR_PAGINA = 6;
 
@@ -78,7 +79,7 @@ export default function Estoque() {
         id: item.produto.id,
         nome: item.produto.nome,
         descricao: item.produto.descricao || "",
-        unidademedida: item.produto.unidademedida || "unidade",
+        unidademedida: repairEncoding(item.produto.unidademedida) || "unidade",
         preco: item.produto.preco ?? 0,
         ativo: item.produto.ativo ?? true,
 

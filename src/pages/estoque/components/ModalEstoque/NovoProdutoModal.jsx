@@ -148,7 +148,7 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
 
     if (step === 1 && hasIncompleteAtributo) {
       setError(
-        "Preencha todos os atributos adicionados ou remova os que nÃ£o for usar",
+        "Preencha todos os atributos adicionados ou remova os que não for usar",
       );
       return false;
     }

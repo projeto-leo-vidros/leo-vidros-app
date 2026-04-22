@@ -81,6 +81,7 @@ const UniversalInput = React.forwardRef(
       readOnly = false,
       startIcon,
       endIcon,
+      endIconTitle,
       options = [],
       placeholder,
       registration,
@@ -199,6 +200,20 @@ const UniversalInput = React.forwardRef(
           {errorMessage}
         </p>
       ) : null;
+
+    const renderEndIcon = (icon, className) => {
+      if (!icon) return null;
+
+      return (
+        <span
+          className={className}
+          title={endIconTitle}
+          aria-label={endIconTitle}
+        >
+          {icon}
+        </span>
+      );
+    };
 
     // ── Hint ────────────────────────────────────────────────
     const renderHint = () =>
@@ -372,9 +387,8 @@ const UniversalInput = React.forwardRef(
               </button>
             )}
 
-            {!isPassword && endIcon && (
-              <span className="text-[#6b7280] flex-shrink-0">{endIcon}</span>
-            )}
+            {!isPassword &&
+              renderEndIcon(endIcon, "text-[#6b7280] flex-shrink-0")}
           </div>
 
           {renderError()}
@@ -413,11 +427,11 @@ const UniversalInput = React.forwardRef(
             </button>
           )}
 
-          {!isPassword && endIcon && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-              {endIcon}
-            </span>
-          )}
+          {!isPassword &&
+            renderEndIcon(
+              endIcon,
+              "absolute right-3 top-1/2 -translate-y-1/2 text-gray-400",
+            )}
         </div>
 
         {renderError()}

@@ -95,14 +95,14 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           onClick={handleProfileClick}
         >
           <div className="hidden sm:block text-right mr-1">
-            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">
+            <p className="text-xs sm:text-base md:text-lg font-semibold text-white group-hover:text-gray-200 transition-colors">
               {userName}
             </p>
-            <p className="text-[11px] sm:text-xs text-gray-300">Administador</p>
+            <p className="text-xs sm:text-sm md:text-base text-gray-300">Administrador</p>
           </div>
           <Avatar
             src={userPhoto}
-            className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border-2 border-white group-hover:border-gray-300 transition-colors"
+            className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
           <ChevronDown
             className={`text-white transition-transform duration-300 group-hover:text-gray-300 cursor-pointer ${

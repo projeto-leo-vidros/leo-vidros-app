@@ -195,7 +195,7 @@ export default function ClienteFormModal({
           >
             <section className="flex flex-col gap-5">
               <h3 className="text-left text-lg font-bold text-gray-700">
-                Informacoes basicas
+                Informações Básicas
               </h3>
 
               <div className="grid grid-cols-2 gap-4">

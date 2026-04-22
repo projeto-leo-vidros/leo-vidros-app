@@ -232,10 +232,10 @@ export default function Acesso() {
         <main className="flex-1 flex flex-col items-center px-4 md:px-8 pt-6 pb-10 gap-6">
           <div className="w-full max-w-[1380px] flex flex-col gap-8">
             <div className="mb-10 text-center">
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="mb-2 text-2xl font-semibold text-gray-800 sm:text-3xl md:text-4xl">
                 Controle de acesso
               </h1>
-              <p className="text-gray-500 text-lg">
+              <p className="text-sm text-gray-500 sm:text-base">
                 Visualize todas as solicitações de acessos de sua empresa
               </p>
             </div>

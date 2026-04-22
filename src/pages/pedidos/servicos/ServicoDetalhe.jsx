@@ -84,8 +84,8 @@ function Stepper({ status }) {
   const activeStep = getStepIndex(status);
 
   return (
-    <div className="bg-transparent rounded-lg border border-gray-200 px-6 py-6 shadow-sm flex flex-col gap-2">
-      <p className="text-sm font-semibold text-gray-600 mb-12">Progresso do Serviço</p>
+    <div className="bg-transparent rounded-lg px-6 py-6 flex flex-col gap-5 ">
+      <p className="text-md font-semibold text-gray-600 mb-12">Progresso do Serviço</p>
 
       <div className="overflow-x-auto -mx-2 px-2">
       <div className="relative flex items-start justify-between min-w-[560px]">
@@ -721,7 +721,7 @@ export default function PedidoDetalhe() {
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
 
         {/* ── Área de scroll ── */}
-        <main className="app-scroll-area flex-1 px-4 pt-20 pb-6 sm:px-6 flex justify-center">
+        <main className="app-scroll-area flex-1 px-4 pt-25 pb-6 sm:px-6 flex justify-center">
           <div className="w-full max-w-[1400px] flex flex-col gap-5">
 
             {/* Topbar */}
@@ -734,15 +734,12 @@ export default function PedidoDetalhe() {
                 Voltar para Serviços
               </button>
 
-              <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-2">
-                <p className="text-xl font-bold text-gray-800 leading-tight flex items-center justify-center gap-3">
-                  <span className="inline-flex items-center justify-center bg-[#e0f2fa] p-1.5 rounded-md shadow-sm">
-                    {/* w-4.5 é inválido no Tailwind — corrigido para w-[18px] */}
+              <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-4">
+                <p className="text-xl font-bold text-gray-800 bg-[#e0f2fa] p-3 rounded-md shadow-sm leading-tight flex items-center justify-center gap-3">
                     <Wrench className="w-[18px] h-[18px] text-[#007EA7]" />
-                  </span>
                   Pedido #{String(pedido.id).padStart(3, "0")}
                 </p>
-                <p className="text-sm text-gray-500 mt-6">
+                <p className="text-md text-gray-500 mt-6">
                   {formatDate(pedido.dataCompra)} · {pedido.clienteNome}
                 </p>
               </div>
@@ -1019,10 +1016,10 @@ export default function PedidoDetalhe() {
                             }
                             handleFieldChange("etapaServico", novaEtapa);
                           }}
-                          className={`w-full px-3 py-2 border-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
+                          className={`w-full px-3 py-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
                             temMudancaEtapa
-                              ? "border-amber-400 bg-amber-50"
-                              : "border-gray-300 focus:border-[#007EA7]"
+                              ? "bg-amber-50"
+                              : "border-transparent"
                           }`}
                           disabled={etapaTravadaPorAgendamento}
                         >
@@ -1263,7 +1260,6 @@ export default function PedidoDetalhe() {
               </div>
             </div>
 
-            {/* Espaço inferior para não ficar escondido atrás da barra fixa */}
             <div className="h-6" />
           </div>
         </main>

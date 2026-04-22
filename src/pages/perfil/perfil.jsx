@@ -31,6 +31,8 @@ const InputField = ({
   disabled = false,
   className = "",
   showPasswordToggle = false,
+  lockTooltip = "Este campo não pode ser alterado.",
+  inputClassName = "",
 }) => (
   <UniversalInput
     label={label}
@@ -39,8 +41,10 @@ const InputField = ({
     onChange={onChange}
     type={showPasswordToggle ? "password" : type}
     disabled={disabled}
+    className={inputClassName}
     wrapperClassName={className}
     endIcon={disabled && !showPasswordToggle ? <Lock className="h-4 w-4 text-gray-400" /> : undefined}
+    endIconTitle={disabled && !showPasswordToggle ? lockTooltip : undefined}
   />
 );
 
@@ -54,6 +58,8 @@ InputField.propTypes = {
   disabled: PropTypes.bool,
   className: PropTypes.string,
   showPasswordToggle: PropTypes.bool,
+  lockTooltip: PropTypes.string,
+  inputClassName: PropTypes.string,
 };
 
 // COMPONENTE MESSAGE ALERT (Movido para fora do componente Perfil por boas práticas)
@@ -93,8 +99,6 @@ export default function Perfil() {
   const [activeTab, setActiveTab] = useState("personal");
   const [isEditing, setIsEditing] = useState(false);
 
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [cepLoading, setCepLoading] = useState(false);
@@ -122,6 +126,17 @@ export default function Perfil() {
   const { user, updatePhoto, clearPhoto, updateUser } = useUser();
   const userPhoto = user.photo ?? DefaultAvatar;
   const fileInputRef = useRef(null);
+  const lockedInputClassName = !isEditing ? "border-gray-700 bg-gray-100" : "";
+
+  useEffect(() => {
+    if (!message.text) return undefined;
+
+    const timeoutId = setTimeout(() => {
+      setMessage({ type: "", text: "" });
+    }, 4000);
+
+    return () => clearTimeout(timeoutId);
+  }, [message]);
 
   const getUserId = () => {
     const userId = sessionStorage.getItem("userId");
@@ -311,6 +326,11 @@ export default function Perfil() {
     return true;
   };
 
+  const wantsPasswordChange =
+    Boolean(formData.senhaAtual) ||
+    Boolean(formData.novaSenha) ||
+    Boolean(formData.confirmarSenha);
+
   const handleSave = () => {
     const userId = sessionStorage.getItem("userId");
 
@@ -322,7 +342,7 @@ export default function Perfil() {
       return;
     }
 
-    if (isChangingPassword && !validatePasswordChange()) {
+    if (wantsPasswordChange && !validatePasswordChange()) {
       return;
     }
 
@@ -345,7 +365,7 @@ export default function Perfil() {
       email: formData.email,
       cpf: formData.cpf,
       telefone: formData.telefone,
-      senha: isChangingPassword ? formData.novaSenha : "",
+      senha: wantsPasswordChange ? formData.novaSenha : "",
       endereco: enderecoRequest,
     };
 
@@ -356,12 +376,11 @@ export default function Perfil() {
 
         setMessage({
           type: "success",
-          text: isChangingPassword
+          text: wantsPasswordChange
             ? "Perfil e senha atualizados com sucesso!"
             : "Perfil atualizado com sucesso!",
         });
         setIsEditing(false);
-        setIsChangingPassword(false);
 
         return Api.get(`/usuarios/${userId}`);
       })
@@ -388,6 +407,9 @@ export default function Perfil() {
           estado: endereco.uf || endereco.estado || "",
           pais: endereco.pais || "Brasil",
           complemento: endereco.complemento || "",
+          senhaAtual: "",
+          novaSenha: "",
+          confirmarSenha: "",
         });
       })
       .catch((error) => {
@@ -404,6 +426,7 @@ export default function Perfil() {
     if (isEditing) {
       handleSave();
     } else {
+      setSidebarOpen(false);
       setIsEditing(true);
       setMessage({ type: "", text: "" });
       setCepError("");
@@ -420,7 +443,9 @@ export default function Perfil() {
         style={{ display: "none" }}
       />
 
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      {!isEditing && (
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      )}
 
       <div className="app-content flex-1 flex flex-col">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
@@ -531,13 +556,14 @@ export default function Perfil() {
 
                     <div className="space-y-2">
                       {activeTab === "personal" ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-6 border-t border-gray-800">
                           <InputField
                             label="Nome"
                             name="nome"
                             value={formData.nome}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-2 text-start py-3"
                           />
 
@@ -547,6 +573,8 @@ export default function Perfil() {
                             value={formData.cpf}
                             onChange={handleInputChange}
                             disabled={true}
+                            inputClassName="border-gray-700 bg-gray-100"
+                            lockTooltip="O CPF não pode ser alterado no perfil."
                             className="text-start"
                           />
 
@@ -556,6 +584,8 @@ export default function Perfil() {
                             value={formData.cargo}
                             onChange={handleInputChange}
                             disabled={true}
+                            inputClassName="border-gray-700 bg-gray-100"
+                            lockTooltip="O cargo é definido pelo sistema e não pode ser alterado aqui."
                             className="text-start"
                           />
 
@@ -566,6 +596,7 @@ export default function Perfil() {
                             value={formData.email}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="text-start"
                           />
 
@@ -575,26 +606,18 @@ export default function Perfil() {
                             value={formData.telefone}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="text-start"
                           />
 
-                          <div className="lg:col-span-2 pt-6 border-t border-gray-200">
-                            <div className="flex items-center justify-between mb-4">
+                          <div className="lg:col-span-2 pt-6 border-t border-gray-800">
+                            <div className="mb-4">
                               <h3 className="text-lg font-semibold text-gray-800">
                                 Segurança da Conta
                               </h3>
-                              {isEditing && !isChangingPassword && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setIsChangingPassword(true)}
-                                >
-                                  Alterar senha
-                                </Button>
-                              )}
                             </div>
 
-                            {isChangingPassword && isEditing ? (
+                            {isEditing ? (
                               <div className="flex flex-col gap-1 space-y-2 bg-gray-50 p-6 rounded-lg border border-gray-200">
                                 <InputField
                                   label="Senha Atual"
@@ -625,28 +648,11 @@ export default function Perfil() {
                                   showPasswordToggle={true}
                                   className="text-start gap-2"
                                 />
-
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setIsChangingPassword(false);
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      novaSenha: "",
-                                      confirmarSenha: "",
-                                    }));
-                                  }}
-                                >
-                                  Cancelar alteração de senha
-                                </Button>
                               </div>
                             ) : (
                               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                 <p className="text-sm text-gray-600">
-                                  {isEditing
-                                    ? "Clique em 'Alterar senha' para atualizar sua senha de acesso."
-                                    : "Clique em 'Editar Informações' para alterar sua senha."}
+                                  {"Clique em 'Editar Informações' para alterar sua senha."}
                                 </p>
                               </div>
                             )}
@@ -660,6 +666,7 @@ export default function Perfil() {
                             value={formData.rua}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-4 text-start"
                           />
 
@@ -670,6 +677,7 @@ export default function Perfil() {
                               value={formData.cep}
                               onChange={handleInputChange}
                               disabled={!isEditing}
+                              className={lockedInputClassName}
                               maxLength={9}
                               placeholder="00000-000"
                               error={cepError || undefined}
@@ -682,6 +690,11 @@ export default function Perfil() {
                                   <AlertCircle className="h-4 w-4 text-red-500" />
                                 ) : undefined
                               }
+                              endIconTitle={
+                                !isEditing
+                                  ? "Clique em 'Editar Informações' para alterar este campo."
+                                  : undefined
+                              }
                             />
                           </div>
 
@@ -691,6 +704,7 @@ export default function Perfil() {
                             value={formData.bairro}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-2 text-start"
                           />
 
@@ -700,6 +714,7 @@ export default function Perfil() {
                             value={formData.cidade}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-2 text-start"
                           />
 
@@ -709,6 +724,7 @@ export default function Perfil() {
                             value={formData.numero}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-2 text-start"
                           />
 
@@ -718,6 +734,7 @@ export default function Perfil() {
                             value={formData.estado}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-2 text-start"
                           />
 
@@ -727,6 +744,7 @@ export default function Perfil() {
                             value={formData.pais}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-2 text-start"
                           />
 
@@ -736,6 +754,7 @@ export default function Perfil() {
                             value={formData.complemento}
                             onChange={handleInputChange}
                             disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
                             className="lg:col-span-4 text-start"
                           />
                         </div>

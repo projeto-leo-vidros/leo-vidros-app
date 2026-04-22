@@ -1,5 +1,6 @@
 import axios from "axios";
 import Swal from "sweetalert2";
+import { repairEncoding } from "../../utils/fixEncoding";
 
 const BACKEND_URL =
   import.meta.env.VITE_BACKEND_URL;
@@ -18,7 +19,15 @@ const configureInterceptors = (instance) => {
   });
 
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      const responseType = response.config?.responseType;
+
+      if (responseType !== "blob" && responseType !== "arraybuffer") {
+        response.data = repairEncoding(response.data);
+      }
+
+      return response;
+    },
     (error) => {
       const skipRedirect = error.config?.skipAuthRedirect;
 

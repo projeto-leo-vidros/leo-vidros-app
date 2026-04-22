@@ -97,12 +97,6 @@ const MovimentacaoDetalheModal = ({ isOpen, onClose, movimento, produto }) => {
             </span>
             Detalhes da Movimentação #{movimento.id}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-full transition-colors z-20"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
         </div>
 
         {/* Conteúdo do Modal - Estilo Chat */}

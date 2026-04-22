@@ -253,7 +253,7 @@ const EntradaSaidaEstoque = ({
             {loading
               ? "Processando..."
               : currentItemIndex < itemsInfo.length - 1
-                ? "Proximo Item"
+                ? "Próximo Item"
                 : "Finalizar"}
           </Button>
         </div>
