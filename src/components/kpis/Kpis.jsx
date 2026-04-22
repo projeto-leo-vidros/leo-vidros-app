@@ -38,7 +38,6 @@ export default function Kpis({ stats = [], gridClassName }) {
             }
             className={cardClassName}
           >
-            {/* Título e ícone */}
             <div className={`mb-4 flex w-full items-center justify-center gap-2 text-center ${stat.headerClassName || ""}`}>
               {Icon && <Icon className={`h-5 w-5 ${stat.iconClassName || "text-[#003d6b]"}`} />}
               <p className={`text-sm leading-tight font-semibold break-words ${stat.titleClassName || "text-gray-800"}`}>
@@ -46,7 +45,6 @@ export default function Kpis({ stats = [], gridClassName }) {
               </p>
             </div>
 
-            {/* Valor e legenda */}
             <div className="mt-2 flex flex-col items-center justify-center gap-4">
               <h2 className={`text-3xl font-bold tracking-tight ${stat.valueClassName || "text-gray-900"}`}>
                 {stat.value}
