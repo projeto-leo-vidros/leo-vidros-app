@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Check } from "lucide-react";
+import { Filter } from "lucide-react";
 
 const FilterDropdown = ({
   isOpen,
@@ -72,37 +72,45 @@ const FilterDropdown = ({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute z-10 top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl/20 border border-gray-200 p-4">
+    <div className="absolute z-10 top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-2xl shadow-slate-400/60 border border-gray-200 p-4 flex flex-col gap-2">
       <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-4 border-b pb-3">
         <Filter className="w-4 h-4 mr-2" />
         Filtros
       </div>
 
       {Object.keys(filterOptions).map((key) => (
-        <div key={key} className="mb-4 last:mb-0 py-2">
+        <div key={key} className="mb-4 last:mb-0 py-2 flex flex-col gap-2">
           <h3 className="text-sm font-semibold text-gray-800 mb-2">
             {filterOptions[key].title}
           </h3>
-          <div className="space-y-1">
+          <div className="space-y-2 flex flex-col gap-2">
             {filterOptions[key].options.map((option) => {
               const isSelected = (tempFilters[key] || []).includes(option);
               return (
-                <div
+                <label
                   key={option}
-                  className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => handleToggleFilter(key, option)}
+                  className={`flex items-center gap-3 rounded-md border p-2 cursor-pointer transition-colors ${
+                    isSelected
+                      ? "border-[#007EA7] bg-[#EAF7FC]"
+                      : "border-transparent hover:bg-gray-50"
+                  }`}
                 >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleToggleFilter(key, option)}
+                    className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-[#007EA7] focus:ring-2 focus:ring-[#007EA7] focus:ring-offset-0"
+                  />
                   <span
                     className={`text-sm ${
                       isSelected
-                        ? "font-medium text-[#003d6b]"
+                        ? "font-medium text-[#007EA7]"
                         : "text-gray-700"
                     }`}
                   >
                     {option}
                   </span>
-                  {isSelected && <Check className="w-4 h-4 text-[#003d6b]" />}
-                </div>
+                </label>
               );
             })}
           </div>

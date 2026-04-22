@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   Button,
   TextField,
   Typography,
 } from "@mui/material";
+import { muiModalSx } from "../../../../components/ui/modal/modalStyles";
 
 export default function DeleteFuncionario({
   open,
@@ -26,7 +27,7 @@ export default function DeleteFuncionario({
       deletarFuncionario(funcionario.id);
       setOpen(false);
     } else {
-      alert("O nome digitado não confere com o funcionário.");
+      alert("O nome digitado nao confere com o funcionario.");
     }
   };
 
@@ -36,12 +37,15 @@ export default function DeleteFuncionario({
       onClose={() => setOpen(false)}
       fullWidth
       maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: "20px" } }}
+      sx={muiModalSx}
+      PaperProps={{ sx: { borderRadius: "28px" } }}
     >
-      <DialogTitle>Confirmar Exclusão</DialogTitle>
-      <DialogContent>
+      <DialogTitle sx={{ px: 3, py: 2.5, fontWeight: 700 }}>
+        Confirmar Exclusao
+      </DialogTitle>
+      <DialogContent sx={{ px: 3, pb: 1 }}>
         <Typography mb={2}>
-          Deseja realmente excluir este funcionário?
+          Deseja realmente excluir este funcionario?
         </Typography>
         {funcionario && (
           <Typography mb={1}>Nome: {funcionario.nome}</Typography>
@@ -54,7 +58,7 @@ export default function DeleteFuncionario({
           margin="dense"
         />
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, py: 2, bgcolor: "#f8fafc" }}>
         <Button onClick={handleDelete} variant="contained" color="error">
           Excluir
         </Button>

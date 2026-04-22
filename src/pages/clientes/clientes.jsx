@@ -1,11 +1,9 @@
 import React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import * as XLSX from "xlsx";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import { Search, Upload, Edit, Eye, Plus } from "lucide-react";
-import ClientesService from "../../api/services/clientesService";
 import ClienteFormModal from "./components/ClienteFormModal";
 import ClienteDetailsModal from "./components/ClienteDetailsModal";
 import ClienteImportModal from "./components/ClienteImportModal";
@@ -15,15 +13,18 @@ import { formatCurrency, formatPhone } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 
-const getPrimaryAddress = (cliente) => {
-  if (
-    !cliente.enderecos ||
-    !Array.isArray(cliente.enderecos) ||
-    cliente.enderecos.length === 0
-  ) {
-    return { rua: "N/A", cidade: "N/A", uf: "N/A" };
-  }
-  return cliente.enderecos[0];
+const normalizeClienteStatus = (status) => {
+  const normalized = String(status ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+  if (normalized === "ATIVO") return "Ativo";
+  if (normalized === "INATIVO") return "Inativo";
+  if (normalized === "FINALIZADO") return "Finalizado";
+
+  return status || "Inativo";
 };
 
 const InfoItem = ({ label, value }) => (
@@ -86,7 +87,6 @@ export default function Clientes() {
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [openImportModal, setOpenImportModal] = useState(false);
 
-  const [selecionados, setSelecionados] = useState([]);
   const [openDetails, setOpenDetails] = useState(false);
   const [clienteDetalhes, setClienteDetalhes] = useState(null);
 
@@ -96,7 +96,14 @@ export default function Clientes() {
     try {
       const response = await Api.get("/clientes");
       const data = response.data?.content ?? response.data;
-      setClientes(Array.isArray(data) ? data : []);
+      setClientes(
+        Array.isArray(data)
+          ? data.map((cliente) => ({
+              ...cliente,
+              status: normalizeClienteStatus(cliente.status),
+            }))
+          : [],
+      );
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       setClientes([]);
@@ -167,7 +174,10 @@ export default function Clientes() {
           clienteAtualizado,
         );
 
-        const clienteRetornado = response.data;
+        const clienteRetornado = {
+          ...response.data,
+          status: normalizeClienteStatus(response.data?.status),
+        };
 
         setClientes((prev) =>
           prev.map((c) =>
@@ -196,7 +206,10 @@ export default function Clientes() {
 
         const response = await Api.post("/clientes", novoClienteComId);
 
-        const novoCliente = response.data;
+        const novoCliente = {
+          ...response.data,
+          status: normalizeClienteStatus(response.data?.status),
+        };
         setClientes((prev) => [novoCliente, ...prev]);
 
         setOpenForm(false);
@@ -215,53 +228,6 @@ export default function Clientes() {
         setOpenForm(false);
       }
     }
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const todosIdsFiltrados = clientesFiltrados.map((c) => c.id);
-      setSelecionados(todosIdsFiltrados);
-    } else {
-      setSelecionados([]);
-    }
-  };
-
-  const handleSelectClick = (event, id) => {
-    setSelecionados((prev) =>
-      prev.includes(id) ? prev.filter((selId) => selId !== id) : [...prev, id],
-    );
-  };
-
-  const isSelected = (id) => selecionados.includes(id);
-
-  const handleExportar = () => {
-    if (selecionados.length === 0) {
-      alert("Nenhum cliente selecionado para exportar.");
-      return;
-    }
-
-    const dataToExport = clientes.filter((c) => selecionados.includes(c.id));
-    const nomeArquivo = `clientes_selecionados_${selecionados.length}.xlsx`;
-
-    const simplifiedData = dataToExport.map((c) => {
-      const enderecoPrimario = getPrimaryAddress(c);
-      const qtdPedidos = pedidos.filter((p) => p.cliente?.id === c.id).length;
-      return {
-        Nome: c.nome,
-        Telefone: c.telefone,
-        Email: c.email,
-        Status: c.status,
-        Endereco: enderecoPrimario.rua,
-        Cidade: enderecoPrimario.cidade,
-        UF: enderecoPrimario.uf,
-        Serviços_Registrados: qtdPedidos,
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(simplifiedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
-    XLSX.writeFile(workbook, nomeArquivo);
   };
 
   const abrirModalVisualizar = (cliente) => {
@@ -293,21 +259,22 @@ export default function Clientes() {
             </p>
           </div>
 
-          <div className="w-full max-w-[1380px] mx-auto flex flex-col gap-6">
+          <div className="w-full max-w-[1380px] mx-auto">
             {/* Tabela de Clientes */}
-            <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-6">
               {/* Barra de ações */}
-              <div className="flex flex-col gap-3 mb-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex shrink-0">
                   <Button
                     variant="primary"
-                    size="sm"
                     onClick={abrirModalCriar}
                     startIcon={<Plus className="w-6 h-6" />}
                   >
                     Novo Cliente
                   </Button>
-                  <div className="relative w-full sm:max-w-lg">
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2 lg:ml-auto">
+                  <div className="relative w-full sm:w-[320px] sm:max-w-md">
                     <UniversalInput
                       variant="search"
                       placeholder="Busque por nome..."
@@ -316,8 +283,6 @@ export default function Clientes() {
                       startIcon={<Search className="w-5 h-5" />}
                     />
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-end">
                   <UniversalInput
                     as="select"
                     value={ordenar}
@@ -342,7 +307,6 @@ export default function Clientes() {
                   />
                   <Button
                     variant="secondary"
-                    size="sm"
                     onClick={() => setOpenImportModal(true)}
                     startIcon={<Upload className="w-4 h-4" />}
                   >
@@ -356,16 +320,6 @@ export default function Clientes() {
                 <div className="min-w-[600px]">
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-48px rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  <div className="py-3 w-[5%] pl-4 pr-1">
-                    <UniversalInput
-                      as="checkbox"
-                      checked={
-                        clientesFiltrados.length > 0 &&
-                        selecionados.length === clientesFiltrados.length
-                      }
-                      onChange={handleSelectAllClick}
-                    />
-                  </div>
                   <div className="py-3 w-[30%] sm:w-[25%] pl-2 pr-1">Nome</div>
                   <div className="py-3 w-[20%] sm:w-[15%] px-4">Contato</div>
                   <div className="hidden md:block py-3 w-[20%] px-4">Email</div>
@@ -394,7 +348,6 @@ export default function Clientes() {
                     </div>
                   ) : (
                     clientesPagina.map((c) => {
-                      const isItemSelected = isSelected(c.id);
                       const qtdPedidos = pedidos.filter(
                         (p) => p.cliente?.id === c.id,
                       ).length;
@@ -402,19 +355,8 @@ export default function Clientes() {
                       return (
                         <React.Fragment key={c.id}>
                           <div
-                            className={`flex items-center border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                              isItemSelected ? "bg-blue-50" : ""
-                            }`}
+                            className="flex items-center border-b border-gray-200 hover:bg-gray-50 transition-colors"
                           >
-                            <div className="py-3 w-[5%] pl-4 pr-1">
-                              <UniversalInput
-                                as="checkbox"
-                                checked={isItemSelected}
-                                onChange={(event) =>
-                                  handleSelectClick(event, c.id)
-                                }
-                              />
-                            </div>
                             <div className="py-3 w-[30%] sm:w-[25%] pl-2 pr-1 text-sm text-gray-900 truncate">
                               {c.nome}
                             </div>
@@ -476,8 +418,8 @@ export default function Clientes() {
 
               {/* Paginação */}
               {clientesFiltrados.length > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 mt-4">
-                  <p className="text-sm text-gray-600">
+                <div className="mt-6 flex flex-col items-center justify-between gap-4 text-sm text-gray-600 sm:flex-row">
+                  <p>
                     Mostrando{" "}
                     <span className="font-medium">
                       {clientesFiltrados.length > 0 ? indexPrimeiro + 1 : 0}-

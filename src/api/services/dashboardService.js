@@ -77,6 +77,19 @@ export const getAgendamentosFuturos = async () => {
 export const getTaxaOcupacaoServicos = () =>
   dashboardService.getTaxaOcupacaoServicos();
 export const getQtdServicosHoje = () => dashboardService.getQtdServicosHoje();
+export const getFaturamentoMes = async () => {
+  const r = await dashboardService.get(`${BASE}/faturamento-mes`);
+  return r.success ? r : { ...r, data: { faturamentoMes: 0, percentualVariacao: null } };
+};
+export const getOrcamentosAbertos = async () => {
+  const r = await dashboardService.get(`${BASE}/orcamentos-abertos`);
+  return r.success ? r : { ...r, data: { quantidade: 0, valorTotal: 0 } };
+};
+
+export const getFaturamentoAnual = async () => {
+  const r = await dashboardService.get(`${BASE}/faturamento-anual`);
+  return r.success ? r : { ...r, data: { ano: new Date().getFullYear(), meses: [] } };
+};
 
 export { dashboardService };
 export default dashboardService;

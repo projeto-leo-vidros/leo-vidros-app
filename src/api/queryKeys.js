@@ -8,6 +8,9 @@ export const queryKeys = {
     taxaOcupacaoServicos: () => ["dashboard", "taxaOcupacaoServicos"],
     qtdItensCriticos: () => ["dashboard", "qtdItensCriticos"],
     qtdServicosHoje: () => ["dashboard", "qtdServicosHoje"],
+    faturamentoMes: () => ["dashboard", "faturamentoMes"],
+    faturamentoAnual: () => ["dashboard", "faturamentoAnual"],
+    orcamentosAbertos: () => ["dashboard", "orcamentosAbertos"],
   },
 
   agendamentos: {

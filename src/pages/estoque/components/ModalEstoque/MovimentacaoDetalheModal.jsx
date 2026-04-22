@@ -87,20 +87,16 @@ const MovimentacaoDetalheModal = ({ isOpen, onClose, movimento, produto }) => {
     : movimento.quantidadeAtual + movimento.quantidade;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] p-4">
       <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl relative z-[10001]">
         {/* Header do Modal */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
           <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-blue-600" />
+            <span className="bg-gray-100 p-2 rounded">
+              <MessageCircle className="w-5 h-5 text-gray-700" />
+            </span>
             Detalhes da Movimentação #{movimento.id}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-full transition-colors z-20"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
         </div>
 
         {/* Conteúdo do Modal - Estilo Chat */}

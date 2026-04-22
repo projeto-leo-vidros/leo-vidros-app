@@ -474,8 +474,8 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         {/* Header Modernizado */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-              <Wrench className="w-6 h-6 text-[#828282]" />
+            <div className="bg-gray-100 p-2 rounded">
+              <Wrench className="w-6 h-6 text-gray-700" />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -619,7 +619,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                           name="servicoNome"
                           value={formData.servicoNome || ""}
                           onChange={handleChange}
-                          placeholder="Nome do serviço"
+                          placeholder="Digite o nome do serviço"
                         />
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -647,7 +647,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                           rows={3}
                           value={formData.descricao}
                           onChange={handleChange}
-                          placeholder="Descrição do serviço..."
+                          placeholder="Digite a descrição do serviço"
                         />
 
                         <UniversalInput
@@ -1089,7 +1089,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
       {mostrarModalExcluirAgendamentos && (
         <div
-          className="fixed inset-0 z-[9999] grid place-items-center bg-black/40 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] grid place-items-center bg-black/50 px-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) cancelarExclusaoAgendamentos();
           }}
