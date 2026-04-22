@@ -139,7 +139,7 @@ export default function PaginaInicial() {
       )}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="app-content flex min-h-screen flex-1 flex-col">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20" />
 

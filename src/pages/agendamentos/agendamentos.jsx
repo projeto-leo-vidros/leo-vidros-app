@@ -595,9 +595,9 @@ export default function Agendamentos() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="app-page flex min-h-screen bg-gray-100">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="flex min-h-screen flex-1 flex-col">
+        <div className="app-content flex min-h-screen flex-1 flex-col">
           <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
           <div className="h-[80px]" />
           <div className="flex flex-1 items-center justify-center">
@@ -610,7 +610,7 @@ export default function Agendamentos() {
 
   return (
     <div
-      className="flex min-h-screen font-[Inter]"
+      className="app-page flex min-h-screen font-[Inter]"
       style={{ backgroundColor: "#f7f9fa" }}
     >
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
@@ -623,7 +623,7 @@ export default function Agendamentos() {
         />
 
         <main
-          className="relative flex flex-1 flex-col items-center justify-start gap-10 px-6 transition-all duration-300 sm:px-8 md:px-10"
+          className="relative flex flex-1 flex-col items-center justify-start gap-10 px-4 transition-all duration-300 sm:px-6 md:px-8"
           style={{ paddingTop: `${headerHeight + 40}px` }}
         >
           <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-10 pb-4 md:px-6">
@@ -635,7 +635,7 @@ export default function Agendamentos() {
             </div>
 
             {/* ====== Stats ====== */}
-            <div className="w-full shrink-0 [&>div]:!grid-cols-1 [&>div]:!gap-12 sm:[&>div]:!grid-cols-3">
+            <div className="w-full shrink-0 [&>div]:!grid-cols-1 [&>div]:!gap-3 sm:[&>div]:!grid-cols-3 sm:[&>div]:!gap-6">
               <Kpis
                 stats={[
                   {
@@ -665,7 +665,7 @@ export default function Agendamentos() {
 
             {/* ====== Filter Indicator ====== */}
             {activeKpiFilter && (
-              <div className="w-full flex shrink-0 items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-4 px-6 shadow-sm">
+              <div className="w-full flex shrink-0 flex-col gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4 px-6 shadow-sm md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <Clock className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-semibold text-blue-900">
@@ -679,9 +679,9 @@ export default function Agendamentos() {
             )}
 
             {/* ====== Area Principal do Calendário ====== */}
-            <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="flex flex-col min-h-[600px] lg:min-h-0 lg:flex-1 lg:overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:flex-row">
               {/* Right Panel */}
-              <div className="flex w-[340px] shrink-0 flex-col border-l border-gray-200 bg-gray-50/50 transition-all duration-300">
+              <div className="hidden lg:flex order-2 w-full shrink-0 flex-col border-t border-gray-200 bg-gray-50/50 transition-all duration-300 lg:order-none lg:w-[300px] lg:border-l lg:border-t-0 xl:w-[340px]">
                 <div className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-1 flex-col gap-3 space-y-6 overflow-y-auto p-4">
                   <MiniCalendar
                     selectedDate={selectedDate}
@@ -700,7 +700,7 @@ export default function Agendamentos() {
                 </div>
               </div>
               {/* Main Calendar View */}
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
+              <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white min-h-[500px]">
                 <CalendarView
                   selectedDate={selectedDate}
                   onDateSelect={setSelectedDate}

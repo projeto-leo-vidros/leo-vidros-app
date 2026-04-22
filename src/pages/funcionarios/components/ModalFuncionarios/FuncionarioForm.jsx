@@ -72,7 +72,7 @@ export default function FuncionarioForm({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-start px-10 py-20 overflow-y-auto z-50"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
       onClick={handleClose}
     >
       <div
@@ -109,7 +109,7 @@ export default function FuncionarioForm({
                 Informações Básicas
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <UniversalInput
                   label="Nome"
                   required
@@ -183,7 +183,7 @@ export default function FuncionarioForm({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
+          <div className="px-4 sm:px-6 py-4 border-t bg-gray-50 flex flex-wrap justify-between gap-3">
             <Button variant="ghost" onClick={handleClose}>
               Cancelar
             </Button>

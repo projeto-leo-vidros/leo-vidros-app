@@ -463,7 +463,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-start px-10 py-20 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center px-3 sm:px-10 py-4 overflow-y-auto z-[1300]"
       style={{ zIndex: 10000 }}
       onClick={onClose}
     >
@@ -477,11 +477,11 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
             <div className="bg-[#eeeeee] p-2.5 rounded-lg">
               <Wrench className="w-6 h-6 text-[#828282]" />
             </div>
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold text-gray-900">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                 Pedido #{servico.id?.toString().padStart(3, "0")}
               </h2>
-              <p className="text-md text-gray-500">
+              <p className="text-sm text-gray-500 hidden sm:block">
                 (
                 {modoEdicao
                   ? "Editando informações"
@@ -510,7 +510,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           <div className="flex flex-col gap-3 p-6">
             <div className="grid grid-cols-12 gap-3">
               {/* Coluna Esquerda - Informações Principais */}
-              <div className="col-span-5 space-y-6 flex flex-col gap-2">
+              <div className="col-span-12 md:col-span-5 space-y-6 flex flex-col gap-2">
                 {/* Resumo do Pedido / Serviço (unificado) */}
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
@@ -572,7 +572,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                             {formData.servicoNome || "Não informado"}
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 py-2 border-b border-gray-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 border-b border-gray-100">
                           <div>
                             <span className="text-gray-600 font-medium block mb-1">
                               Código:
@@ -622,7 +622,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                           placeholder="Nome do serviço"
                         />
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <UniversalInput
                             label="Código"
                             readOnly
@@ -812,7 +812,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
               </div>
 
               {/* Coluna Direita - Agendamentos */}
-              <div className="col-span-7">
+              <div className="col-span-12 md:col-span-7">
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm h-full">
                   <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center justify-between">
@@ -899,7 +899,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                               </div>
 
                               {/* Informações principais */}
-                              <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                 <div className="bg-gray-50 rounded-lg p-3">
                                   <div className="flex items-center gap-2 mb-1">
                                     <Calendar className="w-4 h-4 text-gray-500" />
@@ -992,9 +992,9 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-3">
+        <div className="border-t border-gray-200 bg-gray-50 px-4 sm:px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
               <Button variant="ghost" onClick={onClose}>
                 Fechar
               </Button>
@@ -1021,7 +1021,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2">
               {modoEdicao ? (
                 <>
                   <Button

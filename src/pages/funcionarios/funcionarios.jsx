@@ -142,9 +142,9 @@ export default function Funcionarios() {
   };
 
   return (
-    <div className="flex bg-[#f7f9fa] min-h-screen">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="app-content flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20" />
 
@@ -184,6 +184,7 @@ export default function Funcionarios() {
 
               {/* Tabela */}
               <div className="overflow-x-auto">
+                <div className="min-w-[580px]">
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-12 rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4">
@@ -196,13 +197,13 @@ export default function Funcionarios() {
                       onChange={handleSelectAllClick}
                     />
                   </div>
-                  <div className="py-3 w-[20%] pl-2">Nome</div>
-                  <div className="py-3 w-[15%]">Telefone</div>
-                  <div className="py-3 w-[15%]">Função</div>
-                  <div className="py-3 w-[12%]">Escala</div>
-                  <div className="py-3 w-[12%]">Contrato</div>
-                  <div className="py-3 w-[10%] text-center">Status</div>
-                  <div className="py-3 w-[11%] text-center">Ações</div>
+                  <div className="py-3 w-[18%] pl-2">Nome</div>
+                  <div className="py-3 w-[14%]">Telefone</div>
+                  <div className="py-3 w-[14%]">Função</div>
+                  <div className="hidden md:block py-3 w-[12%]">Escala</div>
+                  <div className="hidden md:block py-3 w-[12%]">Contrato</div>
+                  <div className="py-3 w-[12%] text-center">Status</div>
+                  <div className="py-3 w-[22%] text-center">Ações</div>
                 </div>
 
                 {/* Linhas da tabela */}
@@ -239,24 +240,24 @@ export default function Funcionarios() {
                               }
                             />
                           </div>
-                          <div className="py-3 w-[20%] pl-2 text-sm text-gray-900 truncate">
+                          <div className="py-3 w-[18%] pl-2 text-sm text-gray-900 truncate">
                             {f.nome}
                           </div>
-                          <div className="py-3 w-[15%] text-sm text-gray-600 truncate">
+                          <div className="py-3 w-[14%] text-sm text-gray-600 truncate">
                             {f.telefone}
                           </div>
-                          <div className="py-3 w-[15%] text-sm text-gray-600 truncate">
+                          <div className="py-3 w-[14%] text-sm text-gray-600 truncate">
                             {f.funcao}
                           </div>
-                          <div className="py-3 w-[12%] text-sm text-gray-600 truncate">
+                          <div className="hidden md:block py-3 w-[12%] text-sm text-gray-600 truncate">
                             {f.escala || "N/A"}
                           </div>
-                          <div className="py-3 w-[12%] text-sm text-gray-600 truncate">
+                          <div className="hidden md:block py-3 w-[12%] text-sm text-gray-600 truncate">
                             {f.contrato}
                           </div>
-                          <div className="py-3 w-[10%] text-center">
+                          <div className="py-3 w-[12%] text-center">
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                 f.status
                                   ? "bg-green-100 text-green-800"
                                   : "bg-red-100 text-red-800"
@@ -265,37 +266,37 @@ export default function Funcionarios() {
                               {f.status ? "Ativo" : "Inativo"}
                             </span>
                           </div>
-                          <div className="py-3 w-[11%] pr-4">
+                          <div className="py-3 w-[22%] pr-4">
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   abrirAgenda(f);
                                 }}
-                                className="p-1.5 text-gray-600 hover:text-[#007EA7] hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                                className="p-2 text-gray-600 hover:text-[#007EA7] hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                                 title="Ver Agenda"
                               >
-                                <CalendarDays className="w-4 h-4" />
+                                <CalendarDays className="w-5 h-5" />
                               </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   abrirModalEditar(f);
                                 }}
-                                className="p-1.5 text-gray-600 hover:text-[#007EA7] hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                                className="p-2 text-gray-600 hover:text-[#007EA7] hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                                 title="Editar"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-5 h-5" />
                               </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   abrirModalDeletar(f);
                                 }}
-                                className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                                className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                                 title="Deletar"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-5 h-5" />
                               </button>
                             </div>
                           </div>
@@ -304,6 +305,7 @@ export default function Funcionarios() {
                     })
                   )}
                 </div>
+                </div>{/* /min-w */}
               </div>
 
               {/* Paginação */}

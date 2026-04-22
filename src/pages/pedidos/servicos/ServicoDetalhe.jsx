@@ -87,7 +87,8 @@ function Stepper({ status }) {
     <div className="bg-transparent rounded-lg border border-gray-200 px-6 py-6 shadow-sm flex flex-col gap-2">
       <p className="text-sm font-semibold text-gray-600 mb-12">Progresso do Serviço</p>
 
-      <div className="relative flex items-start justify-between">
+      <div className="overflow-x-auto -mx-2 px-2">
+      <div className="relative flex items-start justify-between min-w-[560px]">
         <div
           className="absolute h-[2px] bg-gray-200 z-0"
           style={{ top: "18px", left: "4%", right: "4%" }}
@@ -135,6 +136,7 @@ function Stepper({ status }) {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
@@ -711,22 +713,22 @@ export default function PedidoDetalhe() {
   const produtosCount = formData.produtos.length;
 
   return (
-    <div className="flex bg-[#f7f9fa] h-screen overflow-hidden">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen overflow-x-hidden">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       {/* ── Coluna principal ── */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="app-content flex-1 flex flex-col">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
 
         {/* ── Área de scroll ── */}
-        <main className="flex-1 overflow-y-auto px-6 pt-20 pb-6 flex justify-center">
+        <main className="app-scroll-area flex-1 px-4 pt-20 pb-6 sm:px-6 flex justify-center">
           <div className="w-full max-w-[1400px] flex flex-col gap-5">
 
             {/* Topbar */}
-            <div className="relative py-5 min-h-[106px] flex items-center justify-center">
+            <div className="flex flex-col gap-4 py-4 sm:py-5 lg:relative lg:min-h-[106px] lg:items-center lg:justify-center">
               <button
                 onClick={() => navigate("/Pedidos", { state: { initialTab: "servicos" } })}
-                className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5"
+                className="flex w-full items-center justify-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5 sm:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar para Serviços
@@ -804,7 +806,7 @@ export default function PedidoDetalhe() {
                   <div className="p-6">
                     {endereco ? (
                       <div className="flex flex-col gap-5">
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <FieldGroup label="Rua" className="col-span-2">
                             <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 truncate shadow-sm">
                               {endereco.rua || "—"}
@@ -821,7 +823,7 @@ export default function PedidoDetalhe() {
                             {endereco.bairro || "—"}
                           </div>
                         </FieldGroup>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <FieldGroup label="Cidade">
                             <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 truncate shadow-sm">
                               {endereco.cidade || "—"}
@@ -1076,9 +1078,10 @@ export default function PedidoDetalhe() {
                 <SectionCard
                   title={
                     <>
-                      <span className="text-white/80 pr-2">INSTALAÇÃO - atualmente</span>
-                      <span className="ml-2 bg-white text-[#002A4B] px-2 py-0.5 rounded-full font-extrabold">
-                        {produtosCount} {produtosCount === 1 ? "produto" : "produtos"}
+                      <span className="text-white/80 pr-2 hidden sm:inline">INSTALAÇÃO</span>
+                      <span className="text-white/80 pr-2 sm:hidden">INST.</span>
+                      <span className="ml-1 bg-white text-[#002A4B] px-2 py-0.5 rounded-full font-extrabold text-xs">
+                        {produtosCount}
                       </span>
                     </>
                   }
@@ -1088,10 +1091,10 @@ export default function PedidoDetalhe() {
                   action={
                     <button
                       onClick={handleAdicionarProduto}
-                      className="flex items-center gap-2 bg-white/25 text-white px-4 py-2 rounded-lg hover:bg-white/35 transition-all cursor-pointer font-semibold text-sm shadow-md hover:shadow-lg hover:scale-105"
+                      className="flex items-center gap-2 bg-white/25 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-white/35 transition-all cursor-pointer font-semibold text-sm shadow-md hover:shadow-lg hover:scale-105"
                     >
-                      <Plus className="w-5 h-5" />
-                      Adicionar Produto
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline">Adicionar Produto</span>
                     </button>
                   }
                 >
@@ -1101,7 +1104,7 @@ export default function PedidoDetalhe() {
                         Nenhum produto adicionado
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {formData.produtos.map((produto, index) => (
                           <div
                             key={index}
@@ -1266,7 +1269,7 @@ export default function PedidoDetalhe() {
         </main>
 
         {/* ── Barra de ações FIXA na parte inferior ── */}
-        <div className="shrink-0 border-t-2 bg-white px-6 py-3 flex items-center justify-between gap-4 shadow-[0_-2px_12px_rgba(0,0,0,0.1)]" style={{ borderColor: temMudancaEtapa ? "#f59e0b" : "#e5e7eb" }}>
+        <div className="shrink-0 border-t-2 bg-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 shadow-[0_-2px_12px_rgba(0,0,0,0.1)]" style={{ borderColor: temMudancaEtapa ? "#f59e0b" : "#e5e7eb" }}>
           {/* Mensagem de mudança de etapa */}
           {temMudancaEtapa ? (
             <div className="flex items-center gap-2">
@@ -1281,30 +1284,30 @@ export default function PedidoDetalhe() {
             </p>
           )}
 
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
             <button
               onClick={() => navigate(`/Agendamentos`, { state: { servicoId: id, clienteNome: pedido.clienteNome, servicoNome: servicoInfo?.nome || formData.servicoNome } })}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+              className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
               title="Agendar orçamento ou serviço"
             >
               <Calendar className="w-4 h-4" />
-              Agendar
+              <span className="hidden sm:inline">Agendar</span>
             </button>
 
             <button
               onClick={() => navigate(`/Servicos/${id}/orcamentos`)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+              className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
             >
               <FileText className="w-4 h-4" />
-              Visualizar Orçamentos
+              <span className="hidden sm:inline">Visualizar Orçamentos</span>
             </button>
 
             <button
               onClick={() => navigate(`/Pedidos/${id}/orcamento`)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+              className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              Novo Orçamento
+              <span className="hidden sm:inline">Novo Orçamento</span>
             </button>
 
             <button

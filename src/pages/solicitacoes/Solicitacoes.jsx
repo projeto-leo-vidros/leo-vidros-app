@@ -219,9 +219,9 @@ export default function Acesso() {
   };
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: "#f7f9fa" }}>
+    <div className="app-page flex min-h-screen" style={{ backgroundColor: "#f7f9fa" }}>
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="app-content flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="h-[80px]" />
 
@@ -296,6 +296,7 @@ export default function Acesso() {
               </div>
 
               <div className="overflow-x-auto">
+              <div className="min-w-[700px]">
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 min-h-[48px] rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] flex justify-center px-4">
                     {activeTab === "Pendentes" && (
@@ -383,6 +384,7 @@ export default function Acesso() {
                     ))
                   )}
                 </div>
+              </div>{/* /min-w */}
               </div>
 
               <ModalConfirmacao

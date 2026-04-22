@@ -82,12 +82,12 @@ export default function Pedidos() {
 
   return (
     <div
-      className="flex flex-col items-center min-h-screen"
+      className="app-page flex min-h-screen"
       style={{ backgroundColor: "#f7f9fa" }}
     >
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col w-full items-center">
+      <div className="app-content flex-1 flex flex-col w-full items-center">
         <div className="w-full">
           <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         </div>
@@ -108,7 +108,7 @@ export default function Pedidos() {
           <main className="w-full flex justify-center pb-8">
             <section className="w-full max-w-[1380px]">
               {/* Abas de Navegação */}
-              <div className="flex items-end gap-2 w-full">
+              <div className="flex items-end gap-2 w-full overflow-x-auto pb-1">
                 <button
                   onClick={() => setActiveTab("pedidos")}
                   className={`${tabBaseClass} ${activeTab === "pedidos" ? activeTabClass : inactiveTabClass} text-black`}

@@ -62,13 +62,13 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
     <AppBar
       position="fixed"
       elevation={4}
-      sx={{ bgcolor: "#002A4B" }}
+      sx={{ bgcolor: "#002A4B", zIndex: (theme) => theme.zIndex.drawer + 2 }}
       className="shadow-lg z-1100"
     >
       <Toolbar
+        sx={{ minHeight: { xs: 68, sm: 76, md: 82 } }}
         className="
           flex justify-between items-center
-          min-h-65px sm:min-h-75px md:min-h-80px
           px-3 sm:px-6 md:px-10
         "
       >
@@ -77,9 +77,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           <IconButton
             color="inherit"
             onClick={toggleSidebar}
-            className={`transition-transform duration-300 mr-2 ${
-              sidebarOpen ? "rotate-90" : "rotate-0"
-            }`}
+            className="mr-2"
           >
             <MenuIcon size={24} />
           </IconButton>

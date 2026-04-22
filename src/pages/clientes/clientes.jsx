@@ -275,10 +275,10 @@ export default function Clientes() {
   };
 
   return (
-    <div className="flex bg-[#f7f9fa] min-h-screen">
+    <div className="app-page flex bg-[#f7f9fa] min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="app-content flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20" />
 
@@ -297,7 +297,8 @@ export default function Clientes() {
             {/* Tabela de Clientes */}
             <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
               {/* Barra de ações */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+              <div className="flex flex-col gap-3 mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <Button
                     variant="primary"
                     size="sm"
@@ -306,10 +307,7 @@ export default function Clientes() {
                   >
                     Novo Cliente
                   </Button>
-
-                <div className="flex items-center gap-3 w-full justify-end">
-                  {/* Busca */}
-                  <div className="relative w-full max-w-lg">
+                  <div className="relative w-full sm:max-w-lg">
                     <UniversalInput
                       variant="search"
                       placeholder="Busque por nome..."
@@ -318,50 +316,44 @@ export default function Clientes() {
                       startIcon={<Search className="w-5 h-5" />}
                     />
                   </div>
-
-                  {/* Filtros */}
-                  <div className="flex gap-2 w-auto whitespace-nowrap">
-                    {/* Ordenar */}
-                    <UniversalInput
-                      as="select"
-                      value={ordenar}
-                      onChange={(e) => setOrdenar(e.target.value)}
-                      options={[
-                        { value: "recentes", label: "Recentes" },
-                        { value: "antigos", label: "Antigos" },
-                        { value: "az", label: "A-Z" },
-                        { value: "za", label: "Z-A" },
-                      ]}
-                    />
-
-                    {/* Situação */}
-                    <UniversalInput
-                      as="select"
-                      value={situacao}
-                      onChange={(e) => setSituacao(e.target.value)}
-                      options={[
-                        { value: "Todos", label: "Todos" },
-                        { value: "Ativo", label: "Ativo" },
-                        { value: "Inativo", label: "Inativo" },
-                        { value: "Finalizado", label: "Finalizado" },
-                      ]}
-                    />
-
-                    {/* Importar */}
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setOpenImportModal(true)}
-                      startIcon={<Upload className="w-4 h-4" />}
-                    >
-                      Importar
-                    </Button>
-                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <UniversalInput
+                    as="select"
+                    value={ordenar}
+                    onChange={(e) => setOrdenar(e.target.value)}
+                    options={[
+                      { value: "recentes", label: "Recentes" },
+                      { value: "antigos", label: "Antigos" },
+                      { value: "az", label: "A-Z" },
+                      { value: "za", label: "Z-A" },
+                    ]}
+                  />
+                  <UniversalInput
+                    as="select"
+                    value={situacao}
+                    onChange={(e) => setSituacao(e.target.value)}
+                    options={[
+                      { value: "Todos", label: "Todos" },
+                      { value: "Ativo", label: "Ativo" },
+                      { value: "Inativo", label: "Inativo" },
+                      { value: "Finalizado", label: "Finalizado" },
+                    ]}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setOpenImportModal(true)}
+                    startIcon={<Upload className="w-4 h-4" />}
+                  >
+                    Importar
+                  </Button>
                 </div>
               </div>
 
               {/* Tabela */}
               <div className="overflow-x-auto">
+                <div className="min-w-[600px]">
                 {/* Cabeçalho da tabela */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-48px rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4 pr-1">
@@ -374,12 +366,12 @@ export default function Clientes() {
                       onChange={handleSelectAllClick}
                     />
                   </div>
-                  <div className="py-3 w-[25%] pl-2 pr-1">Nome</div>
-                  <div className="py-3 w-[15%] px-4">Contato</div>
-                  <div className="py-3 w-[20%] px-4">Email</div>
-                  <div className="py-3 w-[15%] text-center">Status</div>
-                  <div className="py-3 w-[10%] text-center">Serviços</div>
-                  <div className="py-3 w-[10%] text-right pr-8">Ações</div>
+                  <div className="py-3 w-[30%] sm:w-[25%] pl-2 pr-1">Nome</div>
+                  <div className="py-3 w-[20%] sm:w-[15%] px-4">Contato</div>
+                  <div className="hidden md:block py-3 w-[20%] px-4">Email</div>
+                  <div className="py-3 w-[20%] sm:w-[15%] text-center">Status</div>
+                  <div className="hidden sm:block py-3 w-[10%] text-center">Serviços</div>
+                  <div className="py-3 w-[25%] sm:w-[10%] text-right pr-8">Ações</div>
                 </div>
 
                 {/* Linhas da tabela */}
@@ -423,18 +415,18 @@ export default function Clientes() {
                                 }
                               />
                             </div>
-                            <div className="py-3 w-[25%] pl-2 pr-1 text-sm text-gray-900 truncate">
+                            <div className="py-3 w-[30%] sm:w-[25%] pl-2 pr-1 text-sm text-gray-900 truncate">
                               {c.nome}
                             </div>
-                            <div className="py-3 w-[15%] px-4 text-sm text-gray-600 truncate">
+                            <div className="py-3 w-[20%] sm:w-[15%] px-4 text-sm text-gray-600 truncate">
                               {formatPhone(c.telefone)}
                             </div>
-                            <div className="py-3 w-[20%] px-4 text-sm text-gray-600 truncate">
+                            <div className="hidden md:block py-3 w-[20%] px-4 text-sm text-gray-600 truncate">
                               {c.email}
                             </div>
-                            <div className="py-3 w-[15%] text-center">
+                            <div className="py-3 w-[20%] sm:w-[15%] text-center">
                               <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs sm:text-sm font-medium ${
                                   c.status === "Ativo"
                                     ? "bg-green-100 text-green-800"
                                     : c.status === "Inativo"
@@ -445,10 +437,10 @@ export default function Clientes() {
                                 {c.status}
                               </span>
                             </div>
-                            <div className="py-3 w-[10%] text-center text-sm text-gray-900">
+                            <div className="hidden sm:block py-3 w-[10%] text-center text-sm text-gray-900">
                               {qtdPedidos}
                             </div>
-                            <div className="py-3 w-[10%] text-right pr-8">
+                            <div className="py-3 w-[25%] sm:w-[10%] text-right pr-8">
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={(e) => {
@@ -479,11 +471,12 @@ export default function Clientes() {
                     })
                   )}
                 </div>
+                </div>{/* /min-w */}
               </div>
 
               {/* Paginação */}
               {clientesFiltrados.length > 0 && (
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 mt-4">
                   <p className="text-sm text-gray-600">
                     Mostrando{" "}
                     <span className="font-medium">
