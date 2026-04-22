@@ -458,9 +458,15 @@ export default function OrcamentoPage() {
   const [produtos, setProdutos] = useState([]);
 
   useEffect(() => {
+    const extrairLista = (data) => {
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.content)) return data.content;
+      return [];
+    };
+
     Api.get("/pedidos")
       .then((res) => {
-        const lista = Array.isArray(res.data) ? res.data : [];
+        const lista = extrairLista(res.data);
         setPedidos(
           lista.map((p) => ({
             id: p.id,
@@ -477,7 +483,7 @@ export default function OrcamentoPage() {
 
     Api.get("/estoques")
       .then((res) => {
-        const lista = Array.isArray(res.data) ? res.data : [];
+        const lista = extrairLista(res.data);
         setProdutos(
           lista
             .map((e) => ({
@@ -506,7 +512,7 @@ export default function OrcamentoPage() {
             cliente_id: String(orc.clienteId || ""),
             cliente_nome: orc.clienteNome || "",
             pedido_id: String(orc.pedidoId || ""),
-            status_id: orc.statusId || "RASCUNHO",
+            status_id: orc.statusNome || orc.statusId || "RASCUNHO",
             data_orcamento: orc.dataOrcamento?.split("T")[0] || "",
             prazo_instalacao: orc.prazoInstalacao?.split("T")[0] || "",
             garantia: orc.garantia || "",
@@ -708,47 +714,46 @@ export default function OrcamentoPage() {
         totalFinal,
       );
 
-      const tempId = `temp_${Date.now()}`;
-      
-      let sseConnection = null;
-      const ssePromise = new Promise((resolve) => {
-        sseConnection = OrcamentosService.monitorarProgresso(tempId, (eventData) => {
-          resolve(eventData);
-        });
-      });
+      let orcId = savedOrcamentoId ? parseInt(savedOrcamentoId) : null;
+      let numeroOrcamento = dadosGerais.numero_orcamento;
 
-      const result = await OrcamentosService.criarOrcamento(payload);
-
-      if (result.success && result.data) {
-        const orcId = result.data.id;
+      if (!orcId) {
+        const createResult = await OrcamentosService.criarOrcamento(payload);
+        if (!createResult.success || !createResult.data) {
+          setToast({ message: createResult.error || "Erro ao salvar orçamento.", type: "error" });
+          setTimeout(() => setToast(null), 4000);
+          return;
+        }
+        orcId = createResult.data.id;
+        numeroOrcamento = createResult.data.numeroOrcamento || numeroOrcamento;
         setSavedOrcamentoId(orcId);
         setLastSaved(new Date());
-        queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
-        
-        if (sseConnection) {
-          sseConnection.close();
-        }
-        
-        startProgress(
-          orcId,
-          result.data.numeroOrcamento || dadosGerais.numero_orcamento
-        );
-        setToast({ message: "Orçamento enviado para geração!", type: "success" });
-        setTimeout(() => {
-          setToast(null);
-          navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
-        }, 2000);
       } else {
-        setToast({
-          message: result.error || "Erro ao gerar orçamento.",
-          type: "error",
-        });
-        if (sseConnection) {
-          sseConnection.close();
+        const updateResult = await OrcamentosService.atualizarOrcamento(orcId, payload);
+        if (!updateResult.success) {
+          setToast({ message: updateResult.error || "Erro ao atualizar orçamento.", type: "error" });
+          setTimeout(() => setToast(null), 4000);
+          return;
         }
-        setTimeout(() => setToast(null), 4000);
+        setLastSaved(new Date());
       }
+
+      const pdfResult = await OrcamentosService.gerarPdf(orcId);
+      if (!pdfResult.success) {
+        setToast({ message: pdfResult.error || "Erro ao iniciar geração do PDF.", type: "error" });
+        setTimeout(() => setToast(null), 4000);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pedidos.all() });
+
+      startProgress(orcId, numeroOrcamento);
+      setToast({ message: "Orçamento enviado para geração!", type: "success" });
+      setTimeout(() => {
+        setToast(null);
+        navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
+      }, 2000);
     } catch (e) {
       setToast({ message: "Erro ao gerar orçamento.", type: "error" });
       setTimeout(() => setToast(null), 4000);
