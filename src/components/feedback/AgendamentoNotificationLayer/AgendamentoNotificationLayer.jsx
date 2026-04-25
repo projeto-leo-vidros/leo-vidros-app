@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { X, Plus } from "lucide-react";
@@ -8,6 +8,7 @@ import { useAgendamentos } from "../../../hooks/queries/useAgendamentos";
 import AgendamentoNotification from "../../ui/misc/AgendamentoNotification";
 import { useAgendamentoNotifications } from "../../../pages/agendamentos/hooks/useAgendamentoNotifications";
 import Api from "../../../api/client/Api";
+import { useUser } from "../../../context/UserContext";
 
 const buildPayload = (agendamento, nomeStatus) => ({
   servicoId: agendamento.servico?.id,
@@ -35,13 +36,26 @@ const buildPayload = (agendamento, nomeStatus) => ({
 
 export default function AgendamentoNotificationLayer() {
   const queryClient = useQueryClient();
+  const { user } = useUser();
   const { data: agendamentos = [] } = useAgendamentos({
+    enabled: user.isAuthenticated,
     refetchInterval: 60000,
     refetchOnWindowFocus: false,
   });
 
+  useEffect(() => {
+    if (!user.isAuthenticated) {
+      queryClient.removeQueries({ queryKey: queryKeys.agendamentos.all() });
+    }
+  }, [user.isAuthenticated, queryClient]);
+
+  const agendamentosParaNotificar = useMemo(
+    () => (user.isAuthenticated ? agendamentos : []),
+    [user.isAuthenticated, agendamentos]
+  );
+
   const { notifications, dismissNotification } =
-    useAgendamentoNotifications(agendamentos);
+    useAgendamentoNotifications(agendamentosParaNotificar);
   const compactTimersRef = useRef(new Map());
   const compactKeysRef = useRef(new Set());
   const lockedOpenKeysRef = useRef(new Set());
