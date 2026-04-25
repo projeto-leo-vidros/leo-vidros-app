@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { X, Plus } from "lucide-react";
@@ -43,8 +43,19 @@ export default function AgendamentoNotificationLayer() {
     refetchOnWindowFocus: false,
   });
 
+  useEffect(() => {
+    if (!user.isAuthenticated) {
+      queryClient.removeQueries({ queryKey: queryKeys.agendamentos.all() });
+    }
+  }, [user.isAuthenticated, queryClient]);
+
+  const agendamentosParaNotificar = useMemo(
+    () => (user.isAuthenticated ? agendamentos : []),
+    [user.isAuthenticated, agendamentos]
+  );
+
   const { notifications, dismissNotification } =
-    useAgendamentoNotifications(agendamentos);
+    useAgendamentoNotifications(agendamentosParaNotificar);
   const compactTimersRef = useRef(new Map());
   const compactKeysRef = useRef(new Set());
   const lockedOpenKeysRef = useRef(new Set());
