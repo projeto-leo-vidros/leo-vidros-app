@@ -411,10 +411,7 @@ export default function ProductDetailPage() {
         : "Disponível";
 
   const totalValue = (estoque?.quantidadeTotal ?? 0) * (produto?.preco ?? 0);
-  const quantidadeDisponivel = Math.max(
-    0,
-    estoque.quantidadeDisponivel - estoque.reservado,
-  );
+  const quantidadeDisponivel = estoque.quantidadeDisponivel ?? 0;
 
   const getStatusClasses = (status) => {
     if (status === "ok") {
