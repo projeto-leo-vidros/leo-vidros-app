@@ -215,6 +215,24 @@ function ActionsDropdown({
 }
 
 function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
   return (
     <AnimatePresence>
@@ -320,6 +338,48 @@ export default function Agendamentos() {
   const handleEventDeleted = () => refetch();
 
   const [activeKpiFilter, setActiveKpiFilter] = useState(null);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "Escape") return;
+
+      if (deleteTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setDeleteTarget(null);
+        return;
+      }
+
+      if (detailTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setDetailTarget(null);
+        return;
+      }
+
+      if (showReagendarModal) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setShowReagendarModal(false);
+        setAgendamentoToReagendar(null);
+        return;
+      }
+
+      if (showTaskModal) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setShowTaskModal(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [deleteTarget, detailTarget, showReagendarModal, showTaskModal]);
 
   const filteredTasks = useMemo(() => {
     if (!activeKpiFilter) return tasks;
@@ -630,7 +690,7 @@ export default function Agendamentos() {
           className="relative flex flex-1 flex-col items-center justify-start gap-10 px-4 transition-all duration-300 sm:px-6 md:px-8"
           style={{ paddingTop: `${headerHeight + 40}px` }}
         >
-          <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-10 pb-4 md:px-6">
+          <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-14 pb-4 md:px-6">
             {/* ====== Header ====== */}
             <div className="text-center w-full mx-auto mb-2">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 gap-2">
@@ -639,32 +699,53 @@ export default function Agendamentos() {
             </div>
 
             {/* ====== Stats ====== */}
-            <div className="w-full shrink-0 [&>div]:!grid-cols-1 [&>div]:!gap-3 sm:[&>div]:!grid-cols-3 sm:[&>div]:!gap-6">
-              <Kpis
-                stats={[
+            <div className="w-full shrink-0">
+              <div className="flex flex-col sm:flex-row w-full rounded-xl border border-gray-300 bg-white shadow-sm overflow-hidden">
+                {[
                   {
-                    title: "Agendamentos de Hoje",
+                    label: "Agendamentos de Hoje",
                     value: stats.today,
-                    icon: CalendarIcon,
-                    onClick: () => handleKpiClick("today"),
-                    isActive: activeKpiFilter === "today",
+                    dotColor: "bg-blue-500",
+                    badgeColor: "bg-gray-100 text-gray-700",
+                    filter: "today",
                   },
                   {
-                    title: "Agendamentos Confirmados",
+                    label: "Agendamentos Confirmados",
                     value: stats.confirmed,
-                    icon: Check,
-                    onClick: () => handleKpiClick("confirmed"),
-                    isActive: activeKpiFilter === "confirmed",
+                    dotColor: "bg-emerald-500",
+                    badgeColor: "bg-emerald-100 text-emerald-700",
+                    filter: "confirmed",
                   },
                   {
-                    title: "Agendamentos Pendentes",
+                    label: "Agendamentos Pendentes",
                     value: stats.pending,
-                    icon: Clock,
-                    onClick: () => handleKpiClick("pending"),
-                    isActive: activeKpiFilter === "pending",
+                    dotColor: "bg-amber-400",
+                    badgeColor: "bg-amber-100 text-amber-700",
+                    filter: "pending",
                   },
-                ]}
-              />
+                ].map((item, idx, arr) => (
+                  <button
+                    key={item.filter}
+                    onClick={() => handleKpiClick(item.filter)}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2.5 px-4 py-3 transition-colors duration-150 cursor-pointer",
+                      "hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400",
+                      activeKpiFilter === item.filter ? "bg-gray-50" : "bg-white",
+                      idx < arr.length - 1
+                        ? "border-b sm:border-b-0 sm:border-r border-gray-400"
+                        : "",
+                    )}
+                  >
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", item.dotColor)} />
+                    <span className="text-sm font-medium text-gray-700 text-left leading-tight">
+                      {item.label}
+                    </span>
+                    <span className={cn("ml-1 shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold", item.badgeColor)}>
+                      {item.value}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* ====== Filter Indicator ====== */}

@@ -100,24 +100,25 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
         {/* Usuário */}
         <div
-          className="flex items-center gap-2 sm:gap-2 cursor-pointer group"
+          className="flex items-center gap-1.5 cursor-pointer group"
           onClick={handleProfileClick}
         >
           <div className="hidden sm:block text-right mr-1">
-            <p className="text-xs sm:text-base md:text-lg font-semibold text-white group-hover:text-gray-200 transition-colors">
+            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors leading-tight">
               {userName}
             </p>
-            <p className="text-xs sm:text-sm md:text-base text-gray-300">Administrador</p>
+            <p className="text-xs text-gray-300 leading-tight">Administrador</p>
           </div>
           <Avatar
             src={userPhoto}
-            className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 border-2 border-white group-hover:border-gray-300 transition-colors"
+            sx={{ width: 36, height: 36 }}
+            className="flex-shrink-0 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
           <ChevronDown
             className={`text-white transition-transform duration-300 group-hover:text-gray-300 cursor-pointer ${
               open ? "rotate-180" : "rotate-0"
             } hidden sm:block`}
-            size={20}
+            size={16}
           />
         </div>
 

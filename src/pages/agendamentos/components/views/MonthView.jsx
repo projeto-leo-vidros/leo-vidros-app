@@ -13,7 +13,8 @@ import {
 import { ptBR } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useEventsByDate } from "../../hooks/useCalendarEvents";
 
 const MAX_VISIBLE_FULLSCREEN = 3;
@@ -98,15 +99,24 @@ const getConflictInfo = (dayEvents) => {
   return { conflictIds, conflictPairs };
 };
 
+const getEventHeading = (evt) =>
+  evt.fullTitle || evt.servico?.nome || evt.title || "Agendamento";
+
 const getGroupKey = (evt) =>
   String(
     evt.servico?.id ??
       evt.servicoId ??
       evt.pedido?.id ??
       evt.pedidoId ??
-      evt.fullTitle ??
-      evt.title ??
+      getEventHeading(evt) ??
       evt.id,
+  );
+
+const sortEventsByTime = (events) =>
+  [...events].sort((a, b) =>
+    String(a.startTime || a.inicioAgendamento || "").localeCompare(
+      String(b.startTime || b.inicioAgendamento || ""),
+    ),
   );
 
 const groupEvents = (events) => {
@@ -114,11 +124,28 @@ const groupEvents = (events) => {
 
   events.forEach((evt) => {
     const key = getGroupKey(evt);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(evt);
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        heading: getEventHeading(evt),
+        events: [],
+      });
+    }
+    groups.get(key).events.push(evt);
   });
 
-  return Array.from(groups.values());
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      events: sortEventsByTime(group.events),
+    }))
+    .sort((a, b) => {
+      const firstA = a.events[0];
+      const firstB = b.events[0];
+      return String(
+        firstA?.startTime || firstA?.inicioAgendamento || "",
+      ).localeCompare(String(firstB?.startTime || firstB?.inicioAgendamento || ""));
+    });
 };
 
 const EventCardCompact = ({
@@ -133,9 +160,9 @@ const EventCardCompact = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -5 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className={`flex justify-self-center cursor-pointer rounded-md border px-1.5 py-0.5 font-medium transition
         ${isLowDensity ? "h-[36px] w-[86%] max-w-[300px] flex-col items-center justify-center gap-0.5" : "h-[24px] w-[96%] items-center gap-1.5"}
         ${isConflict ? "border-red-200 bg-red-50/70 hover:bg-red-50" : "border-gray-200 bg-white/85 hover:bg-white"}`}
@@ -144,7 +171,6 @@ const EventCardCompact = ({
         onClick?.(evt);
       }}
       title={evt.fullTitle || evt.title}
-      whileHover={{ scale: 1.01 }}
     >
       {isLowDensity ? (
         <>
@@ -210,9 +236,9 @@ const EventCardExpanded = ({ evt, isConflict, accentColor, onClick }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.15 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className={`flex w-full cursor-pointer overflow-hidden rounded-lg border transition hover:brightness-95
         ${isConflict ? "border-red-300 bg-red-50" : "border-gray-200 bg-white"}`}
       style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
@@ -251,38 +277,56 @@ const EventCardExpanded = ({ evt, isConflict, accentColor, onClick }) => {
 
 const ExpandedDayPanel = ({
   dayLabel,
-  dateKey,
   events,
   conflictIds,
   onEventClick,
   onClose,
 }) => {
-  const grouped = useMemo(
-    () => (events.length > 5 ? groupEvents(events) : []),
-    [events],
-  );
+  const grouped = useMemo(() => groupEvents(events), [events]);
 
-  return (
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  const panelContent = (
     <div
-      className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/35 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[10060] flex items-center justify-center bg-slate-900/20 p-4"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[min(78vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+        className="flex max-h-[min(78vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white opacity-100 shadow-2xl"
+        style={{ backgroundColor: "#ffffff", opacity: 1 }}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">
-              Agendamentos de {dayLabel}
-            </p>
-            <p className="text-xs text-gray-500">
-              {events.length} agendamento{events.length === 1 ? "" : "s"}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-lg font-bold text-gray-900 sm:text-xl">
+                Agendamentos de {dayLabel}
+              </p>
+              <span className="inline-flex rounded-full bg-[#134074ff]/10 px-4 py-1.5 text-sm font-semibold text-[#134074ff]">
+                {events.length} agendamento{events.length === 1 ? "" : "s"}
+              </span>
+            </div>
           </div>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
             onClick={onClose}
             aria-label="Fechar lista de agendamentos"
           >
@@ -290,53 +334,62 @@ const ExpandedDayPanel = ({
           </button>
         </div>
 
-        <div className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent flex-1 overflow-y-auto p-3">
-          <div className="flex flex-col gap-1.5 pr-0.5">
-            {events.length > 5
-              ? grouped.map((group, groupIndex) => (
-                  <div
-                    key={`${dateKey}-group-${groupIndex}`}
-                    className={`grid gap-1.5 ${group.length > 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
-                  >
-                    {group.map((evt) => {
-                      const isConflict = conflictIds.has(evt.id);
-                      const accent = toAccentColor(
-                        evt.backgroundColor || evt.color || "#3b82f6",
-                      );
-
-                      return (
-                        <EventCardExpanded
-                          key={evt.id}
-                          evt={evt}
-                          isConflict={isConflict}
-                          accentColor={accent}
-                          onClick={onEventClick}
-                        />
-                      );
-                    })}
+        <div
+          className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent flex-1 overflow-y-auto bg-white p-3"
+          style={{ backgroundColor: "#ffffff", opacity: 1 }}
+        >
+          <div
+            className="flex flex-col gap-4 bg-white pr-0.5"
+            style={{ backgroundColor: "#ffffff", opacity: 1 }}
+          >
+            {grouped.map((group) => (
+              <section
+                key={group.key}
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+                style={{ backgroundColor: "#ffffff", opacity: 1 }}
+              >
+                <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-bold text-gray-900">
+                      {group.heading}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {group.events.length} atividade
+                      {group.events.length === 1 ? "" : "s"}
+                    </p>
                   </div>
-                ))
-              : events.map((evt) => {
-                  const isConflict = conflictIds.has(evt.id);
-                  const accent = toAccentColor(
-                    evt.backgroundColor || evt.color || "#3b82f6",
-                  );
+                </div>
 
-                  return (
-                    <EventCardExpanded
-                      key={evt.id}
-                      evt={evt}
-                      isConflict={isConflict}
-                      accentColor={accent}
-                      onClick={onEventClick}
-                    />
-                  );
-                })}
+                <div
+                  className="grid gap-2 bg-white p-3 md:grid-cols-2"
+                  style={{ backgroundColor: "#ffffff", opacity: 1 }}
+                >
+                  {group.events.map((evt) => {
+                    const isConflict = conflictIds.has(evt.id);
+                    const accent = toAccentColor(
+                      evt.backgroundColor || evt.color || "#3b82f6",
+                    );
+
+                    return (
+                      <EventCardExpanded
+                        key={evt.id}
+                        evt={evt}
+                        isConflict={isConflict}
+                        accentColor={accent}
+                        onClick={onEventClick}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(panelContent, document.body);
 };
 
 const MonthView = ({
@@ -506,7 +559,7 @@ const MonthView = ({
                 {hiddenCount > 0 && (
                   <button
                     type="button"
-                    className="w-full rounded-lg bg-[#002A4B]/8 py-1.5 text-center text-xs font-semibold text-[#002A4B] transition hover:bg-[#002A4B]/15"
+                    className="w-full cursor-pointer rounded-lg bg-[#002A4B]/8 py-1.5 text-center text-xs font-semibold text-[#002A4B] transition hover:bg-[#002A4B]/15"
                     onClick={(event) => {
                       event.stopPropagation();
                       setExpandedDay((current) =>
@@ -522,7 +575,6 @@ const MonthView = ({
               {isExpandedDay && (
                 <ExpandedDayPanel
                   dayLabel={dayLabel}
-                  dateKey={dateKey}
                   events={dayEvents}
                   conflictIds={conflictIds}
                   onEventClick={onEventClick}
