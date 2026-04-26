@@ -42,7 +42,7 @@ export default function AgendamentoDetailModal({
   const enderecoCompleto = (() => {
     if (!agendamento.endereco) return null;
     const e = agendamento.endereco;
-    return [e.rua, e.numero, e.bairro, e.cidade, e.estado, e.cep]
+    return [e.rua, e.bairro, e.cidade, e.estado, e.cep]
       .filter(Boolean)
       .join(", ");
   })();

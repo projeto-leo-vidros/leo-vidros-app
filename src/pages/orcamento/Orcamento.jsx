@@ -76,6 +76,21 @@ const criarItemVazio = (ordem = 1) => ({
   ordem,
 });
 
+const mapearItensDoPedido = (pedido) => {
+  if (!pedido?.produtos?.length) return [];
+
+  return pedido.produtos.map((produto, index) => ({
+    id: `pedido-${pedido.id}-${produto.id ?? produto.produtoId ?? index}`,
+    produto_id: produto.produtoId || "",
+    descricao: produto.nomeProduto || produto.nome || "",
+    quantidade: String(produto.quantidadeSolicitada ?? produto.quantidade ?? ""),
+    preco_unitario: String(produto.precoUnitarioNegociado ?? produto.preco ?? ""),
+    desconto: "0",
+    observacao: produto.observacao || "",
+    ordem: index + 1,
+  }));
+};
+
 const SectionCard = ({ title, badge, action, children, className = "" }) => (
   <div className={`${tw.card} ${className}`.trim()}>
     <div className={tw.cardHeader}>
@@ -483,6 +498,7 @@ export default function OrcamentoPage() {
             id: p.id,
             clienteId: p.cliente?.id || "",
             clienteNome: p.cliente?.nome || "",
+            produtos: Array.isArray(p.produtos) ? p.produtos : [],
             produtosDesc:
               p.servico?.nome ||
               p.produtos?.map((i) => i.nomeProduto).join(", ") ||
@@ -579,20 +595,48 @@ export default function OrcamentoPage() {
         numero_orcamento: gerarNumeroOrcamento(pedido.id),
       }));
     }
-  }, [pedidos]); 
+  }, [pedidos, dadosGerais.pedido_id]); 
+
+  useEffect(() => {
+    if (orcamentoId || !pedidos.length || !dadosGerais.pedido_id || itens.length > 0) {
+      return;
+    }
+
+    const pedidoSelecionado = pedidos.find(
+      (p) => String(p.id) === String(dadosGerais.pedido_id),
+    );
+
+    if (!pedidoSelecionado) return;
+
+    const itensDoPedido = mapearItensDoPedido(pedidoSelecionado);
+    if (itensDoPedido.length > 0) {
+      setItens(itensDoPedido);
+    }
+  }, [orcamentoId, pedidos, dadosGerais.pedido_id, itens.length]);
 
   const handleDadosChange = useCallback(
     (field, value) => {
+      const pedidoSelecionado =
+        field === "pedido_id"
+          ? pedidos.find((p) => String(p.id) === String(value))
+          : null;
+
       setDadosGerais((prev) => {
         const updates = { ...prev, [field]: value };
         if (field === "pedido_id") {
           updates.numero_orcamento = gerarNumeroOrcamento(value);
-          const pedido = pedidos.find((p) => String(p.id) === String(value));
-          if (pedido?.clienteId) updates.cliente_id = String(pedido.clienteId);
-          updates.cliente_nome = pedido?.clienteNome || "";
+          if (pedidoSelecionado?.clienteId) {
+            updates.cliente_id = String(pedidoSelecionado.clienteId);
+          }
+          updates.cliente_nome = pedidoSelecionado?.clienteNome || "";
         }
         return updates;
       });
+
+      if (field === "pedido_id") {
+        setItens(mapearItensDoPedido(pedidoSelecionado));
+      }
+
       if (errors[field])
         setErrors((prev) => {
           const e = { ...prev };

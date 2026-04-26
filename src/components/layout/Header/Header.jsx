@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -23,19 +23,28 @@ import {
 import Logo from "../../../assets/logo.png";
 import DefaultAvatar from "../../../assets/Avatar.jpg";
 import { useUser } from "../../../context/UserContext.jsx";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const navigate = useNavigate();
 
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const queryClient = useQueryClient();
   const userName = user.name || "Usuário Léo Vidros";
   const userEmail = user.email || "";
   const userPhoto = user.photo || DefaultAvatar;
 
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleProfileClose = () => setAnchorEl(null);
+
+  const handleLogout = useCallback(() => {
+    handleProfileClose();
+    logout();
+    queryClient.clear();
+    navigate("/login");
+  }, [logout, queryClient, navigate]);
 
   const menuItemStyle = {
     paddingY: "10px",
@@ -186,10 +195,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             />
 
             <MenuItem
-              onClick={() => {
-                handleProfileClose();
-                navigate("/");
-              }}
+              onClick={handleLogout}
               sx={menuItemStyle}
             >
               <ListItemIcon sx={iconStyle}>

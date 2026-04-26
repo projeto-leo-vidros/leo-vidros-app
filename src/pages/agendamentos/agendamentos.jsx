@@ -116,7 +116,7 @@ function ActionsDropdown({
   const hasEndereco = (() => {
     if (!agendamento?.endereco) return false;
     const e = agendamento.endereco;
-    return [e.rua, e.numero, e.bairro, e.cidade].some(Boolean);
+    return [e.rua, e.bairro, e.cidade].some(Boolean);
   })();
 
   return (
@@ -407,7 +407,6 @@ export default function Agendamentos() {
       const e = apt.endereco;
       const address = [
         e.rua,
-        e.numero,
         e.bairro,
         e.cidade,
         e.uf || e.estado,
@@ -587,7 +586,7 @@ export default function Agendamentos() {
   const getEnderecoResumo = (apt) => {
     if (!apt.endereco) return null;
     const e = apt.endereco;
-    const parts = [e.rua, e.numero, e.bairro, e.cidade].filter(Boolean);
+    const parts = [e.rua, e.bairro, e.cidade].filter(Boolean);
     return parts.length > 0 ? parts.join(", ") : null;
   };
 

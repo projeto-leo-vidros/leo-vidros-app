@@ -273,7 +273,6 @@ const AgendamentoNotification = ({
                     <span className="shrink-0">📍</span>
                     <span>
                       {agendamento.endereco.rua}
-                      {agendamento.endereco.numero ? `, ${agendamento.endereco.numero}` : ""}
                       {agendamento.endereco.bairro ? ` - ${agendamento.endereco.bairro}` : ""}
                     </span>
                   </div>

@@ -1,4 +1,4 @@
-import { Api, EtlApi } from "../client/Api";
+import Api, { EtlApi } from "../client/Api";
 import BaseService from '../client/BaseService';
 
 class EstoqueService extends BaseService {

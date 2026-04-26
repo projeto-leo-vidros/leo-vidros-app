@@ -83,7 +83,6 @@ export const EventInfo = ({
 
     const parts = [
       endereco.rua,
-      endereco.numero ? `nº ${endereco.numero}` : null,
       endereco.complemento,
       endereco.bairro,
       endereco.cidade,

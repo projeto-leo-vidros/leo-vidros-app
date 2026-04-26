@@ -21,7 +21,6 @@ const buildPayload = (agendamento, nomeStatus) => ({
   endereco: agendamento.endereco
     ? {
         rua: agendamento.endereco.rua || "",
-        numero: agendamento.endereco.numero || 0,
         bairro: agendamento.endereco.bairro || "",
         cidade: agendamento.endereco.cidade || "",
         uf: agendamento.endereco.uf || "",
@@ -29,7 +28,7 @@ const buildPayload = (agendamento, nomeStatus) => ({
         pais: agendamento.endereco.pais || "Brasil",
         complemento: agendamento.endereco.complemento || "",
       }
-    : { rua: "", numero: 0, bairro: "", cidade: "", uf: "", cep: "", pais: "Brasil", complemento: "" },
+    : { rua: "", bairro: "", cidade: "", uf: "", cep: "", pais: "Brasil", complemento: "" },
   funcionariosIds: (agendamento.funcionarios || []).map((f) => f.id),
   produtos: [],
 });

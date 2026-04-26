@@ -145,7 +145,6 @@ const ListView = ({ events = [], onEventClick }) => {
                             <span className="truncate">
                               {[
                                 event.endereco.rua,
-                                event.endereco.numero,
                                 event.endereco.bairro,
                               ]
                                 .filter(Boolean)

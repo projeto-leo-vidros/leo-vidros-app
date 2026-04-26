@@ -65,7 +65,6 @@ export const formatAddress = (endereco) => {
   const parts = [];
 
   if (endereco.rua) parts.push(endereco.rua);
-  if (endereco.numero) parts.push(`nº ${endereco.numero}`);
   if (endereco.complemento) parts.push(endereco.complemento);
 
   const linha1 = parts.join(", ");

@@ -336,7 +336,7 @@ class PedidosService extends BaseService {
 
       etapaCalculada = this.calcularEtapaServicoPorAgendamentos(
         dadosBackend.servico,
-        etapaCalculada,
+        etapaNome,
       );
 
       servicoInfo = {

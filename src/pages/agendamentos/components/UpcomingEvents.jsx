@@ -191,7 +191,7 @@ const UpcomingEvents = ({
                   <div className="mb-2 flex items-center space-x-1 text-xs text-text-secondary">
                     <Icon name="MapPin" size={12} />
                     <span className="truncate">
-                      {event?.endereco?.rua}, {event?.endereco?.numero}
+                      {event?.endereco?.rua}
                     </span>
                   </div>
                 )}

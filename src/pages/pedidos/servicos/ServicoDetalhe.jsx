@@ -16,6 +16,7 @@ import Sidebar from "../../../components/layout/Sidebar/Sidebar";
 import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
 import TaskCreateModal from "../../../components/ui/misc/TaskCreateModal";
 import Api from "../../../api/client/Api";
+import estoqueService from "../../../api/services/estoqueService";
 import PedidosService from "../../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
 
@@ -148,12 +149,11 @@ function AgendamentoTabs({ agendamentos }) {
   const getEnderecoTexto = (endereco) => {
     if (!endereco) return "";
     const rua    = endereco.rua    || endereco.logradouro || "";
-    const numero = endereco.numero || "s/n";
     const bairro = endereco.bairro || "";
     const cidade = endereco.cidade || "";
     const uf     = endereco.uf     || "";
 
-    const linhaPrincipal  = rua ? `${rua}, ${numero}` : "";
+    const linhaPrincipal  = rua || "";
     const linhaSecundaria = [bairro, cidade, uf].filter(Boolean).join(" - ");
     return [linhaPrincipal, linhaSecundaria].filter(Boolean).join(" • ");
   };
@@ -425,13 +425,14 @@ export default function PedidoDetalhe() {
   }, [id]);
 
   useEffect(() => {
-    Api.get("/estoques", { params: { size: 200 } })
-      .then((res) => {
-        const data = res.data;
-        const items = data?.content ?? (Array.isArray(data) ? data : []);
+    estoqueService.getAll({ page: 0, size: 500 }).then((res) => {
+      if (res.success) {
+        const items = res.data?.content ?? (Array.isArray(res.data) ? res.data : []);
         setEstoqueItems(items);
-      })
-      .catch(() => {});
+      } else {
+        console.error("Erro ao carregar estoque:", res.error);
+      }
+    });
   }, []);
 
   const calcularValorTotal = () =>
@@ -809,9 +810,8 @@ export default function PedidoDetalhe() {
                               {endereco.rua || "—"}
                             </div>
                           </FieldGroup>
-                          <FieldGroup label="Nº">
-                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 text-center shadow-sm">
-                              {endereco.numero || "s/n"}
+                          <FieldGroup label="">
+                            <div className="hidden">
                             </div>
                           </FieldGroup>
                         </div>
@@ -1004,7 +1004,6 @@ export default function PedidoDetalhe() {
                                 produtos: produtosPedido,
                                 rua: endereco?.rua || "",
                                 cep: endereco?.cep || "",
-                                numero: endereco?.numero ? String(endereco.numero) : "",
                                 bairro: endereco?.bairro || "",
                                 cidade: endereco?.cidade || "",
                                 uf: endereco?.uf || "",
@@ -1124,28 +1123,40 @@ export default function PedidoDetalhe() {
                                     value={produtoDropdownOpen[index] ? (produtoBusca[index] ?? "") : (produto.nome || "")}
                                     onFocus={(e) => {
                                       const rect = e.target.getBoundingClientRect();
-                                      setProdutoDropdownPos((p) => ({ ...p, [index]: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX, width: rect.width } }));
+                                      setProdutoDropdownPos((p) => ({
+                                        ...p,
+                                        [index]: { top: rect.bottom, left: rect.left, width: rect.width },
+                                      }));
                                       setProdutoDropdownOpen((p) => ({ ...p, [index]: true }));
                                       setProdutoBusca((p) => ({ ...p, [index]: "" }));
                                     }}
                                     onChange={(e) => setProdutoBusca((p) => ({ ...p, [index]: e.target.value }))}
-                                    onBlur={() => setTimeout(() => setProdutoDropdownOpen((p) => ({ ...p, [index]: false })), 150)}
-                                    placeholder="Buscar produto..."
+                                    onBlur={() => setTimeout(() => setProdutoDropdownOpen((p) => ({ ...p, [index]: false })), 200)}
+                                    placeholder={estoqueItems.length === 0 ? "Carregando..." : "Buscar produto..."}
                                     className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] outline-none shadow-sm"
                                   />
                                   {produtoDropdownOpen[index] && produtoDropdownPos[index] && (
                                     <div
-                                      className="fixed z-[9999] bg-white border border-gray-200 rounded-md shadow-xl max-h-52 overflow-y-auto"
-                                      style={{ top: produtoDropdownPos[index].top + 4, left: produtoDropdownPos[index].left, width: produtoDropdownPos[index].width }}
+                                      className="fixed bg-white border border-gray-200 rounded-md shadow-xl overflow-y-auto"
+                                      style={{
+                                        top: produtoDropdownPos[index].top + 4,
+                                        left: produtoDropdownPos[index].left,
+                                        width: produtoDropdownPos[index].width,
+                                        maxHeight: "220px",
+                                        zIndex: 99999,
+                                      }}
                                     >
-                                      {estoqueItems
-                                        .filter((item) => {
+                                      {(() => {
+                                        const busca = produtoBusca[index] || "";
+                                        const filtrados = estoqueItems.filter((item) => {
                                           const nome = item.produto?.nome || item.nomeProduto || item.nome || "";
-                                          const busca = produtoBusca[index] || "";
                                           return nome.toLowerCase().includes(busca.toLowerCase());
-                                        })
-                                        .slice(0, 30)
-                                        .map((item) => {
+                                        });
+                                        if (estoqueItems.length === 0)
+                                          return <p className="px-3 py-2 text-xs text-gray-400">Carregando produtos...</p>;
+                                        if (filtrados.length === 0)
+                                          return <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto encontrado</p>;
+                                        return filtrados.slice(0, 50).map((item) => {
                                           const nome = item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.id}`;
                                           return (
                                             <button
@@ -1162,18 +1173,13 @@ export default function PedidoDetalhe() {
                                                 setFormData((p) => ({ ...p, produtos: updated }));
                                                 setProdutoDropdownOpen((p) => ({ ...p, [index]: false }));
                                               }}
-                                              className="w-full text-left px-3 py-2 text-xs hover:bg-[#eef8fc] hover:text-[#007EA7] transition-colors cursor-pointer"
+                                              className="w-full text-left px-3 py-2 text-xs hover:bg-[#eef8fc] hover:text-[#007EA7] transition-colors cursor-pointer border-b border-gray-50 last:border-0"
                                             >
                                               {nome}
                                             </button>
                                           );
-                                        })}
-                                      {estoqueItems.filter((item) => {
-                                        const nome = item.produto?.nome || item.nomeProduto || item.nome || "";
-                                        return nome.toLowerCase().includes((produtoBusca[index] || "").toLowerCase());
-                                      }).length === 0 && (
-                                        <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto encontrado</p>
-                                      )}
+                                        });
+                                      })()}
                                     </div>
                                   )}
                                 </div>
@@ -1385,7 +1391,6 @@ export default function PedidoDetalhe() {
                     },
                     rua: endereco?.rua || "",
                     cep: endereco?.cep || "",
-                    numero: endereco?.numero ? String(endereco.numero) : "",
                     bairro: endereco?.bairro || "",
                     cidade: endereco?.cidade || "",
                     uf: endereco?.uf || "",
@@ -1431,7 +1436,7 @@ export default function PedidoDetalhe() {
                   setShowServicoSuggestion(false);
                   const endereco = pedido.clienteInfo?.endereco;
                   setTaskModalInitialData({
-                    tipoAgendamento: "ORCAMENTO",
+                    tipoAgendamento: "SERVICO",
                     pedido: {
                       value: pedido.id,
                       label: formData.servicoNome || rawPedido?.servico?.nome || `Pedido #${pedido.id}`,
@@ -1439,7 +1444,6 @@ export default function PedidoDetalhe() {
                     },
                     rua: endereco?.rua || "",
                     cep: endereco?.cep || "",
-                    numero: endereco?.numero ? String(endereco.numero) : "",
                     bairro: endereco?.bairro || "",
                     cidade: endereco?.cidade || "",
                     uf: endereco?.uf || "",

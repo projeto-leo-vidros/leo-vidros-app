@@ -124,7 +124,6 @@ const DEFAULT_FORM_DATA = {
   clienteTelefone: "",
   cep: "",
   rua: "",
-  numero: "",
   complemento: "",
   bairro: "",
   cidade: "",
@@ -241,7 +240,6 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         clienteTelefone: clienteCompleto.telefone || "",
         cep: enderecoPrincipal.cep || "",
         rua: enderecoPrincipal.rua || "",
-        numero: enderecoPrincipal.numero || "",
         bairro: enderecoPrincipal.bairro || "",
         cidade: enderecoPrincipal.cidade || "",
         uf: enderecoPrincipal.uf || "",
@@ -315,10 +313,6 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         setError("Rua é obrigatória");
         return false;
       }
-      if (!formData.numero.trim()) {
-        setError("Número é obrigatório");
-        return false;
-      }
       if (!formData.bairro.trim()) {
         setError("Bairro é obrigatório");
         return false;
@@ -364,7 +358,6 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
           email: formData.clienteEmail,
           telefone: formData.clienteTelefone,
           rua: formData.rua,
-          numero: formData.numero,
           complemento: formData.complemento,
           cep: formData.cep,
           bairro: formData.bairro,
@@ -375,7 +368,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         clienteNome = novoCliente.nome;
       }
 
-      const enderecoCompleto = `${formData.rua}, ${formData.numero}${
+      const enderecoCompleto = `${formData.rua}${
         formData.complemento ? ", " + formData.complemento : ""
       } - ${formData.bairro}, ${formData.cidade}/${formData.uf} - CEP: ${
         formData.cep
@@ -604,14 +597,6 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
 
               <div className="flex flex-row gap-12 items-end">
                 <UniversalInput
-                  label="Número"
-                  name="numero"
-                  placeholder="Digite o número"
-                  value={formData.numero}
-                  onChange={handleChange}
-                  required
-                />
-                <UniversalInput
                   label="CEP"
                   name="cep"
                   placeholder="00000-000"
@@ -831,7 +816,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
                 <div className="text-md text-gray-900 flex flex-col gap-1 items-start">
                   <p className="font-medium">
-                    {formData.rua}, {formData.numero}
+                    {formData.rua}
                     {formData.complemento && `, ${formData.complemento}`}
                   </p>
                   <p>

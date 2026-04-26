@@ -31,7 +31,7 @@ StatusPill.propTypes = {
   status: PropTypes.string,
 };
 
-function Progress({ value = 0, total = 6, dark = false }) {
+function Progress({ value = 0, total = 7, dark = false }) {
   const pct = Math.min(100, Math.round((Number(value) / Number(total)) * 100));
   return (
     <div className="flex items-center gap-2 w-full mt-1">

@@ -167,7 +167,16 @@ export default function Clientes() {
     const statusAnterior = clienteSelecionado?.status;
     if (modoEdicao && clienteSelecionado) {
       try {
-        const clienteAtualizado = { ...clienteSelecionado, ...dadosCliente };
+        const enderecoExistente = clienteSelecionado?.enderecos?.[0];
+        const enderecoAtualizado = dadosCliente.enderecos?.[0]
+          ? { ...(enderecoExistente?.id ? { id: enderecoExistente.id } : {}), ...dadosCliente.enderecos[0] }
+          : enderecoExistente;
+
+        const clienteAtualizado = {
+          ...clienteSelecionado,
+          ...dadosCliente,
+          enderecos: enderecoAtualizado ? [enderecoAtualizado] : [],
+        };
 
         const response = await Api.put(
           `/clientes/${clienteSelecionado.id}`,

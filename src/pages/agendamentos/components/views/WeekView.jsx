@@ -3,6 +3,7 @@ import { format, addDays, startOfWeek, isToday, isBefore, startOfDay } from "dat
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { getEventDate } from "../../utils/eventHelpers";
+import { calculateEventStyle, calculateEventLayout } from "../../utils/calendarUtils";
 
 const toSoftAccent = (color) => {
   if (!color || typeof color !== "string") return "#94a3b8";
@@ -142,21 +143,6 @@ const WeekView = ({
                 String(b.startTime || b.inicioAgendamento || ""),
               ),
             );
-            const isLowDensity = sortedDayEvents.length <= 2;
-            const eventRowHeightClass =
-              sortedDayEvents.length <= 2
-                ? "h-[36px]"
-                : sortedDayEvents.length <= 4
-                  ? "h-[32px]"
-                  : "h-[28px]";
-            const eventWidthClass =
-              sortedDayEvents.length <= 2
-                ? "w-[86%] max-w-[300px]"
-                : "w-[92%]";
-            const timeTextClass =
-              sortedDayEvents.length <= 2 ? "text-[11px]" : "text-[10px]";
-            const titleTextClass =
-              sortedDayEvents.length <= 2 ? "text-[13px]" : "text-[11px]";
             const currentTimePos = isToday(day)
               ? getCurrentTimePosition()
               : null;
@@ -186,66 +172,45 @@ const WeekView = ({
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-0 z-20 p-1">
-                  <div className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent flex h-full flex-col gap-1 overflow-y-auto pr-0.5">
-                    {sortedDayEvents.map((evt, index) => {
-                      const accentColor = toSoftAccent(
-                        evt.backgroundColor || evt.color || "#3b82f6",
-                      );
-                      return (
-                        <motion.div
-                          key={evt.id}
-                          initial={{ opacity: 0, x: -5 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2, delay: index * 0.04 }}
-                          className={`flex ${eventRowHeightClass} ${eventWidthClass} justify-self-center rounded-md border border-gray-200 bg-white/90 px-1.5 py-0.5 shadow-sm transition hover:border-gray-300 hover:bg-white`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEventClick?.(evt);
-                          }}
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                        >
-                          {isLowDensity ? (
-                            <div className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-center">
-                              <span
-                                className={`w-full truncate ${titleTextClass} font-bold text-gray-700`}
-                                title={evt.title || "Evento"}
-                              >
-                                {evt.title || "Evento"}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                <span
-                                  className="h-1.5 w-1.5 shrink-0 rounded-full"
-                                  style={{ backgroundColor: accentColor }}
-                                />
-                                <span className={`${timeTextClass} font-semibold text-gray-600`}>
-                                  {evt.startTime || evt.inicioAgendamento || "--:--"}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex h-full w-full items-center gap-1.5">
-                              <span
-                                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                                style={{ backgroundColor: accentColor }}
-                              />
-                              <span className={`${timeTextClass} shrink-0 font-semibold text-gray-600`}>
-                                {evt.startTime || evt.inicioAgendamento || "--:--"}
-                              </span>
-                              <span
-                                className={`truncate ${titleTextClass} font-semibold text-gray-700`}
-                                title={evt.title || "Evento"}
-                              >
-                                {evt.title || "Evento"}
-                              </span>
-                            </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
+                {calculateEventLayout(sortedDayEvents).map((evt, index) => {
+                  const eventStyle = calculateEventStyle(evt.startTime, evt.endTime, 7, 70);
+                  const widthPercent = 100 / evt.totalColumns;
+                  const leftPercent = evt.column * widthPercent;
+                  const accentColor = toSoftAccent(evt.backgroundColor || evt.color || "#3b82f6");
+                  return (
+                    <motion.div
+                      key={evt.id || index}
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.04 }}
+                      className="absolute rounded-md border-l-4 bg-white/95 px-1.5 py-0.5 shadow-sm hover:shadow-md hover:z-30 cursor-pointer overflow-hidden transition-all"
+                      style={{
+                        ...eventStyle,
+                        left: `calc(${leftPercent}% + 2px)`,
+                        width: `calc(${widthPercent}% - 4px)`,
+                        borderLeftColor: evt.backgroundColor || "#3b82f6",
+                        backgroundColor: `${evt.backgroundColor || "#3b82f6"}18`,
+                        zIndex: 20,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick?.(evt);
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span
+                        className="block w-full truncate text-[11px] font-bold text-gray-700"
+                        title={evt.title || "Evento"}
+                      >
+                        {evt.title || "Evento"}
+                      </span>
+                      <span className="text-[10px] font-semibold text-gray-500">
+                        {evt.startTime || "--:--"}
+                      </span>
+                    </motion.div>
+                  );
+                })}
               </div>
             );
           })}

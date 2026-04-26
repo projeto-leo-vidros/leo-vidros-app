@@ -117,7 +117,6 @@ export default function Perfil() {
     cep: "",
     bairro: "",
     cidade: "",
-    numero: "",
     estado: "",
     pais: "",
     complemento: "",
@@ -239,8 +238,7 @@ export default function Perfil() {
           cep: endereco.cep || "",
           bairro: endereco.bairro || "",
           cidade: endereco.cidade || "",
-          numero: endereco.numero || "",
-          estado: endereco.uf || endereco.estado || "",
+              estado: endereco.uf || endereco.estado || "",
           pais: endereco.pais || "Brasil",
           complemento: endereco.complemento || "",
 
@@ -355,7 +353,6 @@ export default function Perfil() {
       cidade: formData.cidade,
       bairro: formData.bairro,
       uf: formData.estado,
-      numero: formData.numero,
       complemento: formData.complemento,
       pais: formData.pais,
     };
@@ -403,8 +400,7 @@ export default function Perfil() {
           cep: endereco.cep || "",
           bairro: endereco.bairro || "",
           cidade: endereco.cidade || "",
-          numero: endereco.numero || "",
-          estado: endereco.uf || endereco.estado || "",
+              estado: endereco.uf || endereco.estado || "",
           pais: endereco.pais || "Brasil",
           complemento: endereco.complemento || "",
           senhaAtual: "",
@@ -712,16 +708,6 @@ export default function Perfil() {
                             label="Cidade"
                             name="cidade"
                             value={formData.cidade}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            inputClassName={lockedInputClassName}
-                            className="lg:col-span-2 text-start"
-                          />
-
-                          <InputField
-                            label="Número"
-                            name="numero"
-                            value={formData.numero}
                             onChange={handleInputChange}
                             disabled={!isEditing}
                             inputClassName={lockedInputClassName}

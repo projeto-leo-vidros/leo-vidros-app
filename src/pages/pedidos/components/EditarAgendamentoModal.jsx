@@ -402,8 +402,7 @@ const EditarAgendamentoModal = ({
                     </div>
                     <div className="text-sm text-blue-700 space-y-1">
                       <p>
-                        {agendamento.endereco.rua},{" "}
-                        {agendamento.endereco.numero || "S/N"}
+                        {agendamento.endereco.rua}
                       </p>
                       <p>
                         {agendamento.endereco.bairro},{" "}

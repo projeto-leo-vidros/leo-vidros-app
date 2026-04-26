@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Fragment } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Check,
   Trash2,
@@ -83,6 +83,50 @@ const categoryOptions = [
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
 ];
 
+const normalizePedidoProdutos = (pedidoData) => {
+  const produtos = pedidoData?.produtos || [];
+
+  return produtos
+    .filter((produto) => produto?.produtoId != null)
+    .map((produto) => ({
+      id: produto.produtoId,
+      nome: produto.nomeProduto || produto.nome || "Produto",
+      quantidade: parseFloat(produto.quantidadeSolicitada) || 1,
+      origemPedido: true,
+    }));
+};
+
+const mergeProdutosPedidoComSelecionados = (
+  produtosPedido = [],
+  produtosSelecionados = [],
+) => {
+  const extras = (produtosSelecionados || []).filter((produto) => {
+    if (!produto) return false;
+    if (produto.origemPedido === false) return true;
+
+    return !produtosPedido.some(
+      (produtoPedido) => String(produtoPedido.id) === String(produto.id),
+    );
+  });
+
+  return [...produtosPedido, ...extras];
+};
+
+const getProdutosIniciais = (initialData = {}) => {
+  const produtosPedido = normalizePedidoProdutos(initialData?.pedido?.originalData);
+
+  if ((initialData?.produtos || []).length === 0) {
+    return produtosPedido;
+  }
+
+  const produtosInformados = initialData.produtos.map((produto) => ({
+    ...produto,
+    origemPedido: produto?.origemPedido ?? false,
+  }));
+
+  return mergeProdutosPedidoComSelecionados(produtosPedido, produtosInformados);
+};
+
 const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const [formData, setFormData] = useState({
     id: null,
@@ -95,7 +139,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     endTime: "",
     rua: "",
     cep: "",
-    numero: "",
     complemento: "",
     bairro: "",
     cidade: "",
@@ -345,6 +388,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     formData?.startTime,
     formData?.endTime,
     formData?.id,
+    formData?.tipoAgendamento,
     fetchFuncionariosDisponiveis,
   ]);
 
@@ -362,6 +406,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const handlePedidoChange = (selectedPedidoOption) => {
     if (selectedPedidoOption?.originalData) {
       const data = selectedPedidoOption.originalData;
+      const tipoValue =
+        formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
+      const produtosPedido =
+        tipoValue === "SERVICO" ? normalizePedidoProdutos(data) : [];
 
       const cliente = data.cliente || data.servico?.cliente;
       if (cliente) {
@@ -395,12 +443,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         setFormData((prev) => ({
           ...prev,
           pedido: selectedPedidoOption,
+          produtos: mergeProdutosPedidoComSelecionados(
+            produtosPedido,
+            prev.produtos,
+          ),
           rua: end.rua || end.logradouro || "",
           cep: end.cep || "",
-          numero:
-            end.numero !== null && end.numero !== undefined
-              ? String(end.numero)
-              : "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
           uf: end.uf || "",
@@ -410,7 +458,14 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       } else {
         setSavedAddress(null);
         setUseExistingAddress(false);
-        setFormData((prev) => ({ ...prev, pedido: selectedPedidoOption }));
+        setFormData((prev) => ({
+          ...prev,
+          pedido: selectedPedidoOption,
+          produtos: mergeProdutosPedidoComSelecionados(
+            produtosPedido,
+            prev.produtos,
+          ),
+        }));
       }
     } else {
       setClienteInfo(null);
@@ -430,7 +485,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         ...prev,
         rua: "",
         cep: "",
-        numero: "",
         bairro: "",
         cidade: "",
         uf: "",
@@ -443,10 +497,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         ...prev,
         rua: savedAddress.rua || savedAddress.logradouro || "",
         cep: savedAddress.cep || "",
-        numero:
-          savedAddress.numero !== null && savedAddress.numero !== undefined
-            ? String(savedAddress.numero)
-            : "",
         bairro: savedAddress.bairro || "",
         cidade: savedAddress.cidade || "",
         uf: savedAddress.uf || "",
@@ -497,9 +547,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       );
       const newProducts = newIds.map((id) => {
         const option = produtosOptions.find((opt) => opt.value === id);
-        const existingInitData = initialData?.produtos?.find(
-          (p) => p.id === id,
-        );
+        const existingInitData =
+          currentProducts.find((p) => p.id === id) ||
+          normalizePedidoProdutos(formData?.pedido?.originalData).find(
+            (p) => p.id === id,
+          ) ||
+          initialData?.produtos?.find((p) => p.id === id);
         return {
           id: id,
           nome: option
@@ -508,6 +561,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               ? existingInitData.nome
               : "Produto",
           quantidade: existingInitData ? existingInitData.quantidade : 1,
+          origemPedido: existingInitData?.origemPedido ?? false,
         };
       });
       return { ...prev, produtos: [...keptProducts, ...newProducts] };
@@ -536,13 +590,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         tipoAgendamento: initialData?.tipoAgendamento || "",
         pedido: initialData?.pedido || null,
         funcionarios: initialData?.funcionarios || [],
-        produtos: initialData?.produtos || [],
+        produtos: getProdutosIniciais(initialData),
         eventDate: initialData?.eventDate || "",
         startTime: initialData?.startTime || "",
         endTime: initialData?.endTime || "",
         rua: initialData?.rua || "",
         cep: initialData?.cep || "",
-        numero: initialData?.numero || "",
         complemento: initialData?.complemento || "",
         bairro: initialData?.bairro || "",
         cidade: initialData?.cidade || "",
@@ -581,6 +634,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       const tipoValue =
         formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
       if (!tipoValue) newErrors.tipoAgendamento = "* Obrigatório";
+      if (!formData?.pedido) newErrors.pedido = "* Selecione um pedido";
       if (!formData?.eventDate?.trim()) {
         newErrors.eventDate = "* Obrigatória";
       } else {
@@ -704,7 +758,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           bairro: formData.bairro || null,
           uf: formData.uf || "",
           pais: formData.pais || "Brasil",
-          numero: formData.numero ? parseInt(formData.numero, 10) : 0,
         },
         funcionariosIds: selectedFuncionarios,
         produtos: produtosPayload,
@@ -1203,7 +1256,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                       </p>
                       {useExistingAddress && (
                         <p className="text-xs text-blue-700">
-                          {savedAddress.rua}, {savedAddress.numero || "S/N"} -{" "}
+                          {savedAddress.rua} -{" "}
                           {savedAddress.bairro}, {savedAddress.cidade}/
                           {savedAddress.uf}
                         </p>
@@ -1261,14 +1314,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <UniversalInput
-                  label="Número"
-                  value={formData?.numero}
-                  onChange={(e) =>
-                    handleInputChange("numero", e?.target?.value)
-                  }
-                  placeholder="Nº"
-                />
                 <UniversalInput
                   label="Complemento"
                   value={formData?.complemento}
@@ -1329,7 +1374,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   Produtos Reservados
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Inclua os itens que serao reservados para executar o servico.
+                  Os produtos vinculados ao pedido sao carregados automaticamente, e voce ainda pode adicionar ou remover outros itens.
                 </p>
               </div>
 

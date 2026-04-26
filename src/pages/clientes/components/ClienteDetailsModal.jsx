@@ -116,8 +116,8 @@ export default function ClienteDetailsModal({
               <UniversalInput
                 label="Endereço"
                 value={
-                  endereco && (endereco.rua || endereco.bairro || endereco.cep || endereco.numero)
-                    ? `${endereco.rua || ""}${endereco.numero ? ", " + endereco.numero : ""}${endereco.bairro ? " - " + endereco.bairro : ""}${endereco.cidade ? " / " + endereco.cidade : ""}${endereco.uf ? " - " + endereco.uf : ""}`
+                  endereco && (endereco.rua || endereco.bairro || endereco.cep)
+                    ? `${endereco.rua || ""}${endereco.bairro ? " - " + endereco.bairro : ""}${endereco.cidade ? " / " + endereco.cidade : ""}${endereco.uf ? " - " + endereco.uf : ""}`
                     : "N/A"
                 }
                 readOnly

@@ -74,7 +74,6 @@ const DEFAULT_FORM_DATA = {
   endereco: {
     cep: "",
     rua: "",
-    numero: "",
     complemento: "",
     bairro: "",
     cidade: "",
@@ -88,7 +87,6 @@ const DEFAULT_FORM_DATA = {
 const EMPTY_ENDERECO = {
   cep: "",
   rua: "",
-  numero: "",
   complemento: "",
   bairro: "",
   cidade: "",
@@ -137,7 +135,6 @@ const NovoPedidoServicoModal = ({
             endereco: {
               cep: endereco.cep ?? "",
               rua: endereco.rua ?? "",
-              numero: endereco.numero ? String(endereco.numero) : "",
               complemento: endereco.complemento ?? "",
               bairro: endereco.bairro ?? "",
               cidade: endereco.cidade ?? "",
@@ -177,7 +174,7 @@ const NovoPedidoServicoModal = ({
     setError(null);
   };
 
-  const handleEnderecoChange = (e) => {
+  const handleEnderecoChange = async (e) => {
     const { name, value } = e.target;
     const maskedValue = name === "cep" ? cepMask(value) : value;
 
@@ -186,6 +183,31 @@ const NovoPedidoServicoModal = ({
       endereco: { ...prev.endereco, [name]: maskedValue },
     }));
     setError(null);
+
+    if (name === "cep") {
+      const digits = value.replace(/\D/g, "");
+      if (digits.length === 8) {
+        try {
+          const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+          const data = await res.json();
+          if (!data.erro) {
+            setFormData((prev) => ({
+              ...prev,
+              endereco: {
+                ...prev.endereco,
+                cep: cepMask(digits),
+                rua: data.logradouro || prev.endereco.rua,
+                bairro: data.bairro || prev.endereco.bairro,
+                cidade: data.localidade || prev.endereco.cidade,
+                uf: data.uf || prev.endereco.uf,
+              },
+            }));
+          }
+        } catch {
+          // silently ignore ViaCEP errors
+        }
+      }
+    }
   };
 
   const handleTipoClienteChange = (tipo) => {
@@ -251,7 +273,6 @@ const NovoPedidoServicoModal = ({
         endereco: {
           cep: end.cep || "",
           rua: end.rua || "",
-          numero: end.numero?.toString() || "",
           complemento: end.complemento || "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
@@ -267,7 +288,6 @@ const NovoPedidoServicoModal = ({
         endereco: {
           cep: end.cep || "",
           rua: end.rua || "",
-          numero: end.numero?.toString() || "",
           complemento: end.complemento || "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
@@ -299,7 +319,6 @@ const NovoPedidoServicoModal = ({
       endereco: {
         cep: endereco.cep || "",
         rua: endereco.rua || "",
-        numero: endereco.numero?.toString() || "",
         complemento: endereco.complemento || "",
         bairro: endereco.bairro || "",
         cidade: endereco.cidade || "",
@@ -386,7 +405,6 @@ const NovoPedidoServicoModal = ({
             {
               ...formData.endereco,
               pais: "Brasil",
-              numero: parseInt(formData.endereco.numero, 10) || 0,
             },
           ],
         });
@@ -646,13 +664,6 @@ const NovoPedidoServicoModal = ({
                       onChange={handleEnderecoChange}
                     />
                     <UniversalInput
-                      name="numero"
-                      label="Numero"
-                      placeholder="Digite o número"
-                      value={formData.endereco.numero}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
                       name="bairro"
                       label="Bairro"
                       placeholder="Digite o bairro"
@@ -796,8 +807,7 @@ const NovoPedidoServicoModal = ({
                   </div>
                   <div className="space-y-2 text-sm text-gray-700">
                     <p>
-                      <strong>Rua:</strong> {formData.endereco.rua},{" "}
-                      {formData.endereco.numero || "S/N"}
+                      <strong>Rua:</strong> {formData.endereco.rua}
                     </p>
                     {formData.endereco.complemento && (
                       <p>
@@ -920,7 +930,6 @@ NovoPedidoServicoModal.propTypes = {
       PropTypes.shape({
         cep: PropTypes.string,
         rua: PropTypes.string,
-        numero: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         complemento: PropTypes.string,
         bairro: PropTypes.string,
         cidade: PropTypes.string,

@@ -41,7 +41,6 @@ const ufRequired = z
 export const enderecoSchema = z.object({
   cep: cepRaw,
   rua: z.string().min(1, "Rua e obrigatoria"),
-  numero: z.union([z.string(), z.number()]).optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
   cidade: z.string().min(1, "Cidade e obrigatoria"),
@@ -52,7 +51,6 @@ export const enderecoSchema = z.object({
 export const enderecoOpcionalSchema = z.object({
   cep: cepRaw,
   rua: z.string().optional().default(""),
-  numero: z.union([z.string(), z.number()]).optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
   cidade: z.string().optional().default(""),
@@ -63,8 +61,7 @@ export const enderecoOpcionalSchema = z.object({
 export const clienteSchema = z.object({
   nome: z
     .string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras"),
+    .min(2, "Nome deve ter pelo menos 2 caracteres"),
   cpf: cpfRequired,
   contato: telefoneRequired,
   email: z
@@ -72,10 +69,9 @@ export const clienteSchema = z.object({
     .trim()
     .min(1, "Email e obrigatorio")
     .email("Email invalido"),
-  status: z.enum(["Ativo", "Inativo"]).default("Inativo"),
+  status: z.enum(["Ativo", "Inativo", "Finalizado"]).default("Inativo"),
   cep: cepRequired,
   rua: z.string().trim().min(1, "Rua e obrigatoria"),
-  numero: z.union([z.string(), z.number()]).optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().trim().min(1, "Bairro e obrigatorio"),
   cidade: z.string().trim().min(1, "Cidade e obrigatoria"),
@@ -92,7 +88,6 @@ export const clientePayloadSchema = clienteSchema.transform((data) => ({
     {
       cep: data.cep,
       rua: data.rua,
-      numero: data.numero ? Number(data.numero) : undefined,
       complemento: data.complemento,
       bairro: data.bairro,
       cidade: data.cidade,
@@ -202,7 +197,6 @@ export const pedidoServicoEtapa1Schema = z.object({
     rua: z.string().min(1, "Endereco e obrigatorio"),
     cidade: z.string().min(1, "Cidade e obrigatoria"),
     cep: z.string().optional().default(""),
-    numero: z.union([z.string(), z.number()]).optional().default(""),
     complemento: z.string().optional().default(""),
     bairro: z.string().optional().default(""),
     uf: z.string().max(2).optional().default(""),

@@ -631,7 +631,6 @@ const CalendarView = ({
               if (!endereco) return;
               const addressParts = [
                 endereco.rua,
-                endereco.numero,
                 endereco.complemento,
                 endereco.bairro,
                 endereco.cidade,
