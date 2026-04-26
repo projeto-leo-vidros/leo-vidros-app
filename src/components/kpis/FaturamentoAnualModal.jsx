@@ -46,11 +46,11 @@ export default function FaturamentoAnualModal({ onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 cursor-pointer"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl"
+        className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between rounded-t-2xl bg-[#002A4B] px-6 py-4 text-white">
@@ -64,7 +64,7 @@ export default function FaturamentoAnualModal({ onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 transition-colors hover:bg-white/10"
+            className="cursor-pointer rounded-full p-1 transition-colors hover:bg-white/10"
           >
             <X className="h-5 w-5" />
           </button>

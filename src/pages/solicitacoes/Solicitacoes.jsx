@@ -315,8 +315,14 @@ export default function Acesso() {
                   <div className="py-3 w-[15%] px-4">CPF</div>
                   <div className="py-3 w-[15%] px-4">Telefone</div>
                   <div className="py-3 w-[15%] px-4">Email</div>
-                  <div className="py-3 w-[15%] px-4 text-center">Situação</div>
-                  <div className="py-3 w-[15%] px-4 text-center">Ações</div>
+                  <div
+                    className={`py-3 px-4 text-center ${activeTab === "Pendentes" ? "w-[15%]" : "w-[30%]"}`}
+                  >
+                    Situação
+                  </div>
+                  {activeTab === "Pendentes" && (
+                    <div className="py-3 w-[15%] px-4 text-center">Ações</div>
+                  )}
                 </div>
 
                 <div>
@@ -355,15 +361,17 @@ export default function Acesso() {
                         <div className="w-[15%] px-4 text-gray-600">
                           {s.email || "-"}
                         </div>
-                        <div className="w-[15%] px-4 text-center">
+                        <div
+                          className={`px-4 text-center ${activeTab === "Pendentes" ? "w-[15%]" : "w-[30%]"}`}
+                        >
                           <span
                             className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(s.status?.nome)}`}
                           >
                             {s.status?.nome}
                           </span>
                         </div>
-                        <div className="w-[15%] px-4 text-center flex justify-center gap-2">
-                          {activeTab === "Pendentes" ? (
+                        {activeTab === "Pendentes" && (
+                          <div className="w-[15%] px-4 text-center flex justify-center gap-2">
                             <>
                               <button
                                 onClick={() => handleApprove(s.id)}
@@ -380,10 +388,8 @@ export default function Acesso() {
                                 <X className="w-5 h-5" />
                               </button>
                             </>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}

@@ -31,11 +31,11 @@ export default function OrcamentosAbertosModal({ onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 cursor-pointer"
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl"
+        className="flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl cursor-default"
         style={{ maxHeight: "85vh" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -53,7 +53,7 @@ export default function OrcamentosAbertosModal({ onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 transition-colors hover:bg-white/10"
+            className="cursor-pointer rounded-full p-1 transition-colors hover:bg-white/10"
           >
             <X className="h-5 w-5" />
           </button>

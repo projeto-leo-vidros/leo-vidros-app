@@ -10,6 +10,7 @@ const Clientes = lazy(() => import("../pages/clientes/clientes.jsx"));
 const Estoque = lazy(() => import("../pages/estoque/estoque.jsx"));
 const ProdutoDetalhe = lazy(() => import("../pages/estoque/ProdutoDetalhe.jsx"));
 const Pedidos = lazy(() => import("../pages/pedidos/pedidos.jsx"));
+const PedidoDetalhe = lazy(() => import("../pages/pedidos/PedidoDetalhe.jsx"));
 const ServicoDetalhe = lazy(() => import("../pages/pedidos/servicos/ServicoDetalhe.jsx"));
 const Solicitacoes = lazy(() => import("../pages/solicitacoes/Solicitacoes.jsx"));
 const Agendamentos = lazy(() => import("../pages/agendamentos/agendamentos.jsx"));
@@ -82,6 +83,14 @@ export const appRouter = createBrowserRouter([
     element: withSuspense(
       <ProtectedRoute>
         <Pedidos />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/pedidos/:id",
+    element: withSuspense(
+      <ProtectedRoute>
+        <PedidoDetalhe />
       </ProtectedRoute>
     ),
   },

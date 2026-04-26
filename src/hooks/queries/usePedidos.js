@@ -17,9 +17,15 @@ export function usePedidosProduto(options = {}) {
       const res = await PedidosService.buscarPedidosDeProduto();
       if (!res.success)
         throw new Error(res.error ?? "Erro ao carregar pedidos");
-      const mapeados = (res.data ?? []).map((p) =>
-        PedidosService.mapearParaFrontend(p),
-      );
+      const mapeados = (res.data ?? [])
+        .filter((p) => {
+          const tipoPedido = String(p?.tipoPedido ?? "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+          return tipoPedido === "produto";
+        })
+        .map((p) => PedidosService.mapearParaFrontend(p));
       return sortById(mapeados);
     },
     ...options,

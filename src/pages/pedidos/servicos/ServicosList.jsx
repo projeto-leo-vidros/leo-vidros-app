@@ -66,7 +66,7 @@ const formatServicoId = (id) => {
   return idString;
 };
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 3;
 
 // Removida a constante NOVO_FORM que não estava sendo usada
 

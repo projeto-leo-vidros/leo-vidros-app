@@ -181,8 +181,8 @@ export default function PaginaInicial() {
               )}
             </div>
 
-            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-2">
+              <div className="flex self-start flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
                   <h2 className="text-base font-semibold">Próximos Agendamentos</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
@@ -190,9 +190,9 @@ export default function PaginaInicial() {
                   </span>
                 </div>
 
-                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
+                <div className="divide-y divide-gray-50">
                   {agendamentosFuturos.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
+                    <div className="flex items-center justify-center py-10">
                       <p className="text-sm italic text-gray-400">
                         Nenhum agendamento futuro.
                       </p>
@@ -232,7 +232,7 @@ export default function PaginaInicial() {
                 </div>
               </div>
 
-              <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="flex self-start flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
                   <h2 className="text-base font-semibold">Itens em Estoque Crítico</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
@@ -240,9 +240,9 @@ export default function PaginaInicial() {
                   </span>
                 </div>
 
-                <div className="min-h-[180px] flex-1 divide-y divide-gray-50">
+                <div className="divide-y divide-gray-50">
                   {itensCriticos.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
+                    <div className="flex items-center justify-center py-10">
                       <p className="text-sm italic text-gray-400">Estoque em dia.</p>
                     </div>
                   ) : (

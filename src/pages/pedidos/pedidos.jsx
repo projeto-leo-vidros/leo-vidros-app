@@ -26,6 +26,7 @@ export default function Pedidos() {
   const [triggerNovo, setTriggerNovo] = useState(
     location.state?.autoTriggerNovo === true,
   );
+  const pedidoProdutoParaAbrir = location.state?.abrirPedidoProdutoId ?? null;
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -213,6 +214,7 @@ export default function Pedidos() {
                             triggerNovoRegistro={
                               triggerNovo && activeTab === "pedidos"
                             }
+                            pedidoParaAbrirId={pedidoProdutoParaAbrir}
                             onNovoRegistroHandled={handleNovoRegistroHandled}
                             statusFilter={getStatusFilter()}
                             paymentFilter={getPaymentFilter()}

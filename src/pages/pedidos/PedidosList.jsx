@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useModal } from '../../hooks/useModal';
 import { usePagination } from '../../hooks/usePagination';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Package, Trash2, AlertTriangle, FileText, Pencil } from 'lucide-react';
 import SkeletonLoader from '../../components/feedback/Skeleton/SkeletonLoader';
 import NovoPedidoProdutoModal from './components/NovoPedidoProdutoModal';
@@ -24,8 +24,9 @@ const formatPedidoId = (id) => {
     return idString;
 }
 
-export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoRegistroHandled, statusFilter, paymentFilter }) {
+export default function PedidosList({ busca = "", triggerNovoRegistro, pedidoParaAbrirId = null, onNovoRegistroHandled, statusFilter, paymentFilter }) {
     const navigate = useNavigate();
+    const location = useLocation();
 
     const {
         data: pedidos = [],
@@ -49,6 +50,20 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             onNovoRegistroHandled();
         }
     }, [triggerNovoRegistro, onNovoRegistroHandled]);
+
+    useEffect(() => {
+        if (!pedidoParaAbrirId || !pedidos.length) return;
+
+        const pedidoAlvo = pedidos.find(
+            (item) => String(item.id) === String(pedidoParaAbrirId),
+        );
+
+        if (!pedidoAlvo) return;
+
+        setCurrent(pedidoAlvo);
+        openModal('editar');
+        navigate(location.pathname, { replace: true, state: {} });
+    }, [pedidoParaAbrirId, pedidos, openModal, navigate, location.pathname]);
 
 
     const listaFiltrada = useMemo(() => {
