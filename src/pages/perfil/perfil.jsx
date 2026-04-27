@@ -114,6 +114,7 @@ export default function Perfil() {
     novaSenha: "",
     confirmarSenha: "",
     rua: "",
+    numero: "",
     cep: "",
     bairro: "",
     cidade: "",
@@ -235,6 +236,7 @@ export default function Perfil() {
           cargo: "Gerente Administrativo",
 
           rua: endereco.rua || endereco.logradouro || "",
+          numero: endereco.numero || "",
           cep: endereco.cep || "",
           bairro: endereco.bairro || "",
           cidade: endereco.cidade || "",
@@ -349,6 +351,7 @@ export default function Perfil() {
 
     const enderecoRequest = {
       rua: formData.rua,
+      numero: formData.numero,
       cep: formData.cep,
       cidade: formData.cidade,
       bairro: formData.bairro,
@@ -397,6 +400,7 @@ export default function Perfil() {
           telefone: userData.telefone || "",
           cargo: "Gerente Administrativo",
           rua: endereco.rua || "",
+          numero: endereco.numero || "",
           cep: endereco.cep || "",
           bairro: endereco.bairro || "",
           cidade: endereco.cidade || "",
@@ -663,7 +667,17 @@ export default function Perfil() {
                             onChange={handleInputChange}
                             disabled={!isEditing}
                             inputClassName={lockedInputClassName}
-                            className="lg:col-span-4 text-start"
+                            className="lg:col-span-3 text-start"
+                          />
+
+                          <InputField
+                            label="Número"
+                            name="numero"
+                            value={formData.numero}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
+                            className="lg:col-span-1 text-start"
                           />
 
                           <div className="lg:col-span-2 text-start flex flex-col">

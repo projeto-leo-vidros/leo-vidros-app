@@ -31,6 +31,7 @@ const DEFAULT_VALUES = {
   status: "Inativo",
   cep: "",
   rua: "",
+  numero: "",
   complemento: "",
   bairro: "",
   cidade: "",
@@ -79,6 +80,7 @@ export default function ClienteFormModal({
         status: normalizeClienteStatus(clienteInicial.status),
         cep: cepMask(endereco.cep ?? ""),
         rua: endereco.rua ?? "",
+        numero: endereco.numero ?? "",
         complemento: endereco.complemento ?? "",
         bairro: endereco.bairro ?? "",
         cidade: endereco.cidade ?? "",
@@ -140,6 +142,7 @@ export default function ClienteFormModal({
           {
             cep: data.cep,
             rua: data.rua,
+            numero: data.numero,
             complemento: data.complemento,
             bairro: data.bairro,
             cidade: data.cidade,
@@ -292,6 +295,13 @@ export default function ClienteFormModal({
                   registration={register("rua")}
                   error={errors.rua}
                   placeholder="Digite a rua"
+                />
+
+                <UniversalInput
+                  label="Número"
+                  registration={register("numero")}
+                  error={errors.numero}
+                  placeholder="Digite o número"
                 />
 
                 <UniversalInput

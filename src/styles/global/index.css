@@ -37,7 +37,7 @@ article {
 .app-page {
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .app-content {
@@ -49,8 +49,7 @@ article {
 .app-scroll-area {
   width: 100%;
   min-width: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 @media (max-width: 768px) {

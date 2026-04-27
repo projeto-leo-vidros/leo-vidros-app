@@ -19,9 +19,8 @@ import {
   Flag,
   GripVertical,
   Store,
+  Plus,
 } from "lucide-react";
-import Button from "../../components/ui/Button/Button.component";
-import UniversalInput from "../../components/ui/Input/UniversalInput";
 
 const MAPS_KEY = import.meta.env.VITE_MAPS_KEY;
 
@@ -39,9 +38,7 @@ const maskCep = (value) => {
   if (!value) return "";
   let v = value.replace(/\D/g, "");
   if (v.length > 8) v = v.slice(0, 8);
-  if (v.length > 5) {
-    return v.replace(/^(\d{5})(\d)/, "$1-$2");
-  }
+  if (v.length > 5) return v.replace(/^(\d{5})(\d)/, "$1-$2");
   return v;
 };
 
@@ -49,31 +46,14 @@ export default function RotasResponsivoCompacto() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const [headerHeight, setHeaderHeight] = useState(80);
-  const headerRef = useRef(null);
-
   const addressFromState = location.state?.address;
-
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
-  useEffect(() => {
-    const updateHeight = () => {
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
-      }
-    };
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, []);
 
   const [googleLoaded, setGoogleLoaded] = useState(false);
 
   const [addresses, setAddresses] = useState(() => {
-    const savedAddresses = sessionStorage.getItem("routeAddresses");
-    if (savedAddresses) {
-      return JSON.parse(savedAddresses);
-    }
+    const saved = sessionStorage.getItem("routeAddresses");
+    if (saved) return JSON.parse(saved);
     return [
       {
         id: "init-0",
@@ -87,11 +67,9 @@ export default function RotasResponsivoCompacto() {
   });
 
   const [directionsResponse, setDirectionsResponse] = useState(null);
-
   const [totalTime, setTotalTime] = useState("0 min");
   const [totalDistance, setTotalDistance] = useState("0 km");
   const [finalPoint, setFinalPoint] = useState("N/A");
-
   const [editingId, setEditingId] = useState(null);
 
   const cepInputRef = useRef(null);
@@ -103,38 +81,32 @@ export default function RotasResponsivoCompacto() {
 
   useEffect(() => {
     if (!googleLoaded) return;
-
-    const currentMarkers = addresses.map((a) => a.coords);
-
-    if (currentMarkers.length >= 2) {
-      calculateRoute(currentMarkers);
+    const markers = addresses.map((a) => a.coords);
+    if (markers.length >= 2) {
+      calculateRoute(markers);
     } else {
       setDirectionsResponse(null);
       setTotalTime("0 min");
       setTotalDistance("0 km");
     }
-
     if (addresses.length > 0) {
-      const lastAddr = addresses[addresses.length - 1];
-      setFinalPoint(lastAddr.formatted.split(",")[0]);
+      setFinalPoint(addresses[addresses.length - 1].formatted.split(",")[0]);
     }
   }, [addresses, googleLoaded]);
 
   useEffect(() => {
-    if (addressFromState && googleLoaded) {
-      const addAddressFromAgendamento = async () => {
-        const addressExists = addresses.some(
-          (addr) =>
-            addr.formatted &&
-            addr.formatted
-              .toLowerCase()
-              .includes(addressFromState.toLowerCase()),
-        );
-
-        if (!addressExists) {
-          const result = await geoCodeAddress(addressFromState);
-          if (result) {
-            const newAddress = {
+    if (!addressFromState || !googleLoaded) return;
+    const addFromAgendamento = async () => {
+      const exists = addresses.some(
+        (a) =>
+          a.formatted?.toLowerCase().includes(addressFromState.toLowerCase()),
+      );
+      if (!exists) {
+        const result = await geoCodeAddress(addressFromState);
+        if (result) {
+          setAddresses((prev) => [
+            ...prev,
+            {
               id: `agendamento-${Date.now()}`,
               cep: "",
               numero: "",
@@ -142,57 +114,41 @@ export default function RotasResponsivoCompacto() {
               coords: result.location,
               isFixed: false,
               fromAgendamento: true,
-            };
-            setAddresses((prev) => [...prev, newAddress]);
-          }
+            },
+          ]);
         }
-      };
-
-      addAddressFromAgendamento();
-    }
+      }
+    };
+    addFromAgendamento();
   }, [addressFromState, googleLoaded]);
 
-  const calculateRoute = (currentMarkers) => {
-    if (!window.google || !window.google.maps) return;
-
-    const waypoints = currentMarkers.slice(1, -1).map((marker) => ({
-      location: marker,
-      stopover: true,
-    }));
-
+  const calculateRoute = (markers) => {
+    if (!window.google?.maps) return;
     const directionsService = new window.google.maps.DirectionsService();
     directionsService.route(
       {
-        origin: currentMarkers[0],
-        destination: currentMarkers[currentMarkers.length - 1],
-        waypoints,
+        origin: markers[0],
+        destination: markers[markers.length - 1],
+        waypoints: markers.slice(1, -1).map((m) => ({ location: m, stopover: true })),
         travelMode: window.google.maps.TravelMode.DRIVING,
         drivingOptions: {
-          departureTime: new Date(Date.now()),
+          departureTime: new Date(),
           trafficModel: "bestguess",
         },
       },
       (result, status) => {
         if (status === "OK" && result) {
           setDirectionsResponse(result);
-
-          let totalDistVal = 0;
-          let totalDurVal = 0;
-
-          const legs = result.routes[0].legs;
-
-          legs.forEach((leg) => {
-            totalDistVal += leg.distance.value;
-            totalDurVal += leg.duration.value;
+          let dist = 0;
+          let dur = 0;
+          result.routes[0].legs.forEach((leg) => {
+            dist += leg.distance.value;
+            dur += leg.duration.value;
           });
-
-          setTotalDistance((totalDistVal / 1000).toFixed(1) + " km");
-
-          const hours = Math.floor(totalDurVal / 3600);
-          const minutes = Math.floor((totalDurVal % 3600) / 60);
-          let timeString =
-            hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
-          setTotalTime(timeString);
+          setTotalDistance((dist / 1000).toFixed(1) + " km");
+          const h = Math.floor(dur / 3600);
+          const m = Math.floor((dur % 3600) / 60);
+          setTotalTime(h > 0 ? `${h}h ${m}min` : `${m}min`);
         }
       },
     );
@@ -200,10 +156,10 @@ export default function RotasResponsivoCompacto() {
 
   const geoCodeAddress = async (address) => {
     try {
-      const response = await fetch(
+      const res = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${MAPS_KEY}`,
       );
-      const data = await response.json();
+      const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         return {
           location: data.results[0].geometry.location,
@@ -212,18 +168,17 @@ export default function RotasResponsivoCompacto() {
       }
       return null;
     } catch (err) {
-      console.error("Erro ao geocodificar endereço:", err);
+      console.error("Erro ao geocodificar:", err);
       return null;
     }
   };
 
   const geoCodeCepNumero = async (cep, numero) => {
     try {
-      const query = `${cep},${numero}`;
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${MAPS_KEY}`,
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(`${cep},${numero}`)}&key=${MAPS_KEY}`,
       );
-      const data = await response.json();
+      const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         return {
           location: data.results[0].geometry.location,
@@ -239,335 +194,373 @@ export default function RotasResponsivoCompacto() {
 
   const addCep = async (cep, numero) => {
     if (!cep) return;
-    const cleanCep = cep.replace(/\D/g, "");
-
-    const cepExists = addresses.some((addr) => addr.cep === cleanCep);
-    if (cepExists) {
+    const clean = cep.replace(/\D/g, "");
+    if (addresses.some((a) => a.cep === clean)) {
       alert("Este CEP já foi adicionado!");
       return;
     }
-
-    const result = await geoCodeCepNumero(cleanCep, numero);
+    const result = await geoCodeCepNumero(clean, numero);
     if (result) {
-      const newAddress = {
-        id: `id-${Date.now()}`,
-        cep: cleanCep,
-        numero,
-        formatted: result.formatted,
-        coords: result.location,
-        isFixed: false,
-      };
-      setAddresses((prev) => [...prev, newAddress]);
+      setAddresses((prev) => [
+        ...prev,
+        {
+          id: `id-${Date.now()}`,
+          cep: clean,
+          numero,
+          formatted: result.formatted,
+          coords: result.location,
+          isFixed: false,
+        },
+      ]);
       cepInputRef.current.value = "";
       numeroInputRef.current.value = "";
     }
   };
 
-  const deleteAddress = (id) => {
+  const deleteAddress = (id) =>
     setAddresses(addresses.filter((a) => a.id !== id));
-  };
 
   const saveEdit = async (id, newCep, newNumero) => {
-    const cleanCep = newCep.replace(/\D/g, "");
-    const result = await geoCodeCepNumero(cleanCep, newNumero);
+    const clean = newCep.replace(/\D/g, "");
+    const result = await geoCodeCepNumero(clean, newNumero);
     if (result) {
-      const index = addresses.findIndex((a) => a.id === id);
-      const newAddresses = [...addresses];
-      newAddresses[index] = {
-        ...newAddresses[index],
-        cep: cleanCep,
-        numero: newNumero,
-        formatted: result.formatted,
-        coords: result.location,
-      };
-      setAddresses(newAddresses);
+      setAddresses((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? { ...a, cep: clean, numero: newNumero, formatted: result.formatted, coords: result.location }
+            : a,
+        ),
+      );
       setEditingId(null);
     }
   };
 
-  const handleReorder = (newOrder) => {
+  const handleReorder = (newOrder) =>
     setAddresses([addresses[0], ...newOrder]);
-  };
 
   const fixedItem = addresses[0];
   const draggableItems = addresses.slice(1);
 
   return (
-    <LoadScript
-      googleMapsApiKey={MAPS_KEY}
-      onLoad={() => setGoogleLoaded(true)}
-    >
-      <div className="app-page flex min-h-screen bg-[#f8fafc] font-sans overflow-x-hidden">
+    <LoadScript googleMapsApiKey={MAPS_KEY} onLoad={() => setGoogleLoaded(true)}>
+      <div className="app-page flex bg-[#f7f9fa] min-h-screen">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="app-content flex-1 flex flex-col min-h-screen">
+          <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+          <div className="pt-20 lg:pt-20" />
 
-        <div className="app-content flex-1 flex flex-col w-full relative">
-          <Header
-            ref={headerRef}
-            toggleSidebar={toggleSidebar}
-            sidebarOpen={sidebarOpen}
-          />
+          <main className="flex-1 flex flex-col items-center px-4 md:px-8 pt-6 pb-10">
+            <div className="w-full max-w-[1380px] flex flex-col gap-2">
 
-          <main
-            className="flex-1 flex flex-col items-center w-full px-4 pb-4 gap-4"
-            style={{ paddingTop: `${headerHeight + 10}px` }}
-          >
-            {/* Cabeçalho da página de rotas */}
-            <div className="w-full max-w-[1500px] shrink-0 mb-8 relative flex items-center justify-center">
-              <div className="absolute left-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              {/* Botão Voltar */}
+              <div className="flex items-center mb-6">
+                <button
                   onClick={() => window.history.back()}
-                  startIcon={<ArrowLeft size={18} />}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer transition-colors text-sm font-medium"
                 >
+                  <ArrowLeft className="w-5 h-5" />
                   Voltar
-                </Button>
+                </button>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <span className="hidden sm:inline">Rotas de Serviços</span>
-                <span className="sm:hidden">Rotas</span>
-              </h1>
-            </div>
+              {/* Título */}
+              <div className="text-center mb-8 md:mb-10">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-1">
+                  Rotas de Serviços
+                </h1>
+                <p className="text-gray-500 text-sm">Planeje e otimize os atendimentos</p>
+              </div>
 
-            {/* Formulário e métricas */}
-            <div className="w-full max-w-[1500px] shrink-0 flex flex-col gap-3 mb-4">
-              <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden flex flex-col lg:flex-row">
-                {/* Formulário de entrada */}
-                <div className="p-3 lg:w-[40%] bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col justify-center">
-                  <h3 className="text-xs font-bold text-[#002B4E] uppercase mb-1 flex items-center gap-2">
-                    <MapPin size={14} /> Adicionar a Rota
-                  </h3>
-                  <div className="flex gap-2 items-center py-1">
-                    <UniversalInput
+              {/* Formulário + KPIs lado a lado */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+                <div className="flex flex-col justify-center gap-3 rounded-lg border border-gray-200 bg-white px-6 py-5 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-[#003d6b]" />
+                    <p className="text-sm font-semibold text-gray-800">Adicionar Parada</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
                       ref={cepInputRef}
-                      onInput={(e) =>
-                        (e.target.value = maskCep(e.target.value))
-                      }
-                      wrapperClassName="flex-1"
+                      onInput={(e) => (e.target.value = maskCep(e.target.value))}
                       placeholder="CEP"
+                      className="flex-1 px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                     />
-                    <UniversalInput
+                    <input
                       ref={numeroInputRef}
-                      wrapperClassName="w-16 sm:w-24"
                       placeholder="Nº"
+                      className="w-16 px-3 py-2 border-2 border-[#005a7a] rounded-md text-sm focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                     />
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() =>
-                        addCep(
-                          cepInputRef.current.value,
-                          numeroInputRef.current.value,
-                        )
-                      }
-                    >
-                      Adicionar
-                    </Button>
                   </div>
-                </div>
-
-                {/* Métricas da rota */}
-                <div className="flex-1 p-3 grid grid-cols-3 divide-x divide-gray-100 bg-white">
-                  <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-                    <Clock size={18} className="text-[#002B4E] shrink-0" />
-                    <span className="text-xs font-semibold text-gray-500 leading-tight">
-                      Tempo<br className="hidden sm:block" /><span className="sm:hidden"> </span>Estimado
-                    </span>
-                    <span className="text-sm sm:text-base font-bold text-gray-800">
-                      {totalTime}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-                    <Navigation size={18} className="text-[#002B4E] shrink-0" />
-                    <span className="text-xs font-semibold text-gray-500 leading-tight">
-                      Distância<br className="hidden sm:block" /><span className="sm:hidden"> </span>Total
-                    </span>
-                    <span className="text-sm sm:text-base font-bold text-gray-800">
-                      {totalDistance}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-                    <Flag size={18} className="text-[#002B4E] shrink-0" />
-                    <span className="text-xs font-semibold text-gray-500 leading-tight">
-                      Destino<br className="hidden sm:block" /><span className="sm:hidden"> </span>Final
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-gray-800 truncate w-full">
-                      {finalPoint}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Grid com Mapa e Lista de Paradas */}
-            <div className="w-full max-w-[1500px] flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Mapa da rota */}
-              <div className="lg:col-span-2 bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden flex flex-col h-full">
-                <div className="bg-[#002B4E] text-white py-2 px-4 font-bold text-xs flex justify-between items-center shrink-0">
-                  <span className="flex items-center gap-2">
-                    <Navigation size={14} /> Mapa
-                  </span>
-                </div>
-                <div className="grow relative bg-gray-100">
-                  <GoogleMap
-                    mapContainerStyle={mapContainerStyle}
-                    center={
-                      addresses.length > 0
-                        ? addresses[Math.floor(addresses.length / 2)].coords
-                        : defaultCenter
+                  <button
+                    onClick={() =>
+                      addCep(cepInputRef.current.value, numeroInputRef.current.value)
                     }
-                    zoom={12}
-                    options={{
-                      disableDefaultUI: false,
-                      zoomControl: true,
-                      streetViewControl: false,
-                      mapTypeControl: false,
-                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-[#002B4E] hover:bg-[#003d6b] text-white rounded-md transition-colors text-sm font-medium"
                   >
-                    {addresses.map((addr, i) => (
-                      <Marker
-                        key={addr.id}
-                        position={addr.coords}
-                        label={{
-                          text: `${i + 1}`,
-                          color: "white",
-                          fontWeight: "bold",
-                          fontSize: "12px",
-                        }}
-                      />
-                    ))}
-                    {directionsResponse && (
-                      <DirectionsRenderer
-                        options={{
-                          directions: directionsResponse,
-                          suppressMarkers: true,
-                        }}
-                      />
-                    )}
-                  </GoogleMap>
+                    <Plus className="w-4 h-4" />
+                    Adicionar
+                  </button>
+                </div>
+
+                {/* KPI: Tempo */}
+                <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-5 text-center shadow-sm hover:shadow-md transition-all duration-200">
+                  <div className="mb-4 flex w-full items-center justify-center gap-2">
+                    <Clock className="h-5 w-5 text-[#003d6b]" />
+                    <p className="text-sm font-semibold text-gray-800">Tempo Estimado</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                    <h2 className="text-xl font-bold tracking-tight text-gray-900">{totalTime}</h2>
+                    <p className="text-sm text-gray-500">Tempo de viagem</p>
+                  </div>
+                </div>
+
+                {/* KPI: Distância */}
+                <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-5 text-center shadow-sm hover:shadow-md transition-all duration-200">
+                  <div className="mb-4 flex w-full items-center justify-center gap-2">
+                    <Navigation className="h-5 w-5 text-[#003d6b]" />
+                    <p className="text-sm font-semibold text-gray-800">Distância Total</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                    <h2 className="text-xl font-bold tracking-tight text-gray-900">{totalDistance}</h2>
+                    <p className="text-sm text-gray-500">Km percorridos</p>
+                  </div>
+                </div>
+
+                {/* KPI: Destino Final */}
+                <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-5 text-center shadow-sm hover:shadow-md transition-all duration-200">
+                  <div className="mb-4 flex w-full items-center justify-center gap-2">
+                    <Flag className="h-5 w-5 text-[#003d6b]" />
+                    <p className="text-sm font-semibold text-gray-800">Destino Final</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                    <h2 className="text-xl font-bold tracking-tight text-gray-900 truncate w-full" title={finalPoint}>
+                      {finalPoint}
+                    </h2>
+                    <p className="text-sm text-gray-500">Última parada</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Lista de paradas */}
-              <div className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden flex flex-col h-full">
-                <div className="bg-[#002B4E] text-white py-2 px-4 font-bold text-md flex justify-between items-center z-10 shrink-0">
-                  <span className="flex items-center gap-2">
-                    <MapPin size={14} />
-                    {addresses.length - 1} Pontos de Atendimento
-                  </span>
+              <br />
+
+              {/* Mapa + Lista de paradas */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Mapa */}
+                <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                  <div className="bg-[#002B4E] text-white px-4 py-2.5 flex items-center justify-between shrink-0">
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <Navigation className="w-4 h-4" />
+                      Mapa da Rota
+                    </span>
+                    {addresses.length >= 2 && (
+                      <span className="text-xs font-medium text-green-300 bg-green-900/40 border border-green-700 px-2 py-0.5 rounded-full">
+                        Rota calculada
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1" style={{ minHeight: "460px" }}>
+                    <GoogleMap
+                      mapContainerStyle={mapContainerStyle}
+                      center={
+                        addresses.length > 0
+                          ? addresses[Math.floor(addresses.length / 2)].coords
+                          : defaultCenter
+                      }
+                      zoom={12}
+                      options={{
+                        disableDefaultUI: false,
+                        zoomControl: true,
+                        streetViewControl: false,
+                        mapTypeControl: false,
+                      }}
+                    >
+                      {addresses.map((addr, i) => (
+                        <Marker
+                          key={addr.id}
+                          position={addr.coords}
+                          label={{
+                            text: `${i + 1}`,
+                            color: "white",
+                            fontWeight: "bold",
+                            fontSize: "12px",
+                          }}
+                        />
+                      ))}
+                      {directionsResponse && (
+                        <DirectionsRenderer
+                          options={{
+                            directions: directionsResponse,
+                            suppressMarkers: true,
+                          }}
+                        />
+                      )}
+                    </GoogleMap>
+                  </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto bg-[#f8fafc] p-3 scrollbar-thin">
-                  {/* Ponto fixo */}
-                  <div className="bg-white rounded border-l-4 border-[#002B4E] shadow-sm p-3 flex gap-3 items-center mb-3">
-                    <div className="w-6 h-6 rounded-full bg-[#002B4E] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      <Store size={12} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-800 text-sm truncate">
-                        {fixedItem.formatted.split(",")[0]}
-                      </p>
-                    </div>
+                {/* Lista de paradas */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+                  <div className="bg-[#002B4E] text-white px-4 py-2.5 flex items-center justify-between shrink-0">
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <MapPin className="w-4 h-4" />
+                      Paradas
+                    </span>
+                    <span className="text-xs font-medium text-blue-200 bg-white/10 px-2 py-0.5 rounded-full">
+                      {draggableItems.length} {draggableItems.length === 1 ? "ponto" : "pontos"}
+                    </span>
                   </div>
 
-                  {/* Lista arrastável */}
-                  <Reorder.Group
-                    axis="y"
-                    values={draggableItems}
-                    onReorder={handleReorder}
-                    className="space-y-2"
+                  <div
+                    className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#f7f9fa]"
+                    style={{ minHeight: "460px" }}
                   >
-                    <AnimatePresence>
-                      {draggableItems.map((addr, index) => {
-                        const realIndex = index + 1;
-                        return (
-                          <Reorder.Item
-                            key={addr.id}
-                            value={addr}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            whileDrag={{
-                              scale: 1.02,
-                              boxShadow: "0px 5px 10px rgba(0,0,0,0.1)",
-                            }}
-                            className="bg-white rounded border border-gray-200 p-2 flex gap-2 items-center shadow-sm cursor-grab active:cursor-grabbing"
-                          >
-                            <div className="text-gray-300 cursor-grab">
-                              <GripVertical size={14} />
-                            </div>
+                    {/* Ponto fixo */}
+                    <div className="bg-white rounded-md border border-gray-200 border-l-4 border-l-[#007EA7] p-3 flex gap-3 items-center shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-[#007EA7] flex items-center justify-center shrink-0">
+                        <Store className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-[#007EA7] uppercase tracking-wide mb-0.5">
+                          Ponto de partida
+                        </p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {fixedItem.formatted.split(",")[0]}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-white bg-[#007EA7] rounded-full w-5 h-5 flex items-center justify-center shrink-0">
+                        1
+                      </span>
+                    </div>
 
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white ${realIndex === addresses.length - 1 ? "bg-red-500" : "bg-blue-500"}`}
+                    {/* Linha conectora */}
+                    {draggableItems.length > 0 && (
+                      <div className="flex items-center gap-2 px-3">
+                        <div className="w-px h-4 bg-gray-300 ml-3.5" />
+                        <span className="text-xs text-gray-400">
+                          Arraste para reordenar
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Lista arrastável */}
+                    <Reorder.Group
+                      axis="y"
+                      values={draggableItems}
+                      onReorder={handleReorder}
+                      className="space-y-2"
+                    >
+                      <AnimatePresence>
+                        {draggableItems.map((addr, index) => {
+                          const isLast = index === draggableItems.length - 1;
+                          return (
+                            <Reorder.Item
+                              key={addr.id}
+                              value={addr}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              whileDrag={{
+                                scale: 1.02,
+                                boxShadow: "0px 4px 12px rgba(0,0,0,0.12)",
+                              }}
+                              className={`bg-white rounded-md border border-gray-200 shadow-sm p-3 flex gap-2 items-center cursor-grab active:cursor-grabbing ${
+                                isLast ? "border-l-4 border-l-red-500" : "border-l-4 border-l-blue-500"
+                              }`}
                             >
-                              {realIndex + 1}
-                            </div>
+                              <div className="text-gray-300 shrink-0">
+                                <GripVertical className="w-4 h-4" />
+                              </div>
 
-                            {editingId === addr.id ? (
-                              <div className="flex-1 flex gap-1">
-                                <UniversalInput
-                                  id={`edit-cep-${addr.id}`}
-                                  defaultValue={addr.cep}
-                                  wrapperClassName="flex-1"
-                                  className="border-blue-400 p-1 text-[12px]"
-                                />
-                                <UniversalInput
-                                  id={`edit-num-${addr.id}`}
-                                  defaultValue={addr.numero}
-                                  wrapperClassName="w-10"
-                                  className="border-blue-400 p-1 text-[12px]"
-                                />
-                                <button
-                                  onClick={() =>
-                                    saveEdit(
-                                      addr.id,
-                                      document.getElementById(
-                                        `edit-cep-${addr.id}`,
-                                      ).value,
-                                      document.getElementById(
-                                        `edit-num-${addr.id}`,
-                                      ).value,
-                                    )
-                                  }
-                                  className="bg-green-600 text-white px-1.5 rounded text-[12px] cursor-pointer"
-                                >
-                                  OK
-                                </button>
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white ${
+                                  isLast ? "bg-red-500" : "bg-blue-500"
+                                }`}
+                              >
+                                {index + 2}
                               </div>
-                            ) : (
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-800 text-sm truncate">
-                                  {addr.formatted.split(",")[0]}
-                                </p>
-                              </div>
-                            )}
 
-                            {editingId !== addr.id && (
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => setEditingId(addr.id)}
-                                  className="p-1 text-gray-400 hover:text-blue-600 cursor-pointer"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  onClick={() => deleteAddress(addr.id)}
-                                  className="p-1 text-gray-400 hover:text-red-600 cursor-pointer"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            )}
-                          </Reorder.Item>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </Reorder.Group>
+                              {editingId === addr.id ? (
+                                <div className="flex-1 flex gap-1">
+                                  <input
+                                    id={`edit-cep-${addr.id}`}
+                                    defaultValue={addr.cep}
+                                    className="flex-1 px-2 py-1 border-2 border-[#005a7a] rounded-md text-xs focus:ring-2 focus:ring-[#007EA7]"
+                                  />
+                                  <input
+                                    id={`edit-num-${addr.id}`}
+                                    defaultValue={addr.numero}
+                                    className="w-12 px-2 py-1 border-2 border-[#005a7a] rounded-md text-xs focus:ring-2 focus:ring-[#007EA7]"
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      saveEdit(
+                                        addr.id,
+                                        document.getElementById(`edit-cep-${addr.id}`).value,
+                                        document.getElementById(`edit-num-${addr.id}`).value,
+                                      )
+                                    }
+                                    className="bg-[#007EA7] hover:bg-[#006891] text-white px-2 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                                  >
+                                    OK
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex-1 min-w-0">
+                                  {isLast && (
+                                    <p className="text-[10px] font-bold text-red-500 uppercase tracking-wide leading-none mb-0.5">
+                                      Destino final
+                                    </p>
+                                  )}
+                                  <p className="text-sm font-semibold text-gray-800 truncate">
+                                    {addr.formatted.split(",")[0]}
+                                  </p>
+                                  {addr.fromAgendamento && (
+                                    <p className="text-[10px] text-[#007EA7] font-medium">
+                                      via agendamento
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
+                              {editingId !== addr.id && (
+                                <div className="flex gap-1 shrink-0">
+                                  <button
+                                    onClick={() => setEditingId(addr.id)}
+                                    className="p-1.5 text-gray-400 hover:text-[#007EA7] hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteAddress(addr.id)}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </Reorder.Item>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </Reorder.Group>
+
+                    {draggableItems.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                        <div className="bg-gray-100 p-4 rounded-full">
+                          <MapPin className="w-6 h-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-500 mt-2">
+                          Nenhuma parada adicionada
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Use o formulário acima para adicionar destinos
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
             </div>
           </main>
         </div>

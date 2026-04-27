@@ -81,8 +81,9 @@ export const EventInfo = ({
   const formatEndereco = (endereco) => {
     if (!endereco) return "Endereço não informado";
 
+    const ruaComNumero = [endereco.rua, endereco.numero].filter(Boolean).join(", ");
     const parts = [
-      endereco.rua,
+      ruaComNumero || undefined,
       endereco.complemento,
       endereco.bairro,
       endereco.cidade,

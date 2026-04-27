@@ -138,6 +138,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     startTime: "",
     endTime: "",
     rua: "",
+    numero: "",
     cep: "",
     complemento: "",
     bairro: "",
@@ -448,6 +449,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             prev.produtos,
           ),
           rua: end.rua || end.logradouro || "",
+          numero: end.numero || "",
           cep: end.cep || "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
@@ -484,6 +486,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setFormData((prev) => ({
         ...prev,
         rua: "",
+        numero: "",
         cep: "",
         bairro: "",
         cidade: "",
@@ -496,6 +499,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setFormData((prev) => ({
         ...prev,
         rua: savedAddress.rua || savedAddress.logradouro || "",
+        numero: savedAddress.numero || "",
         cep: savedAddress.cep || "",
         bairro: savedAddress.bairro || "",
         cidade: savedAddress.cidade || "",
@@ -595,6 +599,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         startTime: initialData?.startTime || "",
         endTime: initialData?.endTime || "",
         rua: initialData?.rua || "",
+        numero: initialData?.numero || "",
         cep: initialData?.cep || "",
         complemento: initialData?.complemento || "",
         bairro: initialData?.bairro || "",
@@ -752,6 +757,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         observacao: formData.observacao || null,
         endereco: {
           rua: formData.rua || "",
+          numero: formData.numero || null,
           complemento: formData.complemento || null,
           cep: formData.cep || "",
           cidade: formData.cidade || "",
@@ -1256,7 +1262,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                       </p>
                       {useExistingAddress && (
                         <p className="text-xs text-blue-700">
-                          {savedAddress.rua} -{" "}
+                          {savedAddress.rua}{savedAddress.numero ? `, ${savedAddress.numero}` : ""} -{" "}
                           {savedAddress.bairro}, {savedAddress.cidade}/
                           {savedAddress.uf}
                         </p>
@@ -1313,7 +1319,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   error={errors?.rua}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <UniversalInput
+                  label="Número"
+                  value={formData?.numero}
+                  onChange={(e) => handleInputChange("numero", e?.target?.value)}
+                  placeholder="Número"
+                />
                 <UniversalInput
                   label="Complemento"
                   value={formData?.complemento}
@@ -1322,6 +1334,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   }
                   placeholder="Apto, Bloco..."
                 />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
                 <UniversalInput
                   label="Bairro"
                   value={formData?.bairro}

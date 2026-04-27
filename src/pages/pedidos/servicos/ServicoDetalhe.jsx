@@ -18,6 +18,7 @@ import TaskCreateModal from "../../../components/ui/misc/TaskCreateModal";
 import Api from "../../../api/client/Api";
 import estoqueService from "../../../api/services/estoqueService";
 import PedidosService from "../../../api/services/pedidosService";
+import orcamentosService from "../../../api/services/orcamentosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
 
 const METODOS_COM_PARCELA = ["Cartão de crédito"];
@@ -149,11 +150,12 @@ function AgendamentoTabs({ agendamentos }) {
   const getEnderecoTexto = (endereco) => {
     if (!endereco) return "";
     const rua    = endereco.rua    || endereco.logradouro || "";
+    const numero = endereco.numero || "";
     const bairro = endereco.bairro || "";
     const cidade = endereco.cidade || "";
     const uf     = endereco.uf     || "";
 
-    const linhaPrincipal  = rua || "";
+    const linhaPrincipal  = [rua, numero].filter(Boolean).join(", ");
     const linhaSecundaria = [bairro, cidade, uf].filter(Boolean).join(" - ");
     return [linhaPrincipal, linhaSecundaria].filter(Boolean).join(" • ");
   };
@@ -340,6 +342,7 @@ export default function PedidoDetalhe() {
   const [produtoBusca, setProdutoBusca] = useState({});
   const [produtoDropdownOpen, setProdutoDropdownOpen] = useState({});
   const [produtoDropdownPos, setProdutoDropdownPos] = useState({});
+  const [descontoOrcamento, setDescontoOrcamento] = useState(0);
 
   const toggleSidebar = () => setSidebarOpen((p) => !p);
   const mensagemBloqueioInativacao = "Nao e possivel inativar com agendamento pendente ou em andamento. Cancele/finalize o agendamento antes.";
@@ -386,6 +389,12 @@ export default function PedidoDetalhe() {
       setRawPedido(raw);
       const mapped = PedidosService.mapearParaFrontend(raw);
       setPedido(mapped);
+
+      const orcRes = await orcamentosService.buscarPorPedido(id);
+      if (orcRes.success && orcRes.data.length > 0) {
+        const ultimo = orcRes.data[orcRes.data.length - 1];
+        setDescontoOrcamento(parseFloat(ultimo.valorDesconto) || 0);
+      }
 
       let etapa = raw?.servico
         ? PedidosService.calcularEtapaServicoPorAgendamentos(
@@ -435,11 +444,17 @@ export default function PedidoDetalhe() {
     });
   }, []);
 
-  const calcularValorTotal = () =>
+  const calcularTotalInstalacao = () =>
     formData.produtos.reduce(
       (acc, p) => acc + (parseFloat(p.quantidade) || 0) * (parseFloat(p.preco) || 0),
       0
     );
+
+  const calcularValorTotal = () => {
+    const precoBase = parseFloat(formData.servicoPrecoBase) || 0;
+    const totalInstalacao = calcularTotalInstalacao();
+    return Math.max(0, precoBase + totalInstalacao - descontoOrcamento);
+  };
 
   const handleFieldChange = (field, value) =>
     setFormData((p) => ({ ...p, [field]: value }));
@@ -810,8 +825,9 @@ export default function PedidoDetalhe() {
                               {endereco.rua || "—"}
                             </div>
                           </FieldGroup>
-                          <FieldGroup label="">
-                            <div className="hidden">
+                          <FieldGroup label="Número">
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                              {endereco.numero || "—"}
                             </div>
                           </FieldGroup>
                         </div>
@@ -882,8 +898,14 @@ export default function PedidoDetalhe() {
                         />
                       </FieldGroup>
                       <FieldGroup label="Preço Total">
-                        <div className="px-3 py-2 bg-white border border-[#b9deeb] rounded-md text-sm text-[#007EA7] font-semibold shadow-sm">
+                        <div className="relative group px-3 py-2 bg-white border border-[#b9deeb] rounded-md text-sm text-[#007EA7] font-semibold shadow-sm cursor-default">
                           {formatCurrency(valorTotal || 0)}
+                          <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex flex-col gap-1 bg-gray-900 text-white text-xs rounded-md px-3 py-2 shadow-lg whitespace-nowrap z-10">
+                            <span>Base: {formatCurrency(parseFloat(formData.servicoPrecoBase) || 0)}</span>
+                            <span>Instalação: {formatCurrency(calcularTotalInstalacao())}</span>
+                            {descontoOrcamento > 0 && <span>Desconto: − {formatCurrency(descontoOrcamento)}</span>}
+                            <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-900" />
+                          </div>
                         </div>
                       </FieldGroup>
                     </div>
@@ -1003,6 +1025,7 @@ export default function PedidoDetalhe() {
                                 },
                                 produtos: produtosPedido,
                                 rua: endereco?.rua || "",
+                                numero: endereco?.numero || "",
                                 cep: endereco?.cep || "",
                                 bairro: endereco?.bairro || "",
                                 cidade: endereco?.cidade || "",
@@ -1227,8 +1250,8 @@ export default function PedidoDetalhe() {
                     {formData.produtos.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-gray-200 flex justify-end">
                         <p className="text-sm font-bold text-gray-800">
-                          Total:{" "}
-                          <span className="text-[#007EA7]">{formatCurrency(valorTotal)}</span>
+                          Total instalação:{" "}
+                          <span className="text-[#007EA7]">{formatCurrency(calcularTotalInstalacao())}</span>
                         </p>
                       </div>
                     )}

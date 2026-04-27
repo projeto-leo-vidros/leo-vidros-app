@@ -119,7 +119,7 @@ export default function ClienteDetailsModal({
                 label="Endereço"
                 value={
                   endereco && (endereco.rua || endereco.bairro || endereco.cep)
-                    ? `${endereco.rua || ""}${endereco.bairro ? " - " + endereco.bairro : ""}${endereco.cidade ? " / " + endereco.cidade : ""}${endereco.uf ? " - " + endereco.uf : ""}`
+                    ? `${endereco.rua || ""}${endereco.numero ? ", " + endereco.numero : ""}${endereco.bairro ? " - " + endereco.bairro : ""}${endereco.cidade ? " / " + endereco.cidade : ""}${endereco.uf ? " - " + endereco.uf : ""}`
                     : "N/A"
                 }
                 readOnly

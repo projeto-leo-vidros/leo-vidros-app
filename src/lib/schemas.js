@@ -41,6 +41,7 @@ const ufRequired = z
 export const enderecoSchema = z.object({
   cep: cepRaw,
   rua: z.string().min(1, "Rua e obrigatoria"),
+  numero: z.string().optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
   cidade: z.string().min(1, "Cidade e obrigatoria"),
@@ -51,6 +52,7 @@ export const enderecoSchema = z.object({
 export const enderecoOpcionalSchema = z.object({
   cep: cepRaw,
   rua: z.string().optional().default(""),
+  numero: z.string().optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
   cidade: z.string().optional().default(""),
@@ -72,6 +74,7 @@ export const clienteSchema = z.object({
   status: z.enum(["Ativo", "Inativo", "Finalizado"]).default("Inativo"),
   cep: cepRequired,
   rua: z.string().trim().min(1, "Rua e obrigatoria"),
+  numero: z.string().optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().trim().min(1, "Bairro e obrigatorio"),
   cidade: z.string().trim().min(1, "Cidade e obrigatoria"),
@@ -88,6 +91,7 @@ export const clientePayloadSchema = clienteSchema.transform((data) => ({
     {
       cep: data.cep,
       rua: data.rua,
+      numero: data.numero,
       complemento: data.complemento,
       bairro: data.bairro,
       cidade: data.cidade,
@@ -195,6 +199,7 @@ export const pedidoServicoEtapa0Schema = z
 export const pedidoServicoEtapa1Schema = z.object({
   endereco: z.object({
     rua: z.string().min(1, "Endereco e obrigatorio"),
+    numero: z.string().optional().default(""),
     cidade: z.string().min(1, "Cidade e obrigatoria"),
     cep: z.string().optional().default(""),
     complemento: z.string().optional().default(""),

@@ -8,7 +8,7 @@ import {
   Pencil,
   RefreshCw,
   AlertCircle,
-  ClipboardList,
+  Wrench,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
@@ -50,6 +50,7 @@ export default function OrcamentosServico() {
   const [downloadError, setDownloadError] = useState(null);
   const [isPedidoServico, setIsPedidoServico] = useState(null);
   const [isCheckingPedidoTipo, setIsCheckingPedidoTipo] = useState(true);
+  const [pedido, setPedido] = useState(null);
 
   const {
     data: orcamentos = [],
@@ -65,6 +66,7 @@ export default function OrcamentosServico() {
     Api.get(`/pedidos/${pedidoId}`)
       .then((response) => {
         if (!ativo) return;
+        setPedido(response?.data ?? null);
         setIsPedidoServico(Boolean(response?.data?.servico));
       })
       .catch(() => {
@@ -129,22 +131,17 @@ export default function OrcamentosServico() {
                 Voltar ao Serviço
               </button>
 
-              <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-2">
-                <p className="text-2xl font-semibold text-gray-800 leading-tight flex items-center justify-center gap-3">
-                  <span className="inline-flex items-center justify-center bg-[#e0f2fa] p-1.5 rounded-md shadow-sm">
-                    <ClipboardList className="w-[18px] h-[18px] text-[#007EA7]" />
+              <div className="text-center mb-8">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2">
+                  Histórico de Orçamentos
+                </h1>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#e0f2fa] rounded-md">
+                  <Wrench className="w-4 h-4 text-[#007EA7]" />
+                  <span className="text-base font-semibold text-[#007EA7]">
+                    Pedido #{String(pedidoId).padStart(3, "0")}
+                    {pedido?.clienteNome ? ` · ${pedido.clienteNome}` : ""}
                   </span>
-                  Orçamentos do Pedido #{String(pedidoId).padStart(3, "0")}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {isCheckingPedidoTipo
-                    ? "Verificando tipo de pedido..."
-                    : isPedidoServico === false
-                    ? "Pedido de produto não possui orçamento"
-                    : isLoading
-                    ? "Carregando..."
-                    : `${orcamentos.length} orçamento${orcamentos.length !== 1 ? "s" : ""} encontrado${orcamentos.length !== 1 ? "s" : ""}`}
-                </p>
+                </div>
               </div>
 
               {isPedidoServico !== false && (

@@ -40,6 +40,15 @@ const usePedidoServicoAPI = () => {
     }
   };
 
+  const atualizarCliente = async (clienteId, clienteData) => {
+    try {
+      const response = await Api.put(`/clientes/${clienteId}`, clienteData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Erro ao atualizar cliente");
+    }
+  };
+
   const salvarServico = async (servicoData) => {
     try {
       const response = await Api.post(`/pedidos`, servicoData, {
@@ -61,7 +70,7 @@ const usePedidoServicoAPI = () => {
     }
   };
 
-  return { cadastrarCliente, salvarServico, buscarClientes };
+  return { cadastrarCliente, atualizarCliente, salvarServico, buscarClientes };
 };
 
 const DEFAULT_FORM_DATA = {
@@ -74,6 +83,7 @@ const DEFAULT_FORM_DATA = {
   endereco: {
     cep: "",
     rua: "",
+    numero: "",
     complemento: "",
     bairro: "",
     cidade: "",
@@ -87,6 +97,7 @@ const DEFAULT_FORM_DATA = {
 const EMPTY_ENDERECO = {
   cep: "",
   rua: "",
+  numero: "",
   complemento: "",
   bairro: "",
   cidade: "",
@@ -108,7 +119,7 @@ const NovoPedidoServicoModal = ({
   const [enderecoPrecisaSincronizar, setEnderecoPrecisaSincronizar] = useState(false);
   const clienteRequestVersionRef = useRef(0);
 
-  const { cadastrarCliente, salvarServico, buscarClientes } =
+  const { cadastrarCliente, atualizarCliente, salvarServico, buscarClientes } =
     usePedidoServicoAPI();
 
   const steps = [
@@ -135,6 +146,7 @@ const NovoPedidoServicoModal = ({
             endereco: {
               cep: endereco.cep ?? "",
               rua: endereco.rua ?? "",
+              numero: endereco.numero ?? "",
               complemento: endereco.complemento ?? "",
               bairro: endereco.bairro ?? "",
               cidade: endereco.cidade ?? "",
@@ -273,6 +285,7 @@ const NovoPedidoServicoModal = ({
         endereco: {
           cep: end.cep || "",
           rua: end.rua || "",
+          numero: end.numero || "",
           complemento: end.complemento || "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
@@ -288,6 +301,7 @@ const NovoPedidoServicoModal = ({
         endereco: {
           cep: end.cep || "",
           rua: end.rua || "",
+          numero: end.numero || "",
           complemento: end.complemento || "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
@@ -319,6 +333,7 @@ const NovoPedidoServicoModal = ({
       endereco: {
         cep: endereco.cep || "",
         rua: endereco.rua || "",
+        numero: endereco.numero || "",
         complemento: endereco.complemento || "",
         bairro: endereco.bairro || "",
         cidade: endereco.cidade || "",
@@ -412,6 +427,19 @@ const NovoPedidoServicoModal = ({
         clienteData = clientesExistentes.find(
           (cliente) => String(cliente.id) === String(formData.clienteId),
         );
+
+        const enderecoPreenchido = Object.values(formData.endereco).some((v) => v && v.trim?.());
+        if (enderecoPreenchido) {
+          const enderecosAtuais = clienteData.enderecos || [];
+          clienteData = await atualizarCliente(clienteData.id, {
+            nome: clienteData.nome,
+            cpf: clienteData.cpf,
+            email: clienteData.email,
+            telefone: clienteData.telefone,
+            status: clienteData.status || "Ativo",
+            enderecos: [...enderecosAtuais, { ...formData.endereco, pais: "Brasil" }],
+          });
+        }
       }
 
       const total = calcularValorTotal();
@@ -659,8 +687,14 @@ const NovoPedidoServicoModal = ({
                       name="rua"
                       label="Rua"
                       placeholder="Digite a rua"
-                      wrapperClassName="sm:col-span-2"
                       value={formData.endereco.rua}
+                      onChange={handleEnderecoChange}
+                    />
+                    <UniversalInput
+                      name="numero"
+                      label="Número"
+                      placeholder="Digite o número"
+                      value={formData.endereco.numero}
                       onChange={handleEnderecoChange}
                     />
                     <UniversalInput
@@ -807,7 +841,7 @@ const NovoPedidoServicoModal = ({
                   </div>
                   <div className="space-y-2 text-sm text-gray-700">
                     <p>
-                      <strong>Rua:</strong> {formData.endereco.rua}
+                      <strong>Rua:</strong> {formData.endereco.rua}{formData.endereco.numero ? `, ${formData.endereco.numero}` : ""}
                     </p>
                     {formData.endereco.complemento && (
                       <p>

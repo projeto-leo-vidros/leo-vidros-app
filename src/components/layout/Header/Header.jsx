@@ -13,6 +13,7 @@ import {
   ListItemText,
   Box,
   Typography,
+  ButtonBase,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -32,11 +33,16 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
   const { user, logout } = useUser();
   const queryClient = useQueryClient();
-  const userName = user.name || "Usuário Léo Vidros";
+  const userName = user.name || "UsuÃ¡rio LÃ©o Vidros";
   const userEmail = user.email || "";
   const userPhoto = user.photo || DefaultAvatar;
 
-  const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
+  const handleProfileClick = (event) => {
+    setAnchorEl((current) =>
+      current === event.currentTarget ? null : event.currentTarget
+    );
+  };
+
   const handleProfileClose = () => setAnchorEl(null);
 
   const handleLogout = useCallback(() => {
@@ -70,64 +76,82 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
   return (
     <AppBar
       position="fixed"
-      elevation={4}
+      elevation={2}
       sx={{ bgcolor: "#002A4B", zIndex: (theme) => theme.zIndex.drawer + 2 }}
       className="shadow-lg z-1100"
     >
       <Toolbar
-        sx={{ minHeight: { xs: 68, sm: 76, md: 82 } }}
+        sx={{ minHeight: { xs: 58, sm: 62, md: 66 } }}
         className="
           flex justify-between items-center
-          px-3 sm:px-6 md:px-10
+          px-3 sm:px-5 md:px-7
         "
       >
-        {/* Menu + Logo */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-2 sm:gap-3">
           <IconButton
             color="inherit"
             onClick={toggleSidebar}
-            className="mr-2"
+            size="small"
+            className="mr-0.5"
           >
-            <MenuIcon size={24} />
+            <MenuIcon size={22} />
           </IconButton>
+
           <img
             src={Logo}
-            alt="Logo Léo Vidros"
-            className="h-8 sm:h-10 md:h-12 transition-all duration-300 cursor-pointer hover:opacity-80"
+            alt="Logo LÃ©o Vidros"
+            className="h-8 sm:h-9 md:h-10 cursor-pointer transition-all duration-300 hover:opacity-80"
             onClick={() => navigate("/pagina-inicial")}
           />
         </div>
 
-        {/* Usuário */}
-        <div
-          className="flex items-center gap-1.5 cursor-pointer group"
+        <ButtonBase
+          aria-controls={open ? "header-profile-menu" : undefined}
+          aria-expanded={open ? "true" : undefined}
+          aria-haspopup="menu"
+          className="group rounded-xl"
           onClick={handleProfileClick}
+          sx={{
+            borderRadius: "14px",
+            padding: { xs: "6px 8px", sm: "8px 10px" },
+            transition: "background-color 0.2s ease",
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.08)",
+            },
+          }}
         >
-          <div className="hidden sm:block text-right mr-1">
-            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors leading-tight">
-              {userName}
-            </p>
-            <p className="text-xs text-gray-300 leading-tight">Administrador</p>
-          </div>
-          <Avatar
-            src={userPhoto}
-            sx={{ width: 36, height: 36 }}
-            className="flex-shrink-0 border-2 border-white group-hover:border-gray-300 transition-colors"
-          />
-          <ChevronDown
-            className={`text-white transition-transform duration-300 group-hover:text-gray-300 cursor-pointer ${
-              open ? "rotate-180" : "rotate-0"
-            } hidden sm:block`}
-            size={16}
-          />
-        </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm sm:text-base font-semibold leading-tight text-white transition-colors group-hover:text-gray-200">
+                {userName}
+              </p>
+              <p className="text-xs sm:text-sm leading-tight text-gray-300">
+                Administrador
+              </p>
+            </div>
 
-        {/* Menu suspenso */}
+            <Avatar
+              src={userPhoto}
+              sx={{ width: { xs: 32, sm: 36 }, height: { xs: 32, sm: 36 } }}
+              className="flex-shrink-0 border-2 border-white transition-colors group-hover:border-gray-300"
+            />
+
+            <ChevronDown
+              className={`hidden text-white transition-transform duration-300 group-hover:text-gray-300 sm:block ${
+                open ? "rotate-180" : "rotate-0"
+              }`}
+              size={14}
+            />
+          </div>
+        </ButtonBase>
+
         <MuiMenu
+          id="header-profile-menu"
           anchorEl={anchorEl}
           open={open}
           onClose={handleProfileClose}
           TransitionComponent={Fade}
+          keepMounted
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
           PaperProps={{
@@ -136,15 +160,19 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
               color: "white",
               borderRadius: "16px",
               minWidth: 260,
-              marginTop: "12px",
+              marginTop: "10px",
               border: "1px solid rgba(255, 255, 255, 0.1)",
               boxShadow: "0 8px 25px rgba(0,0,0,0.4)",
               overflow: "hidden",
             },
           }}
+          MenuListProps={{
+            sx: {
+              paddingY: 0,
+            },
+          }}
         >
-          {/* Seção de Perfil Destacada */}
-          <Box className="flex items-center px-4 py-5 gap-3">
+          <Box className="flex items-center gap-3 px-4 py-5">
             <Avatar
               src={userPhoto}
               className="w-12 h-12 border-2 border-white"
@@ -158,7 +186,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
               </Typography>
               <Typography
                 variant="body2"
-                className="text-gray-300 leading-tight"
+                className="leading-tight text-gray-300"
               >
                 {userEmail}
               </Typography>
@@ -169,7 +197,6 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             sx={{ borderColor: "rgba(255, 255, 255, 0.1)", marginX: "8px" }}
           />
 
-          {/* Itens de Menu */}
           <Box sx={{ paddingY: "8px" }}>
             <MenuItem
               onClick={() => {
@@ -195,10 +222,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
               }}
             />
 
-            <MenuItem
-              onClick={handleLogout}
-              sx={menuItemStyle}
-            >
+            <MenuItem onClick={handleLogout} sx={menuItemStyle}>
               <ListItemIcon sx={iconStyle}>
                 <LogOut size={20} />
               </ListItemIcon>
