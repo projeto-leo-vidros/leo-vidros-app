@@ -199,7 +199,7 @@ export const pedidoServicoEtapa0Schema = z
 export const pedidoServicoEtapa1Schema = z.object({
   endereco: z.object({
     rua: z.string().min(1, "Endereco e obrigatorio"),
-    numero: z.string().optional().default(""),
+    numero: z.coerce.string().optional().default(""),
     cidade: z.string().min(1, "Cidade e obrigatoria"),
     cep: z.string().optional().default(""),
     complemento: z.string().optional().default(""),
@@ -220,4 +220,4 @@ export const pedidoServicoEtapa2Schema = z.object({
 });
 
 export const zodFirstError = (zodError) =>
-  zodError.errors[0]?.message ?? "Dados invalidos";
+  (zodError.issues ?? zodError.errors)?.[0]?.message ?? "Dados invalidos";

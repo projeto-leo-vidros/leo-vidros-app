@@ -83,6 +83,23 @@ const categoryOptions = [
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
 ];
 
+const normalizarProdutosOrcamento = (agendamentos = []) =>
+  agendamentos
+    .filter(
+      (ag) =>
+        ag.tipoAgendamento === "ORCAMENTO" &&
+        ag.statusAgendamento?.nome !== "CANCELADO" &&
+        ag.statusAgendamento?.nome !== "INATIVO",
+    )
+    .flatMap((ag) => ag.produtos || [])
+    .filter((ap) => ap.produto?.id)
+    .map((ap) => ({
+      id: ap.produto.id,
+      nome: ap.produto.nome || `Produto #${ap.produto.id}`,
+      quantidade: parseFloat(ap.quantidadeReservada) || 1,
+      origemPedido: true,
+    }));
+
 const normalizePedidoProdutos = (pedidoData) => {
   const produtos = pedidoData?.produtos || [];
 
@@ -348,7 +365,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       const dados = raw?.content ?? (Array.isArray(raw) ? raw : []);
       setProdutosOptions(
         dados
-          .filter((item) => item.produto?.id)
+          .filter((item) => item.produto?.id && (parseFloat(item.quantidadeDisponivel) || 0) > 0)
           .map((item) => ({
             value: item.produto.id,
             label: item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.produto.id}`,
@@ -409,8 +426,11 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       const data = selectedPedidoOption.originalData;
       const tipoValue =
         formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
+      const agendamentos = data.servico?.agendamentos || [];
       const produtosPedido =
-        tipoValue === "SERVICO" ? normalizePedidoProdutos(data) : [];
+        tipoValue === "SERVICO"
+          ? normalizarProdutosOrcamento(agendamentos)
+          : [];
 
       const cliente = data.cliente || data.servico?.cliente;
       if (cliente) {
@@ -839,13 +859,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
     const tipoValue =
       formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
-    const isOrcamento = tipoValue === "ORCAMENTO";
-
-    if (step === 2 && isOrcamento) {
-      await submitToBackend();
-      return;
-    }
-
     if (step === 2) {
       setLoading(true);
       await fetchProdutos();
@@ -973,7 +986,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             </div>
 
             {(formData?.tipoAgendamento?.value === "SERVICO" ||
-              formData?.tipoAgendamento === "SERVICO") && (
+              formData?.tipoAgendamento === "SERVICO" ||
+              formData?.tipoAgendamento?.value === "ORCAMENTO" ||
+              formData?.tipoAgendamento === "ORCAMENTO") && (
               <>
                 <div
                   className={`mx-3 mb-6 h-1 flex-1 rounded-full ${
@@ -1492,13 +1507,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               >
                 {loading
                   ? "Salvando..."
-                  : step === 2 &&
-                      (formData?.tipoAgendamento?.value === "ORCAMENTO" ||
-                        formData?.tipoAgendamento === "ORCAMENTO")
-                    ? "Finalizar"
-                    : step < 3
-                      ? "Próxima Etapa"
-                      : "Finalizar"}
+                  : step < 3
+                    ? "Próxima Etapa"
+                    : "Finalizar"}
               </Button>
             </div>
           </div>

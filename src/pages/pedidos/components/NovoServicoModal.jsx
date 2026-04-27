@@ -38,6 +38,7 @@ const useServicoAPI = () => {
         enderecos: [
           {
             rua: clienteData.rua,
+            numero: clienteData.numero || "",
             complemento: clienteData.complemento || "",
             cep: clienteData.cep,
             cidade: clienteData.cidade,

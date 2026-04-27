@@ -580,6 +580,19 @@ class PedidosService extends BaseService {
       );
     }
 
+    const ACTIVE_STATUSES = ["Ativo", "Em Andamento", "Aguardando"];
+    const isTodosFilter =
+      !filtros.status ||
+      filtros.status === "Todos" ||
+      filtros.status.length === 0;
+    if (isTodosFilter) {
+      servicosFiltrados.sort((a, b) => {
+        const aActive = ACTIVE_STATUSES.includes(a.status) ? 0 : 1;
+        const bActive = ACTIVE_STATUSES.includes(b.status) ? 0 : 1;
+        return aActive - bActive;
+      });
+    }
+
     return servicosFiltrados;
   }
 }

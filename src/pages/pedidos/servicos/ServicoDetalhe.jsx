@@ -289,6 +289,26 @@ function AgendamentoTabs({ agendamentos }) {
                   <p className="text-xs text-gray-600 leading-relaxed">{ag.observacao}</p>
                 </div>
               )}
+
+              {ag.produtos && ag.produtos.length > 0 && (
+                <div className="rounded-md border border-gray-200 bg-white px-5 py-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-3">
+                    Produtos da Instalação
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {ag.produtos.map((ap, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-gray-700 font-medium">
+                          {ap.produto?.nome || `Produto #${ap.produto?.id}`}
+                        </span>
+                        <span className="text-gray-500">
+                          Qtd: {ap.quantidadeUtilizada > 0 ? ap.quantidadeUtilizada : (ap.quantidadeReservada || "—")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
