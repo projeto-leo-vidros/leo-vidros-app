@@ -256,6 +256,7 @@ export default function Perfil() {
       .finally(() => {
         setLoading(false);
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInputChange = (e) => {

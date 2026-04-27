@@ -191,7 +191,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           setFuncionariosOptions(
             response.data.map((func) => ({ value: func.id, label: func.nome })),
           );
-        } catch (fallbackError) {
+        } catch (_fallbackError) {
           setFuncionariosOptions([]);
         }
       } finally {
@@ -216,7 +216,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           const responseServicos = await Api.get("/pedidos/servicos");
           const raw = responseServicos.data;
           allOrders = raw?.content ?? (Array.isArray(raw) ? raw : []);
-        } catch (error) {
+        } catch (_error) {
           console.warn(
             "⚠️ Endpoint /Pedidos/servicos não disponível, tentando alternativa...",
           );

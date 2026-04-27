@@ -36,7 +36,7 @@ const InfoItem = ({ label, value }) => (
   </div>
 );
 
-const HistoryCard = ({ hist }) => (
+const _HistoryCard = ({ hist }) => (
   <div className="w-full p-6 border border-gray-200 rounded-2xl bg-white">
     <div className="flex flex-col md:flex-row justify-between mb-4">
       <div className="max-w-[65%]">
@@ -239,7 +239,7 @@ export default function Clientes() {
     }
   };
 
-  const abrirModalVisualizar = (cliente) => {
+  const _abrirModalVisualizar = (cliente) => {
     setClienteDetalhes(cliente);
     setOpenDetails(true);
   };

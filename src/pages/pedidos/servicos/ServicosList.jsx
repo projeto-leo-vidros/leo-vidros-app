@@ -112,8 +112,8 @@ export default function ServicosList({
 
       const todos = [...servicosMapeados, ...servicosSemDuplicata];
 
-      if (todos.length === 0 && !resultPedidos.success && !resultServicos.success) {
-        setError(resultPedidos.error || resultServicos.error);
+      if (todos.length === 0 && !resultPedidos.success) {
+        setError(resultPedidos.error);
         setServicos([]);
       } else {
         const servicosOrdenados = todos.sort((a, b) => {
@@ -148,6 +148,7 @@ export default function ServicosList({
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -155,7 +156,7 @@ export default function ServicosList({
       openModal("novo");
       onNovoRegistroHandled();
     }
-  }, [triggerNovoRegistro, onNovoRegistroHandled]);
+  }, [triggerNovoRegistro, onNovoRegistroHandled, openModal]);
 
   const listaFiltrada = useMemo(() => {
     return PedidosService.filtrarServicos(servicos, {

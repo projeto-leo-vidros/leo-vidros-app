@@ -158,6 +158,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
       setError(null);
       carregarClientes();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const carregarClientes = async () => {

@@ -1,4 +1,3 @@
-import React from "react";
 import {
   MapPin,
   FileText,
@@ -37,7 +36,7 @@ export const EventInfoRow = ({
   );
 };
 
-export const EventHeader = ({ title, badges, onClose }) => {
+export const EventHeader = ({ title, badges, onClose: _onClose }) => {
   return (
     <div className="flex flex-row items-center justify-between border-b border-gray-100 px-6 pt-5 pb-4">
       <div className="flex flex-col gap-2">

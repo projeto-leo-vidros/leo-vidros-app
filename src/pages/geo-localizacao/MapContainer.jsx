@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   GoogleMap,
   Marker,
@@ -45,6 +45,7 @@ const maskCep = (value) => {
 export default function RotasResponsivoCompacto() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const addressFromState = location.state?.address;
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -120,6 +121,7 @@ export default function RotasResponsivoCompacto() {
       }
     };
     addFromAgendamento();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addressFromState, googleLoaded]);
 
   const calculateRoute = (markers) => {
@@ -255,11 +257,12 @@ export default function RotasResponsivoCompacto() {
               {/* Botão Voltar */}
               <div className="flex items-center mb-6">
                 <button
-                  onClick={() => window.history.back()}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer transition-colors text-sm font-medium"
+                  type="button"
+                  onClick={() => navigate("/agendamentos")}
+                  className="flex w-full items-center justify-center gap-2.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium cursor-pointer border border-gray-300 rounded-md px-4 py-2.5 sm:w-auto"
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                  Voltar
+                  <ArrowLeft className="w-4 h-4" />
+                  Voltar para agendamentos
                 </button>
               </div>
 

@@ -124,6 +124,7 @@ export default function PaginaInicial() {
       qtdItensCriticos,
       orcamentosAberto,
       valorOrcamentosAberto,
+      mesAtual,
       handleOpenFaturamentoModal,
       handleOpenOrcamentosModal,
     ],

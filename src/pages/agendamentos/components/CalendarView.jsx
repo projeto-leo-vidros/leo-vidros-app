@@ -161,6 +161,28 @@ const EventDetailsModal = ({
     }
   };
 
+  useEffect(() => {
+    if (!details) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "Escape") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (isDeleteModalOpen) {
+        setIsDeleteModalOpen(false);
+        return;
+      }
+      onClose?.();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [details, isDeleteModalOpen, onClose]);
+
   if (!details) return null;
 
   const badges = [];
@@ -191,28 +213,6 @@ const EventDetailsModal = ({
         { locale: ptBR },
       )
     : "—";
-
-  useEffect(() => {
-    if (!details) return undefined;
-
-    const handleKeyDown = (event) => {
-      if (event.defaultPrevented) return;
-      if (event.key !== "Escape") return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation?.();
-
-      if (isDeleteModalOpen) {
-        setIsDeleteModalOpen(false);
-        return;
-      }
-      onClose?.();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [details, isDeleteModalOpen, onClose]);
 
   const modalContent = (
     <>

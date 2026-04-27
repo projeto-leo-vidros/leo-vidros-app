@@ -431,6 +431,7 @@ export default function PedidoDetalhe() {
 
   useEffect(() => {
     fetchPedido();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {

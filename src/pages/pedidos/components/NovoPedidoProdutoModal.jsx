@@ -161,6 +161,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
       setError(null);
       carregarDados();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const carregarDados = async () => {

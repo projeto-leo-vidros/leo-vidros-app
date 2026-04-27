@@ -172,6 +172,7 @@ const NovoPedidoServicoModal = ({
     };
 
     carregarDados();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, clienteInicial]);
 
   const handleChange = (e) => {

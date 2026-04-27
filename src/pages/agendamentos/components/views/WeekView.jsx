@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { getEventDate } from "../../utils/eventHelpers";
 import { calculateEventStyle, calculateEventLayout } from "../../utils/calendarUtils";
 
-const toSoftAccent = (color) => {
+const _toSoftAccent = (color) => {
   if (!color || typeof color !== "string") return "#94a3b8";
 
   const normalized = color.trim();
@@ -176,7 +176,6 @@ const WeekView = ({
                   const eventStyle = calculateEventStyle(evt.startTime, evt.endTime, 7, 70);
                   const widthPercent = 100 / evt.totalColumns;
                   const leftPercent = evt.column * widthPercent;
-                  const accentColor = toSoftAccent(evt.backgroundColor || evt.color || "#3b82f6");
                   return (
                     <motion.div
                       key={evt.id || index}

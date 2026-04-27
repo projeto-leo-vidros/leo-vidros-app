@@ -128,6 +128,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
       setModoEdicao(false);
       setError(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, servico]);
 
   const handleChange = (e) => {

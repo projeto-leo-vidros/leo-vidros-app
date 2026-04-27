@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   FileText,
-  Download,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -56,7 +55,6 @@ export default function OrcamentoProgressToast({
   onFinished,
 }) {
   const [status, setStatus] = useState(initialStatus);
-  const [isDownloading, setIsDownloading] = useState(false);
   const sseRef = useRef(null);
   const autoCloseTimerRef = useRef(null);
 
@@ -64,7 +62,6 @@ export default function OrcamentoProgressToast({
     if (!orcamentoId) {
       return;
     }
-    setIsDownloading(true);
 
     try {
       let result = null;
@@ -91,10 +88,8 @@ export default function OrcamentoProgressToast({
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
-    } catch (e) {
+    } catch {
       // Erro ao baixar PDF - usuário verá mensagem de erro no toast
-    } finally {
-      setIsDownloading(false);
     }
   }, [orcamentoId, numeroOrcamento]);
 
@@ -119,18 +114,20 @@ export default function OrcamentoProgressToast({
 
     sseRef.current = sse;
 
+    const autoCloseTimer = autoCloseTimerRef.current;
     return () => {
       sse.close();
-      if (autoCloseTimerRef.current) {
-        clearTimeout(autoCloseTimerRef.current);
+      if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
       }
     };
-  }, [orcamentoId, handleDownload]);
+  }, [orcamentoId, handleDownload, onFinished]);
 
   const handleClose = useCallback(() => {
     sseRef.current?.close();
-    if (autoCloseTimerRef.current) {
-      clearTimeout(autoCloseTimerRef.current);
+    const autoCloseTimer = autoCloseTimerRef.current;
+    if (autoCloseTimer) {
+      clearTimeout(autoCloseTimer);
     }
     onClose?.();
   }, [onClose]);

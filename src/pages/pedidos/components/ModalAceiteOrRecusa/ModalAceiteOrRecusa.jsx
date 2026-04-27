@@ -13,21 +13,6 @@ export default function ModalConfirmacao({
   onConfirmar,
   onCancelar,
 }) {
-  const estilos = {
-    aprovar: {
-      iconeBg: "bg-green-100",
-      iconeCor: "text-green-600",
-      botao: "bg-[#007EA7] hover:bg-[#006b8f]",
-    },
-    recusar: {
-      iconeBg: "bg-yellow-100",
-      iconeCor: "text-yellow-600",
-      botao: "bg-[#007EA7] hover:bg-[#006b8f]",
-    },
-  };
-
-  const estilo = estilos[tipo] || estilos.aprovar;
-
   return (
     <AnimatePresence>
       {aberto && (

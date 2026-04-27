@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useModal } from '../../hooks/useModal';
 import { usePagination } from '../../hooks/usePagination';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Package, Trash2, AlertTriangle, FileText, Pencil } from 'lucide-react';
+import { Package, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import SkeletonLoader from '../../components/feedback/Skeleton/SkeletonLoader';
 import NovoPedidoProdutoModal from './components/NovoPedidoProdutoModal';
 import EditarPedidoModal from './components/EditarPedidoModal';
@@ -49,7 +49,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, pedidoPar
             openModal('novo');
             onNovoRegistroHandled();
         }
-    }, [triggerNovoRegistro, onNovoRegistroHandled]);
+    }, [triggerNovoRegistro, onNovoRegistroHandled, openModal]);
 
     useEffect(() => {
         if (!pedidoParaAbrirId || !pedidos.length) return;

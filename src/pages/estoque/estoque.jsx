@@ -6,9 +6,7 @@ import Button from "../../components/ui/Button/Button.component";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import {
-  Package,
   Search,
-  CalendarDays,
   Filter,
   Download,
   ChevronDown,
@@ -19,7 +17,6 @@ import NovoProdutoModal from "./components/ModalEstoque/NovoProdutoModal";
 import FeedbackModal from "../../components/feedback/FeedbackModal/FeedbackModal";
 import ExportarModal from "./components/ModalEstoque/ExportarModal";
 import EstoqueItemRow from "./components/ModalEstoque/EstoqueItemRow";
-import CalendarDropdown from "./components/EstoqueList/CalendarDropdown";
 import FilterDropdown from "./components/EstoqueList/FilterDropdown";
 import EntradaSaidaEstoque from "./components/ModalEstoque/EntradaSaidaEstoque";
 import InativarProdutoModal from "./components/ModalEstoque/InativarProdutoModal";
@@ -44,10 +41,9 @@ export default function Estoque() {
   const [selectedItems, setSelectedItems] = useState([]);
 
   const [busca, setBusca] = useState("");
-  const [selectedFilterDate, setSelectedFilterDate] = useState(null);
+  const [selectedFilterDate, _setSelectedFilterDate] = useState(null);
   const [activeFilters, setActiveFilters] = useState({});
 
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [expandedItemId, setExpandedItemId] = useState(null);
 
@@ -61,11 +57,6 @@ export default function Estoque() {
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
-  }, []);
-
-  const toYYYYMMDD = useCallback((date) => {
-    if (!date) return null;
-    return date.toISOString().split("T")[0];
   }, []);
 
   const mapEstoqueFromApi = useCallback((data) => {
@@ -219,7 +210,7 @@ export default function Estoque() {
         }, 300);
       }
     }
-  }, [focusItemId, filteredEstoque, expandedItemId, pagina]);
+  }, [focusItemId, filteredEstoque, expandedItemId, pagina, setPagina]);
 
   useEffect(() => {
     if (!openMovimentacaoForItemId || loading || filteredEstoque.length === 0) {
@@ -288,12 +279,12 @@ export default function Estoque() {
         alert("Erro ao salvar item. Tente novamente.");
       }
     },
-    [editingItem, fetchEstoque, parseCurrency],
+    [editingItem, fetchEstoque],
   );
 
   // Novo callback para lidar com o sucesso do modal de produto
   const handleProductSuccess = useCallback(
-    async (savedProduct) => {
+    async (_savedProduct) => {
       // Recarregar o estoque para mostrar o novo produto
       await fetchEstoque();
 
@@ -428,13 +419,6 @@ export default function Estoque() {
     [paginationData.items],
   );
 
-  const handleDateFilterChange = useCallback((newDate) => {
-    if (newDate) {
-      setSelectedFilterDate(newDate);
-      setIsCalendarOpen(false);
-    }
-  }, []);
-
   const handleFilterChange = useCallback((newFilters) => {
     setActiveFilters(newFilters);
   }, []);
@@ -483,7 +467,7 @@ export default function Estoque() {
         },
       };
     });
-  }, [paginationData.items, formatCurrency]);
+  }, [paginationData.items]);
 
   return (
     <div className="app-page flex bg-[#f7f9fa] min-h-screen">

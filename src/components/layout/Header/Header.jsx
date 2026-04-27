@@ -26,7 +26,7 @@ import DefaultAvatar from "../../../assets/Avatar.jpg";
 import { useUser } from "../../../context/UserContext.jsx";
 import { useQueryClient } from "@tanstack/react-query";
 
-export default function Header({ toggleSidebar, sidebarOpen }) {
+export default function Header({ toggleSidebar, sidebarOpen: _sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const navigate = useNavigate();

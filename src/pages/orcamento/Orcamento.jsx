@@ -1,18 +1,15 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import PropTypes from "prop-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/queryKeys";
 import Api from "../../api/client/Api";
 import OrcamentosService from "../../api/services/orcamentosService";
 import { useOrcamentoProgress } from "../../context/OrcamentoProgressContext.jsx";
 import {
-  Trash2,
   Plus,
   ArrowLeft,
   Package,
   AlertCircle,
-  Save,
   CheckCircle,
   Download,
   Loader2,
@@ -739,7 +736,7 @@ export default function OrcamentoPage() {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
         setTimeout(() => setToast(null), 3000);
       }
-    } catch (e) {
+    } catch {
       setToast({ message: "Erro ao salvar rascunho.", type: "error" });
       setTimeout(() => setToast(null), 3000);
     } finally {
@@ -807,7 +804,7 @@ export default function OrcamentoPage() {
         setToast(null);
         navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
       }, 2000);
-    } catch (e) {
+    } catch {
       setToast({ message: "Erro ao gerar orçamento.", type: "error" });
       setTimeout(() => setToast(null), 4000);
     } finally {
