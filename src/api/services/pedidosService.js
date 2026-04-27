@@ -302,7 +302,9 @@ class PedidosService extends BaseService {
         (ag) =>
           ag.statusAgendamento?.nome &&
           ag.statusAgendamento.nome !== "CANCELADO" &&
-          ag.statusAgendamento.nome !== "INATIVO",
+          ag.statusAgendamento.nome !== "INATIVO" &&
+          ag.statusAgendamento.nome !== "CONCLUÍDO" &&
+          ag.statusAgendamento.nome !== "CONCLUIDO",
       );
       temAgendamentoAtivo = agendamentosAtivos.length > 0;
 
@@ -345,7 +347,7 @@ class PedidosService extends BaseService {
         nome: dadosBackend.servico.nome || "Serviço sem nome",
         descricao: dadosBackend.servico.descricao || "",
         precoBase: dadosBackend.servico.precoBase || 0,
-        ativo: temAgendamentoAtivo ? true : dadosBackend.servico.ativo,
+        ativo: dadosBackend.ativo === false ? false : (temAgendamentoAtivo ? true : dadosBackend.servico.ativo),
         etapa: etapaCalculada, 
         agendamentos: agendamentosTodos, 
       };
@@ -401,7 +403,8 @@ class PedidosService extends BaseService {
         statusMapeado = "Ativo";
         break;
       case "FINALIZADO":
-        statusMapeado = "Finalizado";
+      case "INATIVO":
+        statusMapeado = "Inativo";
         break;
       case "PENDENTE":
         statusMapeado = "Ativo";
@@ -415,6 +418,14 @@ class PedidosService extends BaseService {
 
     if (isServico && temAgendamentoAtivo) {
       statusMapeado = "Ativo";
+    }
+
+    if (etapaAtual === "Concluído") {
+      statusMapeado = "Inativo";
+    }
+
+    if (dadosBackend.ativo === false) {
+      statusMapeado = "Inativo";
     }
 
     let dataCompra = dadosBackend.dataCompra;
@@ -452,7 +463,7 @@ class PedidosService extends BaseService {
       itensCount: itensCount,
       valorTotal: dadosBackend.valorTotal || 0,
       status: statusMapeado,
-      ativo: isServico && temAgendamentoAtivo ? true : dadosBackend.ativo !== false,
+      ativo: etapaAtual === "Concluído" ? false : isServico && temAgendamentoAtivo ? true : dadosBackend.ativo !== false,
       tipoPedido:
         dadosBackend.tipoPedido || (isProduto ? "produto" : "servico"),
 
@@ -549,9 +560,21 @@ class PedidosService extends BaseService {
         ? filtros.status
         : [filtros.status];
       if (!statusArray.includes("Todos")) {
-        servicosFiltrados = servicosFiltrados.filter((servico) =>
-          statusArray.includes(servico.status),
-        );
+        const wantAtivos = statusArray.includes("Ativos");
+        const wantInativos = statusArray.includes("Inativos");
+        if (wantAtivos && !wantInativos) {
+          servicosFiltrados = servicosFiltrados.filter(
+            (servico) => servico.etapa !== "Concluído",
+          );
+        } else if (wantInativos && !wantAtivos) {
+          servicosFiltrados = servicosFiltrados.filter(
+            (servico) => servico.etapa === "Concluído",
+          );
+        } else if (!wantAtivos && !wantInativos) {
+          servicosFiltrados = servicosFiltrados.filter((servico) =>
+            statusArray.includes(servico.status),
+          );
+        }
       }
     }
 
@@ -598,3 +621,4 @@ class PedidosService extends BaseService {
 }
 
 export default new PedidosService();
+

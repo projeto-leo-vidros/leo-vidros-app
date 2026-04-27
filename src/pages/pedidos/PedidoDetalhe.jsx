@@ -309,7 +309,8 @@ export default function PedidoDetalhe() {
 
   const statusColors = {
     Ativo: "from-blue-500 to-blue-600 border-blue-700",
-    Finalizado: "from-green-500 to-green-600 border-green-700",
+    Finalizado: "from-slate-500 to-slate-600 border-slate-700",
+    Inativo: "from-slate-500 to-slate-600 border-slate-700",
     "Em Andamento": "from-yellow-500 to-yellow-600 border-yellow-700",
     Cancelado: "from-red-500 to-red-600 border-red-700",
   };

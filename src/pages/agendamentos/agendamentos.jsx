@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   Eye,
   ExternalLink,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
@@ -107,6 +108,7 @@ function ActionsDropdown({
   onEdit,
   onView,
   onLocation,
+  onFinalizar,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -188,11 +190,11 @@ function ActionsDropdown({
                 className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onStatusChange(agendamento, "CONCLUIDO");
+                  onFinalizar?.(agendamento);
                   setOpen(false);
                 }}
               >
-                <Check className="h-4 w-4" /> Concluir
+                <CheckCircle2 className="h-4 w-4" /> Finalizar execução
               </button>
             )}
             {!isFinalizado && <div className="my-1 border-t border-gray-100" />}
@@ -212,6 +214,114 @@ function ActionsDropdown({
         </>
       )}
     </div>
+  );
+}
+
+function FinalizarExecucaoModal({ isOpen, onClose, onConfirm, agendamento, isSaving }) {
+  const [horaFim, setHoraFim] = useState("");
+
+  useEffect(() => {
+    if (isOpen && agendamento) {
+      setHoraFim(agendamento.fimAgendamento?.substring(0, 5) || "");
+    }
+  }, [isOpen, agendamento]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const horaInicio = agendamento?.inicioAgendamento?.substring(0, 5) || "";
+  const horaFimOriginal = agendamento?.fimAgendamento?.substring(0, 5) || "";
+  const horaAtual = format(new Date(), "HH:mm");
+
+  if (!isOpen || !agendamento) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-4">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Finalizar Execução</h3>
+              <p className="text-xs text-gray-500">Informe o horário real de término</p>
+            </div>
+          </div>
+
+          <div className="px-6 py-5 space-y-4">
+            <div className="flex items-center gap-4 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm">
+              <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+              <span className="text-gray-500">Horário previsto:</span>
+              <span className="font-semibold text-gray-700 ml-auto">{horaInicio} – {horaFimOriginal}</span>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Horário real de término
+              </label>
+              <input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setHoraFim(horaAtual)}
+                className="mt-1.5 text-xs text-[#007EA7] hover:underline cursor-pointer"
+              >
+                Usar horário atual ({horaAtual})
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+            <button
+              onClick={onClose}
+              disabled={isSaving}
+              className="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => onConfirm(horaFim)}
+              disabled={isSaving || !horaFim}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isSaving ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando...</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4" /> Finalizar</>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -331,6 +441,8 @@ export default function Agendamentos() {
 
   const [showReagendarModal, setShowReagendarModal] = useState(false);
   const [agendamentoToReagendar, setAgendamentoToReagendar] = useState(null);
+  const [finalizarTarget, setFinalizarTarget] = useState(null);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [tasks, setTasks] = useState([]);
   const autoOpenFromServiceRef = useRef(false);
 
@@ -344,6 +456,14 @@ export default function Agendamentos() {
     const handleKeyDown = (event) => {
       if (event.defaultPrevented) return;
       if (event.key !== "Escape") return;
+
+      if (finalizarTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setFinalizarTarget(null);
+        return;
+      }
 
       if (deleteTarget) {
         event.preventDefault();
@@ -380,7 +500,7 @@ export default function Agendamentos() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [deleteTarget, detailTarget, showReagendarModal, showTaskModal]);
+  }, [finalizarTarget, deleteTarget, detailTarget, showReagendarModal, showTaskModal]);
 
   const filteredTasks = useMemo(() => {
     if (!activeKpiFilter) return tasks;
@@ -590,6 +710,40 @@ export default function Agendamentos() {
       }
     },
     [refetch],
+  );
+
+  const handleFinalizarConfirm = useCallback(
+    async (horaFim) => {
+      if (!finalizarTarget) return;
+      setIsFinalizing(true);
+      try {
+        const result = await agendamentosService.update(finalizarTarget.id, {
+          tipoAgendamento: finalizarTarget.tipoAgendamento,
+          dataAgendamento: finalizarTarget.dataAgendamento,
+          inicioAgendamento: finalizarTarget.inicioAgendamento,
+          fimAgendamento: horaFim.length === 5 ? `${horaFim}:00` : horaFim,
+          statusAgendamento: { tipo: "AGENDAMENTO", nome: "CONCLUIDO" },
+          observacao: finalizarTarget.observacao || null,
+        });
+        if (result.success) {
+          refetch();
+          setFinalizarTarget(null);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Erro ao finalizar",
+            text: result.error || "Não foi possível finalizar o agendamento.",
+            timer: 4000,
+            showConfirmButton: true,
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao finalizar agendamento:", err);
+      } finally {
+        setIsFinalizing(false);
+      }
+    },
+    [finalizarTarget, refetch],
   );
 
   const handleDeleteConfirm = useCallback(async () => {

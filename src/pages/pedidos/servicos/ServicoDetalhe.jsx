@@ -53,6 +53,8 @@ const isAgendamentoBloqueante = (status = "") => {
   return s === "PENDENTE" || s === "EM ANDAMENTO";
 };
 
+const etapaConcluida = (etapa = "") => normalizeStatus(etapa) === "CONCLUIDO";
+
 const STEPS = [
   { label: "PENDENTE" },
   { label: "AGUARDANDO ORÇAMENTO" },
@@ -64,6 +66,17 @@ const STEPS = [
 ];
 
 const ETAPA_OPTIONS = STEPS.map((step) => step.label);
+
+const getQuantidadeDisponivelEstoque = (item = {}) => {
+  const quantidadeDisponivel = parseFloat(
+    item?.quantidadeDisponivel ?? item?.disponivel,
+  );
+  if (Number.isFinite(quantidadeDisponivel)) return quantidadeDisponivel;
+
+  const quantidade = parseFloat(item?.quantidade ?? 0);
+  const reservado = parseFloat(item?.reservado ?? 0);
+  return quantidade - reservado;
+};
 
 function getStepIndex(status) {
   if (!status) return 0;
@@ -240,7 +253,10 @@ function AgendamentoTabs({ agendamentos }) {
             Nenhum agendamento
           </div>
         ) : (
-          current.map((ag, i) => (
+          current.map((ag, i) => {
+            const produtosAgendamento = ag.agendamentoProdutos ?? ag.produtos ?? [];
+
+            return (
             <div
               key={`${activeTab}-${ag.id || i}`}
               className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex flex-col gap-4"
@@ -290,13 +306,13 @@ function AgendamentoTabs({ agendamentos }) {
                 </div>
               )}
 
-              {ag.produtos && ag.produtos.length > 0 && (
+              {produtosAgendamento.length > 0 && (
                 <div className="rounded-md border border-gray-200 bg-white px-5 py-4">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Produtos da Instalação
                   </p>
                   <div className="flex flex-col gap-2">
-                    {ag.produtos.map((ap, idx) => (
+                    {produtosAgendamento.map((ap, idx) => (
                       <div key={idx} className="flex items-center justify-between text-xs">
                         <span className="text-gray-700 font-medium">
                           {ap.produto?.nome || `Produto #${ap.produto?.id}`}
@@ -310,7 +326,8 @@ function AgendamentoTabs({ agendamentos }) {
                 </div>
               )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </>
@@ -438,7 +455,7 @@ export default function PedidoDetalhe() {
         servicoNome:         mapped.servico?.nome         || "",
         servicoDescricao:    mapped.servico?.descricao    || "",
         servicoPrecoBase:    mapped.servico?.precoBase    || 0,
-        servicoAtivo:        mapped.servico?.ativo !== false,
+        servicoAtivo:        (mapped.ativo === false || etapaConcluida(etapa)) ? false : mapped.servico?.ativo !== false,
       });
     } catch (err) {
       console.error("Erro ao buscar pedido:", err);
@@ -538,20 +555,22 @@ export default function PedidoDetalhe() {
         etapaTravadaPorAgendamento && etapaObrigatoriaPorAgendamento
           ? etapaObrigatoriaPorAgendamento
           : formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE";
+      const servicoDeveFicarAtivo = etapaConcluida(etapaParaSalvar)
+        ? false
+        : formData.servicoAtivo !== undefined
+          ? formData.servicoAtivo
+          : (rawPedido?.servico?.ativo !== false);
       requestBody = {
         pedido: {
           valorTotal,
-          ativo:
-            formData.servicoAtivo !== undefined
-              ? formData.servicoAtivo
-              : (rawPedido?.ativo !== undefined ? rawPedido.ativo : true),
+          ativo: servicoDeveFicarAtivo,
           formaPagamento: composeFormaPagamento(formData.formaPagamento, formData.parcelas),
           observacao:     formData.observacoes + produtosObs,
           clienteId:      pedido.clienteId || pedido.clienteInfo?.id || null,
           clienteNome:    formData.clienteNome,
           status: {
             tipo: pedido.statusOriginal?.tipo || "PEDIDO",
-            nome: pedido.statusOriginal?.nome || "ATIVO",
+            nome: servicoDeveFicarAtivo ? "ATIVO" : "INATIVO",
           },
         },
         servico: rawPedido?.servico
@@ -560,7 +579,7 @@ export default function PedidoDetalhe() {
               nome: formData.servicoNome || rawPedido.servico.nome || "",
               descricao: formData.servicoDescricao !== undefined ? formData.servicoDescricao : (rawPedido.servico.descricao || ""),
               precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : (rawPedido.servico.precoBase || 0),
-              ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : (rawPedido.servico.ativo !== false),
+              ativo: servicoDeveFicarAtivo,
               etapaNome: etapaParaSalvar,
             }
           : null,
@@ -680,7 +699,7 @@ export default function PedidoDetalhe() {
         try {
           const produtosAtualizados = agProdutos.map((ap) => {
             const idx = formData.produtos.findIndex(
-              (p) => p.estoqueId === ap.estoque?.id || p.nome === ap.produto?.nome,
+              (p) => p.estoqueId === ap.produto?.id || p.nome === ap.produto?.nome,
             );
             const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
             const qtdUsada = idx >= 0
@@ -694,6 +713,7 @@ export default function PedidoDetalhe() {
           }).filter((p) => p.produtoId);
           if (produtosAtualizados.length > 0) {
             await Api.put(`/agendamentos/${ag.id}`, {
+              servicoId: ag.servico?.id ?? pedido?.servico?.id,
               tipoAgendamento: ag.tipoAgendamento,
               dataAgendamento: ag.dataAgendamento,
               inicioAgendamento: ag.inicioAgendamento,
@@ -1024,19 +1044,6 @@ export default function PedidoDetalhe() {
                             setError(null);
                             if (normalizeStatus(novaEtapa) === "SERVICO AGENDADO") {
                               const endereco = pedido?.clienteInfo?.endereco;
-                              const produtosPedido = (rawPedido?.produtos || [])
-                                .filter((p) => p.estoqueId)
-                                .map((p) => {
-                                  const estoqueItem = estoqueItems.find((e) => e.id === p.estoqueId);
-                                  const produtoId = estoqueItem?.produto?.id;
-                                  if (!produtoId) return null;
-                                  return {
-                                    id: produtoId,
-                                    nome: estoqueItem?.produto?.nome || p.nomeProduto || `Produto #${produtoId}`,
-                                    quantidade: p.quantidadeSolicitada || p.quantidade || 1,
-                                  };
-                                })
-                                .filter(Boolean);
                               setTaskModalInitialData({
                                 tipoAgendamento: "SERVICO",
                                 pedido: {
@@ -1044,7 +1051,6 @@ export default function PedidoDetalhe() {
                                   label: servicoInfo?.nome || formData.servicoNome || `Pedido #${pedido.id}`,
                                   originalData: rawPedido,
                                 },
-                                produtos: produtosPedido,
                                 rua: endereco?.rua || "",
                                 numero: endereco?.numero || "",
                                 cep: endereco?.cep || "",
@@ -1057,7 +1063,11 @@ export default function PedidoDetalhe() {
                               setShowTaskModal(true);
                               return;
                             }
-                            handleFieldChange("etapaServico", novaEtapa);
+                            setFormData((prev) => ({
+                              ...prev,
+                              etapaServico: novaEtapa,
+                              servicoAtivo: etapaConcluida(novaEtapa) ? false : prev.servicoAtivo,
+                            }));
                           }}
                           className={`w-full px-3 py-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
                             temMudancaEtapa
@@ -1081,8 +1091,12 @@ export default function PedidoDetalhe() {
                           Status do Serviço
                         </label>
                         <select
-                          value={formData.servicoAtivo !== undefined ? (formData.servicoAtivo ? "Ativo" : "Inativo") : (servicoInfo?.ativo ? "Ativo" : "Inativo")}
+                          value={etapaConcluida(formData.etapaServico) ? "Inativo" : (formData.servicoAtivo !== undefined ? (formData.servicoAtivo ? "Ativo" : "Inativo") : (servicoInfo?.ativo ? "Ativo" : "Inativo"))}
                           onChange={(e) => {
+                            if (etapaConcluida(formData.etapaServico) && e.target.value === "Ativo") {
+                              setError("Serviço concluído deve permanecer com status Inativo.");
+                              return;
+                            }
                             const novoAtivo = e.target.value === "Ativo";
                             if (!novoAtivo && possuiAgendamentoBloqueante()) {
                               setError(mensagemBloqueioInativacao);
@@ -1092,10 +1106,16 @@ export default function PedidoDetalhe() {
                             setFormData((prev) => ({ ...prev, servicoAtivo: novoAtivo }));
                           }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white outline-none shadow-sm"
+                          disabled={etapaConcluida(formData.etapaServico)}
                         >
                           <option value="Ativo">Ativo</option>
                           <option value="Inativo">Inativo</option>
                         </select>
+                        {etapaConcluida(formData.etapaServico) && (
+                          <p className="mt-2 text-xs text-[#64748b]">
+                            Ao concluir a etapa, o serviço fica inativo automaticamente.
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -1194,14 +1214,31 @@ export default function PedidoDetalhe() {
                                         const busca = produtoBusca[index] || "";
                                         const filtrados = estoqueItems.filter((item) => {
                                           const nome = item.produto?.nome || item.nomeProduto || item.nome || "";
-                                          return nome.toLowerCase().includes(busca.toLowerCase());
+                                          return (
+                                            getQuantidadeDisponivelEstoque(item) > 0 &&
+                                            nome.toLowerCase().includes(busca.toLowerCase())
+                                          );
                                         });
+                                        const itemSelecionado = estoqueItems.find(
+                                          (item) => item.id === produto.estoqueId,
+                                        );
+                                        const podeManterSelecionado =
+                                          itemSelecionado &&
+                                          !filtrados.some((item) => item.id === itemSelecionado.id);
+                                        const itensDropdown = podeManterSelecionado
+                                          ? [itemSelecionado, ...filtrados]
+                                          : filtrados;
+                                        const itensUnicos = itensDropdown.filter(
+                                          (item, itemIndex, arr) =>
+                                            arr.findIndex((candidate) => candidate.id === item.id) === itemIndex,
+                                        );
                                         if (estoqueItems.length === 0)
                                           return <p className="px-3 py-2 text-xs text-gray-400">Carregando produtos...</p>;
-                                        if (filtrados.length === 0)
-                                          return <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto encontrado</p>;
-                                        return filtrados.slice(0, 50).map((item) => {
+                                        if (itensUnicos.length === 0)
+                                          return <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto disponivel</p>;
+                                        return itensUnicos.slice(0, 50).map((item) => {
                                           const nome = item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.id}`;
+                                          const quantidadeDisponivel = getQuantidadeDisponivelEstoque(item);
                                           return (
                                             <button
                                               key={item.id}
@@ -1219,7 +1256,12 @@ export default function PedidoDetalhe() {
                                               }}
                                               className="w-full text-left px-3 py-2 text-xs hover:bg-[#eef8fc] hover:text-[#007EA7] transition-colors cursor-pointer border-b border-gray-50 last:border-0"
                                             >
-                                              {nome}
+                                              <div className="flex items-center justify-between gap-3">
+                                                <span className="truncate">{nome}</span>
+                                                <span className="shrink-0 text-[10px] text-gray-400">
+                                                  Disp. {quantidadeDisponivel}
+                                                </span>
+                                              </div>
                                             </button>
                                           );
                                         });

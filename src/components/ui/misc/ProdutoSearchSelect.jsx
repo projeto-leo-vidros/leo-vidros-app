@@ -1,15 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Search, ChevronDown, X } from "lucide-react";
 
-/**
- * Select pesquisável de produtos.
- * Props:
- *  - produtos: [{ id, nome, preco }]
- *  - value: { id, nome } | null
- *  - onChange: ({ id, nome, preco }) => void
- *  - placeholder: string
- *  - className: string
- */
 const ProdutoSearchSelect = ({
   produtos = [],
   value,
@@ -19,12 +11,36 @@ const ProdutoSearchSelect = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [dropdownStyle, setDropdownStyle] = useState({});
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
   const filtrados = produtos.filter((p) =>
     p.nome?.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const calcularPosicao = () => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropHeight = Math.min(208, filtrados.length * 40 + 8);
+    const openAbove = spaceBelow < dropHeight && spaceAbove > spaceBelow;
+
+    setDropdownStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+      ...(openAbove
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    });
+  };
+
+  useEffect(() => {
+    if (open) calcularPosicao();
+  }, [open, filtrados.length]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -36,6 +52,13 @@ const ProdutoSearchSelect = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => calcularPosicao();
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [open]);
 
   const handleSelect = (produto) => {
     onChange(produto);
@@ -54,6 +77,33 @@ const ProdutoSearchSelect = ({
     setSearch("");
     setTimeout(() => inputRef.current?.focus(), 50);
   };
+
+  const dropdown = open && createPortal(
+    <ul
+      style={dropdownStyle}
+      className="bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-y-auto"
+    >
+      {filtrados.length === 0 ? (
+        <li className="px-3 py-2 text-sm text-gray-400">
+          Nenhum produto encontrado
+        </li>
+      ) : (
+        filtrados.map((p) => (
+          <li
+            key={p.id}
+            onMouseDown={() => handleSelect(p)}
+            className="flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-[#007EA7] transition-colors"
+          >
+            <span>{p.nome}</span>
+            <span className="text-gray-400 text-xs ml-2 shrink-0">
+              R$ {Number(p.preco ?? 0).toFixed(2)}
+            </span>
+          </li>
+        ))
+      )}
+    </ul>,
+    document.body,
+  );
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -90,28 +140,7 @@ const ProdutoSearchSelect = ({
         </button>
       )}
 
-      {open && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-y-auto">
-          {filtrados.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-gray-400">
-              Nenhum produto encontrado
-            </li>
-          ) : (
-            filtrados.map((p) => (
-              <li
-                key={p.id}
-                onMouseDown={() => handleSelect(p)}
-                className="flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-[#007EA7] transition-colors"
-              >
-                <span>{p.nome}</span>
-                <span className="text-gray-400 text-xs ml-2 shrink-0">
-                  R$ {Number(p.preco ?? 0).toFixed(2)}
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
-      )}
+      {dropdown}
     </div>
   );
 };

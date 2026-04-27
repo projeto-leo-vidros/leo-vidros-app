@@ -83,7 +83,27 @@ const categoryOptions = [
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
 ];
 
-const normalizarProdutosOrcamento = (agendamentos = []) =>
+const getQuantidadeDisponivel = (item = {}) => {
+  const quantidadeDisponivel = parseFloat(
+    item?.quantidadeDisponivel ?? item?.disponivel,
+  );
+  if (Number.isFinite(quantidadeDisponivel)) return quantidadeDisponivel;
+
+  const quantidade = parseFloat(item?.quantidade ?? 0);
+  const reservado = parseFloat(item?.reservado ?? 0);
+  return quantidade - reservado;
+};
+
+const _produtoEstaDisponivel = (item = {}) => getQuantidadeDisponivel(item) > 0;
+
+const _filtrarProdutosDisponiveis = (produtos = [], options = []) => {
+  const idsDisponiveis = new Set(options.map((option) => String(option.value)));
+  return (produtos || []).filter((produto) =>
+    idsDisponiveis.has(String(produto.id)),
+  );
+};
+
+const _normalizarProdutosOrcamento = (agendamentos = []) =>
   agendamentos
     .filter(
       (ag) =>
@@ -129,7 +149,14 @@ const mergeProdutosPedidoComSelecionados = (
   return [...produtosPedido, ...extras];
 };
 
-const getProdutosIniciais = (initialData = {}) => {
+const isTipoOrcamento = (tipoAgendamento) =>
+  (tipoAgendamento?.value || tipoAgendamento) === "ORCAMENTO";
+
+const _getProdutosIniciais = (initialData = {}) => {
+  if (!isTipoOrcamento(initialData?.tipoAgendamento)) {
+    return [];
+  }
+
   const produtosPedido = normalizePedidoProdutos(initialData?.pedido?.originalData);
 
   if ((initialData?.produtos || []).length === 0) {
@@ -145,6 +172,7 @@ const getProdutosIniciais = (initialData = {}) => {
 };
 
 const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
+  const showProdutosStep = false;
   const [formData, setFormData] = useState({
     id: null,
     tipoAgendamento: "",
@@ -172,7 +200,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   const [funcionariosOptions, setFuncionariosOptions] = useState([]);
   const [pedidoOptions, setPedidoOptions] = useState([]);
-  const [produtosOptions, setProdutosOptions] = useState([]);
+  const [produtosOptions] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedFuncionarios, setSelectedFuncionarios] = useState([]);
   const [loadingCep, setLoadingCep] = useState(false);
@@ -358,27 +386,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     [initialData],
   );
 
-  const fetchProdutos = useCallback(async () => {
-    try {
-      const response = await Api.get("/estoques", { params: { size: 500 } });
-      const raw = response.data;
-      const dados = raw?.content ?? (Array.isArray(raw) ? raw : []);
-      setProdutosOptions(
-        dados
-          .filter((item) => item.produto?.id && (parseFloat(item.quantidadeDisponivel) || 0) > 0)
-          .map((item) => ({
-            value: item.produto.id,
-            label: item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.produto.id}`,
-            estoqueId: item.id,
-            originalData: item,
-          })),
-      );
-    } catch (error) {
-      console.error("Erro ao buscar produtos:", error);
-      setProdutosOptions([]);
-    }
-  }, []);
-
   useEffect(() => {
     const tipoValue =
       formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
@@ -411,26 +418,20 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   ]);
 
   const handleTypeChange = (selectedOption) => {
-    const typeValue = selectedOption?.value || selectedOption;
     setFormData((prev) => ({
       ...prev,
       tipoAgendamento: selectedOption,
       pedido: null,
+      produtos: [],
     }));
     setSelectedFuncionarios([]);
-    fetchOpcoesPedido(typeValue);
+    setStep(1);
+    fetchOpcoesPedido(selectedOption?.value || selectedOption);
   };
 
   const handlePedidoChange = (selectedPedidoOption) => {
     if (selectedPedidoOption?.originalData) {
       const data = selectedPedidoOption.originalData;
-      const tipoValue =
-        formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
-      const agendamentos = data.servico?.agendamentos || [];
-      const produtosPedido =
-        tipoValue === "SERVICO"
-          ? normalizarProdutosOrcamento(agendamentos)
-          : [];
 
       const cliente = data.cliente || data.servico?.cliente;
       if (cliente) {
@@ -464,10 +465,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         setFormData((prev) => ({
           ...prev,
           pedido: selectedPedidoOption,
-          produtos: mergeProdutosPedidoComSelecionados(
-            produtosPedido,
-            prev.produtos,
-          ),
+          produtos: [],
           rua: end.rua || end.logradouro || "",
           numero: end.numero || "",
           cep: end.cep || "",
@@ -483,10 +481,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         setFormData((prev) => ({
           ...prev,
           pedido: selectedPedidoOption,
-          produtos: mergeProdutosPedidoComSelecionados(
-            produtosPedido,
-            prev.produtos,
-          ),
+          produtos: [],
         }));
       }
     } else {
@@ -560,53 +555,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     }
   };
 
-  const handleProdutosSelectChange = (selectedIds) => {
-    setFormData((prev) => {
-      const currentProducts = prev.produtos || [];
-      const keptProducts = currentProducts.filter((p) =>
-        selectedIds.includes(p.id),
-      );
-      const newIds = selectedIds.filter(
-        (id) => !currentProducts.some((p) => p.id === id),
-      );
-      const newProducts = newIds.map((id) => {
-        const option = produtosOptions.find((opt) => opt.value === id);
-        const existingInitData =
-          currentProducts.find((p) => p.id === id) ||
-          normalizePedidoProdutos(formData?.pedido?.originalData).find(
-            (p) => p.id === id,
-          ) ||
-          initialData?.produtos?.find((p) => p.id === id);
-        return {
-          id: id,
-          nome: option
-            ? option.label
-            : existingInitData
-              ? existingInitData.nome
-              : "Produto",
-          quantidade: existingInitData ? existingInitData.quantidade : 1,
-          origemPedido: existingInitData?.origemPedido ?? false,
-        };
-      });
-      return { ...prev, produtos: [...keptProducts, ...newProducts] };
-    });
-  };
+  const handleProdutosSelectChange = () => {};
 
-  const handleRemoveProduto = (id) => {
-    setFormData((prev) => ({
-      ...prev,
-      produtos: prev.produtos.filter((p) => p.id !== id),
-    }));
-  };
+  const handleRemoveProduto = () => {};
 
-  const handleProdutoQuantidadeChange = (id, quantidade) => {
-    setFormData((prev) => ({
-      ...prev,
-      produtos: prev.produtos.map((p) =>
-        p.id === id ? { ...p, quantidade: parseFloat(quantidade) || 1 } : p,
-      ),
-    }));
-  };
+  const handleProdutoQuantidadeChange = () => {};
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -614,7 +568,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         tipoAgendamento: initialData?.tipoAgendamento || "",
         pedido: initialData?.pedido || null,
         funcionarios: initialData?.funcionarios || [],
-        produtos: getProdutosIniciais(initialData),
+        produtos: [],
         eventDate: initialData?.eventDate || "",
         startTime: initialData?.startTime || "",
         endTime: initialData?.endTime || "",
@@ -646,12 +600,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         }
       }
 
-      const tipoVal = initialData?.tipoAgendamento?.value || initialData?.tipoAgendamento;
-      if (tipoVal === "SERVICO" || initialData?.produtos?.length > 0) {
-        fetchProdutos();
-      }
     }
-  }, [isOpen, initialData, fetchOpcoesPedido, fetchProdutos]);
+  }, [isOpen, initialData, fetchOpcoesPedido]);
 
   const validateStep = (currentStep) => {
     const newErrors = {};
@@ -709,32 +659,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!formData?.rua?.trim()) newErrors.rua = "* Rua obrigatória";
       if (!formData?.cep?.trim()) newErrors.cep = "* CEP obrigatório";
     }
-    if (currentStep === 3) {
-      const produtosInvalidos = (formData?.produtos || [])
-        .map((produto) => {
-          const option = produtosOptions.find((opt) => opt.value === produto.id);
-          const disponivel = parseFloat(
-            option?.originalData?.quantidadeDisponivel ?? 0,
-          );
-          const reservado = parseFloat(produto.quantidade) || 0;
-
-          if (reservado <= 0) {
-            return `${produto.nome}: informe uma quantidade maior que zero.`;
-          }
-
-          if (reservado > disponivel) {
-            return `${produto.nome}: disponivel ${disponivel}, solicitado ${reservado}.`;
-          }
-
-          return null;
-        })
-        .filter(Boolean);
-
-      if (produtosInvalidos.length > 0) {
-        newErrors.submit = `A selecao dos itens nao pode passar do disponivel. Ajuste as quantidades: ${produtosInvalidos.join(" ")}`;
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -759,14 +683,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
       const pedidoCompleto = formData.pedido?.originalData || null;
 
-      const produtosPayload = formData.produtos
-        .filter((p) => p.id != null)
-        .map((p) => ({
-          produtoId: parseInt(p.id, 10),
-          quantidadeUtilizada: 0.0,
-          quantidadeReservada: Math.max(0.01, parseFloat(p.quantidade) || 1),
-        }));
-
       const payload = {
         servicoId: pedidoCompleto?.servico?.id || pedidoCompleto?.id || null,
         tipoAgendamento: tipoValor,
@@ -786,7 +702,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           pais: formData.pais || "Brasil",
         },
         funcionariosIds: selectedFuncionarios,
-        produtos: produtosPayload,
+        produtos: [],
       };
 
       let result;
@@ -857,17 +773,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     e?.preventDefault();
     if (!validateStep(step)) return;
 
-    const tipoValue =
-      formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
     if (step === 2) {
-      setLoading(true);
-      await fetchProdutos();
-      setLoading(false);
-      setStep(3);
+      await submitToBackend();
       return;
     }
 
-    if (step < 3) {
+    const totalSteps = 2;
+    if (step < totalSteps) {
       setStep((s) => s + 1);
       return;
     }
@@ -985,39 +897,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               </span>
             </div>
 
-            {(formData?.tipoAgendamento?.value === "SERVICO" ||
-              formData?.tipoAgendamento === "SERVICO" ||
-              formData?.tipoAgendamento?.value === "ORCAMENTO" ||
-              formData?.tipoAgendamento === "ORCAMENTO") && (
-              <>
-                <div
-                  className={`mx-3 mb-6 h-1 flex-1 rounded-full ${
-                    step >= 3 ? "bg-[#007EA7]" : "bg-gray-200"
-                  }`}
-                />
-
-                <div className="flex flex-1 flex-col items-center gap-2">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all ${
-                      step >= 3
-                        ? "bg-[#007EA7] text-white shadow-md"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    3
-                  </div>
-                  <span
-                    className={`mt-2 text-center text-sm ${
-                      step >= 3
-                        ? "font-semibold text-gray-900"
-                        : "font-medium text-gray-500"
-                    }`}
-                  >
-                    Produtos
-                  </span>
-                </div>
-              </>
-            )}
           </div>
         </div>
 
@@ -1396,7 +1275,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           )}
 
           {/* STEP 3 */}
-          {step === 3 && (
+          {showProdutosStep && step === 3 && isTipoOrcamento(formData?.tipoAgendamento) && (
             <div className="flex h-full flex-col gap-4">
               <div className="text-left">
                 <h3 className="text-base font-semibold text-gray-900">
@@ -1507,7 +1386,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               >
                 {loading
                   ? "Salvando..."
-                  : step < 3
+                  : step < 2
                     ? "Próxima Etapa"
                     : "Finalizar"}
               </Button>

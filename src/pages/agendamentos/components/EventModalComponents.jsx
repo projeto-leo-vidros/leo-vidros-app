@@ -10,6 +10,7 @@ import {
   Package,
   X,
   Tag,
+  CheckCircle2,
 } from "lucide-react";
 import { getAgendamentoDisplayName, getInitials } from "../utils/eventHelpers";
 import Button from "../../../components/ui/Button/Button.component";
@@ -297,11 +298,13 @@ export const EventFooter = ({
   onDelete,
   onViewMap,
   onEdit,
+  onFinalizar,
   isDeleting,
   isLoading,
   hasAddress,
   canDelete = true,
   canEdit = true,
+  canFinalizar = false,
 }) => {
   return (
     <div className="mt-4 flex flex-wrap-reverse items-center justify-end gap-3 rounded-b-xl border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-nowrap">
@@ -326,6 +329,18 @@ export const EventFooter = ({
           startIcon={<Edit size={16} />}
         >
           Editar Detalhes
+        </Button>
+      )}
+
+      {canFinalizar && (
+        <Button
+          variant="outline"
+          onClick={onFinalizar}
+          disabled={isLoading}
+          className="w-full border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 sm:w-auto"
+          startIcon={<CheckCircle2 size={16} />}
+        >
+          Finalizar Execução
         </Button>
       )}
 

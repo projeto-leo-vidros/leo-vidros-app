@@ -162,7 +162,8 @@ export default function AgendamentoDetailModal({
               </div>
             )}
 
-            {agendamento.produtos?.length > 0 && (
+            {agendamento.tipoAgendamento === "ORCAMENTO" &&
+              agendamento.produtos?.length > 0 && (
               <div>
                 <div className="mb-2 flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5 text-gray-400" />

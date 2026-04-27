@@ -16,7 +16,11 @@ import {
   Maximize2,
   Minimize2,
   List,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
+import agendamentosService from "../../../api/services/agendamentosService";
+import Swal from "sweetalert2";
 import {
   useEventDetails,
   useDeleteAgendamento,
@@ -128,6 +132,117 @@ const DeleteConfirmationModal = ({
   );
 };
 
+// --- MODAL DE FINALIZAÇÃO ---
+const FinalizarExecucaoModal = ({ isOpen, onClose, onConfirm, agendamento, isSaving }) => {
+  const [horaFim, setHoraFim] = useState("");
+
+  useEffect(() => {
+    if (isOpen && agendamento) {
+      setHoraFim(agendamento.fimAgendamento?.substring(0, 5) || agendamento.endTime?.substring(0, 5) || "");
+    }
+  }, [isOpen, agendamento]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const horaInicio = agendamento?.inicioAgendamento?.substring(0, 5) || agendamento?.startTime?.substring(0, 5) || "";
+  const horaFimOriginal = agendamento?.fimAgendamento?.substring(0, 5) || agendamento?.endTime?.substring(0, 5) || "";
+  const horaAtual = format(new Date(), "HH:mm");
+
+  if (!isOpen || !agendamento) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[10200] flex items-center justify-center bg-black/50 p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-4">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Finalizar Execução</h3>
+              <p className="text-xs text-gray-500">Informe o horário real de término</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 px-6 py-5">
+            <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+              <Clock className="h-4 w-4 shrink-0 text-gray-400" />
+              <span className="text-gray-500">Horário previsto:</span>
+              <span className="ml-auto font-semibold text-gray-700">{horaInicio} – {horaFimOriginal}</span>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Horário real de término
+              </label>
+              <input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setHoraFim(horaAtual)}
+                className="mt-1.5 cursor-pointer text-xs text-[#007EA7] hover:underline"
+              >
+                Usar horário atual ({horaAtual})
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+            <button
+              onClick={onClose}
+              disabled={isSaving}
+              className="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => onConfirm(horaFim)}
+              disabled={isSaving || !horaFim}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isSaving ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando...</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4" /> Finalizar</>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
+  );
+};
+
 // --- MODAL DE DETALHES DO EVENTO ---
 const EventDetailsModal = ({
   initialEvent,
@@ -146,8 +261,11 @@ const EventDetailsModal = ({
   const { deleteAgendamento, deleting } = useDeleteAgendamento(onDeleteSuccess);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isFinalizarModalOpen, setIsFinalizarModalOpen] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
 
   const isFinalizado = isFinalizedStatus(details?.statusAgendamento);
+  const canFinalizar = !isFinalizado;
 
   const handleDeleteClick = () => {
     if (isFinalizado) return;
@@ -158,6 +276,38 @@ const EventDetailsModal = ({
     const success = await deleteAgendamento(details.id);
     if (success) {
       setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleFinalizarConfirm = async (horaFim) => {
+    if (!details) return;
+    setIsFinalizing(true);
+    try {
+      const result = await agendamentosService.update(details.id, {
+        tipoAgendamento: details.tipoAgendamento,
+        dataAgendamento: details.dataAgendamento,
+        inicioAgendamento: details.inicioAgendamento || details.startTime,
+        fimAgendamento: horaFim.length === 5 ? `${horaFim}:00` : horaFim,
+        statusAgendamento: { tipo: "AGENDAMENTO", nome: "CONCLUIDO" },
+        observacao: details.observacao || null,
+      });
+      if (result.success) {
+        setIsFinalizarModalOpen(false);
+        onEventDeleted?.(details.id);
+        onClose?.();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Erro ao finalizar",
+          text: result.error || "Não foi possível finalizar o agendamento.",
+          timer: 4000,
+          showConfirmButton: true,
+        });
+      }
+    } catch (err) {
+      console.error("Erro ao finalizar agendamento:", err);
+    } finally {
+      setIsFinalizing(false);
     }
   };
 
@@ -172,6 +322,10 @@ const EventDetailsModal = ({
       event.stopPropagation();
       event.stopImmediatePropagation?.();
 
+      if (isFinalizarModalOpen) {
+        setIsFinalizarModalOpen(false);
+        return;
+      }
       if (isDeleteModalOpen) {
         setIsDeleteModalOpen(false);
         return;
@@ -181,7 +335,7 @@ const EventDetailsModal = ({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [details, isDeleteModalOpen, onClose]);
+  }, [details, isDeleteModalOpen, isFinalizarModalOpen, onClose]);
 
   if (!details) return null;
 
@@ -276,11 +430,13 @@ const EventDetailsModal = ({
                   onDelete={handleDeleteClick}
                   onViewMap={() => onGeoLocationClick?.(details.endereco)}
                   onEdit={() => onEdit?.(details)}
+                  onFinalizar={() => setIsFinalizarModalOpen(true)}
                   isDeleting={deleting}
                   isLoading={loading}
                   hasAddress={!!details.endereco}
                   canDelete={!isFinalizado}
                   canEdit={!isFinalizado}
+                  canFinalizar={canFinalizar}
                 />
               </motion.div>
             </div>
@@ -293,6 +449,14 @@ const EventDetailsModal = ({
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         isDeleting={deleting}
+      />
+
+      <FinalizarExecucaoModal
+        isOpen={isFinalizarModalOpen}
+        onClose={() => setIsFinalizarModalOpen(false)}
+        onConfirm={handleFinalizarConfirm}
+        agendamento={details}
+        isSaving={isFinalizing}
       />
     </>
   );

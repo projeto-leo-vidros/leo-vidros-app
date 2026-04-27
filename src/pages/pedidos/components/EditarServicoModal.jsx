@@ -39,6 +39,35 @@ const ETAPAS_SERVICO = [
   { valor: "CONCLUÍDO", label: "Concluído", progresso: 7 },
 ];
 
+const etapaConcluida = (etapa = "") => {
+  if (!etapa) return false;
+  return etapa
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/_/g, " ")
+    .trim()
+    .toUpperCase() === "CONCLUIDO";
+};
+
+const normalizarStatusAgendamento = (status = "") =>
+  status
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/_/g, " ")
+    .trim()
+    .toUpperCase();
+
+const statusFinalizaAgendamento = (status = "") => {
+  const statusNormalizado = normalizarStatusAgendamento(status);
+  return (
+    statusNormalizado === "CANCELADO" ||
+    statusNormalizado === "INATIVO" ||
+    statusNormalizado === "CONCLUIDO"
+  );
+};
+
 const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [formData, setFormData] = useState({
@@ -64,6 +93,11 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   const [mostrarModalExcluirAgendamentos, setMostrarModalExcluirAgendamentos] =
     useState(false);
   const navigate = useNavigate();
+
+  const agendamentosDoServico = servico?.servico?.agendamentos || [];
+  const agendamentosCancelaveis = agendamentosDoServico.filter(
+    (agendamento) => !statusFinalizaAgendamento(agendamento?.statusAgendamento?.nome),
+  );
 
 
 
@@ -112,7 +146,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         clienteNome: servico.clienteNome || "",
         data: servico.data || "",
         descricao: servico.descricao || "",
-        status: servico.status || "Ativo",
+        status: etapaConcluida(etapaParaExibicao) ? "Inativo" : servico.status || "Ativo",
         etapa: etapaParaExibicao,
         progressoValor: etapaInfo
           ? etapaInfo.progresso
@@ -143,6 +177,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
+        status: etapaConcluida(value) ? "Inativo" : prev.status === "Inativo" ? "Ativo" : prev.status,
         progressoValor: etapaInfo ? etapaInfo.progresso : prev.progressoValor,
       }));
     } else {
@@ -156,11 +191,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   const handleSave = async () => {
     const voltouParaPendente =
       etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
-    if (
-      voltouParaPendente &&
-      servico?.servico?.agendamentos &&
-      servico.servico.agendamentos.length > 0
-    ) {
+    if (voltouParaPendente && agendamentosCancelaveis.length > 0) {
       setMostrarModalExcluirAgendamentos(true);
       return;
     }
@@ -175,26 +206,48 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
       const voltouParaPendente =
         etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
 
-      if (
-        voltouParaPendente &&
-        servico?.servico?.agendamentos &&
-        servico.servico.agendamentos.length > 0
-      ) {
-        // Remove todos os agendamentos associados ao retornar para PENDENTE
-        const promisesExclusao = servico.servico.agendamentos.map(
-          (agendamento) => Api.delete(`/agendamentos/${agendamento.id}`),
+      if (voltouParaPendente && agendamentosCancelaveis.length > 0) {
+        const promisesCancelamento = agendamentosCancelaveis.map(
+          (agendamento) =>
+            Api.put(`/agendamentos/${agendamento.id}`, {
+              servicoId: servico?.servico?.id,
+              tipoAgendamento: agendamento.tipoAgendamento,
+              dataAgendamento: agendamento.dataAgendamento,
+              inicioAgendamento: agendamento.inicioAgendamento,
+              fimAgendamento: agendamento.fimAgendamento,
+              statusAgendamento: {
+                tipo: "AGENDAMENTO",
+                nome: "CANCELADO",
+              },
+              observacao: agendamento.observacao || null,
+              endereco: agendamento.endereco || {},
+              funcionariosIds: (agendamento.funcionarios || []).map(
+                (funcionario) => funcionario.id,
+              ),
+              produtos: (agendamento.produtos || [])
+                .filter((produto) => produto?.produto?.id != null)
+                .map((produto) => ({
+                  produtoId: produto.produto.id,
+                  quantidadeUtilizada: produto.quantidadeUtilizada ?? 0,
+                  quantidadeReservada: produto.quantidadeReservada ?? 0,
+                })),
+            }),
         );
-        await Promise.all(promisesExclusao);
+        await Promise.all(promisesCancelamento);
       }
 
       // CORREÇÃO: Envia a etapa EXATAMENTE como está no formData (com acentos e espaços)
       // O Backend espera "ANÁLISE DO ORÇAMENTO", não "ANALISE_DO_ORCAMENTO"
       const etapaParaBackend = formData.etapa;
 
+      const servicoDeveFicarAtivo = etapaConcluida(etapaParaBackend)
+        ? false
+        : formData.status === "Ativo";
+
       const pedidoData = {
         pedido: {
           valorTotal: parseFloat(formData.valorTotal) || 0.0,
-          ativo: formData.status === "Ativo",
+          ativo: servicoDeveFicarAtivo,
           formaPagamento: formData.formaPagamento || "A negociar",
           observacao: formData.descricao || "",
           cliente: {
@@ -221,7 +274,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           },
           status: {
             tipo: "PEDIDO",
-            nome: formData.status.toUpperCase(),
+            nome: servicoDeveFicarAtivo ? "ATIVO" : "INATIVO",
           },
         },
         servico: {
@@ -234,7 +287,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           codigo: formData.servicoCodigo || servico.servico?.codigo || "",
           descricao: formData.descricao || "",
           precoBase: parseFloat(formData.precoBase) || 0.0,
-          ativo: true,
+          ativo: servicoDeveFicarAtivo,
           etapa: {
             tipo: "PEDIDO",
             nome: etapaParaBackend, // Enviando COM acento e espaço, igual ao banco
@@ -249,7 +302,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           onSuccess({
             ...servico,
             descricao: formData.descricao,
-            status: formData.status,
+            status: servicoDeveFicarAtivo ? "Ativo" : "Inativo",
             etapa: formData.etapa,
             etapaOriginal: etapaParaBackend,
             progresso: [parseInt(formData.progressoValor), 7],
@@ -342,11 +395,14 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
       if (houveAlteracaoDeEtapa) {
         const etapaParaBackend = etapaCalculada;
+        const servicoDeveFicarAtivo = etapaConcluida(etapaParaBackend)
+          ? false
+          : servicoAtualizado.status === "Ativo";
 
         const pedidoData = {
           pedido: {
             valorTotal: servicoAtualizado.valorTotal || 0.0,
-            ativo: servicoAtualizado.status === "Ativo",
+            ativo: servicoDeveFicarAtivo,
             formaPagamento: servicoAtualizado.formaPagamento || "A negociar",
             observacao: servicoAtualizado.descricao || "",
             cliente: {
@@ -383,7 +439,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
             },
             status: {
               tipo: "PEDIDO",
-              nome: servicoAtualizado.status.toUpperCase(),
+              nome: servicoDeveFicarAtivo ? "ATIVO" : "INATIVO",
             },
           },
           servico: {
@@ -394,7 +450,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
               "Serviço",
             descricao: servicoAtualizado.descricao || "",
             precoBase: servicoAtualizado.servico?.precoBase || 0.0,
-            ativo: true,
+            ativo: servicoDeveFicarAtivo,
             etapa: {
               tipo: "PEDIDO",
               nome: etapaParaBackend,
@@ -420,7 +476,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           clienteNome: servicoFinal.clienteNome || "",
           data: servicoFinal.data || "",
           descricao: servicoFinal.descricao || "",
-          status: servicoFinal.status || "Ativo",
+          status: etapaConcluida(etapaFinal) ? "Inativo" : servicoFinal.status || "Ativo",
           etapa: etapaFinal,
           progressoValor: etapaInfo
             ? etapaInfo.progresso
@@ -1035,7 +1091,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                         clienteNome: servico.clienteNome || "",
                         data: servico.data || "",
                         descricao: servico.descricao || "",
-                        status: servico.status || "Ativo",
+                        status: etapaConcluida(etapaNormalizada) ? "Inativo" : servico.status || "Ativo",
                         etapa: etapaNormalizada,
                         progressoValor: servico.progresso?.[0] || 1,
                         progressoTotal: 7,
@@ -1097,24 +1153,22 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 <Calendar className="w-8 h-8 text-amber-500" />
               </div>
               <h2 className="text-xl font-bold text-slate-800">
-                Excluir Todos os Agendamentos?
+                Cancelar Agendamentos Abertos?
               </h2>
               <div className="text-slate-600 space-y-2">
                 <p className="font-medium">
-                  ⚠️ Ao voltar para a etapa{" "}
+                  Ao voltar para a etapa{" "}
                   <span className="font-bold text-amber-600">PENDENTE</span>,
-                  todos os agendamentos vinculados a este serviço serão{" "}
-                  <span className="font-bold text-red-600">
-                    EXCLUÍDOS PERMANENTEMENTE
-                  </span>
-                  .
+                  os agendamentos ainda abertos deste serviço serão{" "}
+                  <span className="font-bold text-amber-600">CANCELADOS</span>,
+                  mas continuarão visíveis no histórico e na aba de detalhes.
                 </p>
                 <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded text-left mt-3">
                   <p className="text-sm text-amber-800 font-medium">
-                    📋 Agendamentos que serão excluídos:
+                    Agendamentos que serão cancelados:
                   </p>
                   <ul className="mt-2 space-y-1 text-sm text-amber-700">
-                    {servico?.servico?.agendamentos?.map((ag) => (
+                    {agendamentosCancelaveis.map((ag) => (
                       <li key={ag.id} className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
                         <span className="font-mono">
@@ -1123,8 +1177,8 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                         <span>-</span>
                         <span>
                           {ag.tipoAgendamento === "ORCAMENTO"
-                            ? "📊 Orçamento"
-                            : "🔧 Execução"}
+                            ? "Orçamento"
+                            : "Execução"}
                         </span>
                         <span>-</span>
                         <span>{ag.dataAgendamento}</span>
@@ -1132,8 +1186,8 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                     ))}
                   </ul>
                 </div>
-                <p className="text-sm text-red-600 font-semibold mt-3">
-                  ⚠️ Esta ação NÃO pode ser desfeita!
+                <p className="text-sm text-slate-600 font-medium mt-3">
+                  Agendamentos já concluídos, cancelados ou inativos serão mantidos sem alteração.
                 </p>
               </div>
             </div>
