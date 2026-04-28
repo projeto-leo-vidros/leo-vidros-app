@@ -81,6 +81,22 @@ export const clienteSchema = z.object({
   uf: ufRequired,
 });
 
+// Schema relaxado para editar clientes avulsos (sem dados completos)
+export const clienteAvulsoSchema = z.object({
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  cpf: z.string().optional().transform((v) => (v ? v.replace(/\D/g, "") : "")).refine((v) => v === "" || v.length === 11, { message: "CPF invalido" }),
+  contato: z.string().optional().transform((v) => (v ? v.replace(/\D/g, "") : "")).refine((v) => v === "" || v.length === 10 || v.length === 11, { message: "Telefone invalido" }),
+  email: z.string().trim().optional().refine((v) => !v || v === "" || z.string().email().safeParse(v).success, { message: "Email invalido" }).default(""),
+  status: z.enum(["Ativo", "Inativo", "Finalizado", "Avulso"]).default("Avulso"),
+  cep: cepRaw,
+  rua: z.string().optional().default(""),
+  numero: z.string().optional().default(""),
+  complemento: z.string().optional().default(""),
+  bairro: z.string().optional().default(""),
+  cidade: z.string().optional().default(""),
+  uf: ufField,
+});
+
 export const clientePayloadSchema = clienteSchema.transform((data) => ({
   nome: data.nome,
   cpf: data.cpf || undefined,
