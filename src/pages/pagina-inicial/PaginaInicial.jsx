@@ -76,6 +76,31 @@ export default function PaginaInicial() {
     return `${dia}/${mes}`;
   };
 
+  const agendamentosDaSemana = useMemo(() => {
+    const hoje = new Date();
+    const inicioDaSemana = new Date(hoje);
+    const diaDaSemana = hoje.getDay();
+    const diffParaSegunda = diaDaSemana === 0 ? -6 : 1 - diaDaSemana;
+
+    inicioDaSemana.setDate(hoje.getDate() + diffParaSegunda);
+    inicioDaSemana.setHours(0, 0, 0, 0);
+
+    const fimDaSemana = new Date(inicioDaSemana);
+    fimDaSemana.setDate(inicioDaSemana.getDate() + 6);
+    fimDaSemana.setHours(23, 59, 59, 999);
+
+    return agendamentosFuturos.filter((agendamento) => {
+      if (!agendamento?.dataAgendamento) return false;
+
+      const dataNormalizada = String(agendamento.dataAgendamento).split("T")[0];
+      const dataAgendamento = new Date(`${dataNormalizada}T12:00:00`);
+
+      if (Number.isNaN(dataAgendamento.getTime())) return false;
+
+      return dataAgendamento >= inicioDaSemana && dataAgendamento <= fimDaSemana;
+    });
+  }, [agendamentosFuturos]);
+
   const mesAtual = new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" });
 
   const calculatedKpiData = useMemo(
@@ -187,19 +212,19 @@ export default function PaginaInicial() {
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
                   <h2 className="text-base font-semibold">Próximos Agendamentos</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
-                    Total: {agendamentosFuturos.length}
+                    Total: {agendamentosDaSemana.length}
                   </span>
                 </div>
 
                 <div className="divide-y divide-gray-50">
-                  {agendamentosFuturos.length === 0 ? (
+                  {agendamentosDaSemana.length === 0 ? (
                     <div className="flex items-center justify-center py-10">
                       <p className="text-sm italic text-gray-400">
-                        Nenhum agendamento futuro.
+                        Nenhum agendamento para esta semana.
                       </p>
                     </div>
                   ) : (
-                    agendamentosFuturos.map((ag) => (
+                    agendamentosDaSemana.map((ag) => (
                       <button
                         key={ag.idAgendamento}
                         type="button"

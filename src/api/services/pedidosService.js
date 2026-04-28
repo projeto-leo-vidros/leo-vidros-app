@@ -390,7 +390,10 @@ class PedidosService extends BaseService {
           progressoValor = 0;
           break;
         default:
-          etapaAtual = etapaCalculada;
+          etapaAtual = String(etapaCalculada || "Pendente")
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase());
           progressoValor = 1;
       }
     }
@@ -562,14 +565,31 @@ class PedidosService extends BaseService {
       if (!statusArray.includes("Todos")) {
         const wantAtivos = statusArray.includes("Ativos");
         const wantInativos = statusArray.includes("Inativos");
+
+        const ehInativo = (servico) => {
+          const isCompleted =
+            servico.etapa === "Concluído" || servico.status === "Cancelado";
+          const hasActiveAgendamento = (
+            servico.servico?.agendamentos || []
+          ).some(
+            (ag) =>
+              ag.statusAgendamento?.nome &&
+              ag.statusAgendamento.nome !== "CANCELADO" &&
+              ag.statusAgendamento.nome !== "INATIVO",
+          );
+          const isInactive =
+            servico.ativo === false ||
+            servico.servico?.ativo === false ||
+            String(servico.status || "").toLowerCase() === "inativo";
+          return (isInactive && !hasActiveAgendamento) || isCompleted;
+        };
+
         if (wantAtivos && !wantInativos) {
           servicosFiltrados = servicosFiltrados.filter(
-            (servico) => servico.etapa !== "Concluído",
+            (servico) => !ehInativo(servico),
           );
         } else if (wantInativos && !wantAtivos) {
-          servicosFiltrados = servicosFiltrados.filter(
-            (servico) => servico.etapa === "Concluído",
-          );
+          servicosFiltrados = servicosFiltrados.filter(ehInativo);
         } else if (!wantAtivos && !wantInativos) {
           servicosFiltrados = servicosFiltrados.filter((servico) =>
             statusArray.includes(servico.status),
@@ -603,17 +623,31 @@ class PedidosService extends BaseService {
       );
     }
 
-    const ACTIVE_STATUSES = ["Ativo", "Em Andamento", "Aguardando"];
     const isTodosFilter =
       !filtros.status ||
       filtros.status === "Todos" ||
       filtros.status.length === 0;
     if (isTodosFilter) {
-      servicosFiltrados.sort((a, b) => {
-        const aActive = ACTIVE_STATUSES.includes(a.status) ? 0 : 1;
-        const bActive = ACTIVE_STATUSES.includes(b.status) ? 0 : 1;
-        return aActive - bActive;
-      });
+      const ehInativoSort = (servico) => {
+        const isCompleted =
+          servico.etapa === "Concluído" || servico.status === "Cancelado";
+        const hasActiveAgendamento = (
+          servico.servico?.agendamentos || []
+        ).some(
+          (ag) =>
+            ag.statusAgendamento?.nome &&
+            ag.statusAgendamento.nome !== "CANCELADO" &&
+            ag.statusAgendamento.nome !== "INATIVO",
+        );
+        const isInactive =
+          servico.ativo === false ||
+          servico.servico?.ativo === false ||
+          String(servico.status || "").toLowerCase() === "inativo";
+        return (isInactive && !hasActiveAgendamento) || isCompleted;
+      };
+      servicosFiltrados.sort(
+        (a, b) => (ehInativoSort(a) ? 1 : 0) - (ehInativoSort(b) ? 1 : 0),
+      );
     }
 
     return servicosFiltrados;

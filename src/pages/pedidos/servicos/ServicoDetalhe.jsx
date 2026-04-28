@@ -68,6 +68,31 @@ const STEPS = [
 
 const ETAPA_OPTIONS = STEPS.map((step) => step.label);
 
+const _normBase = (s = "") =>
+  String(s)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/_/g, " ")
+    .trim()
+    .toUpperCase();
+
+const ETAPA_NORM_MAP = {
+  "PENDENTE":              "PENDENTE",
+  "AGUARDANDO ORCAMENTO":  "AGUARDANDO ORÇAMENTO",
+  "ANALISE DO ORCAMENTO":  "ANÁLISE DO ORÇAMENTO",
+  "ORCAMENTO APROVADO":    "ORÇAMENTO APROVADO",
+  "SERVICO AGENDADO":      "SERVIÇO AGENDADO",
+  "SERVICO EM EXECUCAO":   "SERVIÇO EM EXECUÇÃO",
+  "CONCLUIDO":             "CONCLUÍDO",
+};
+
+const normalizarEtapaParaOption = (etapa = "") => {
+  const key = _normBase(etapa);
+  return ETAPA_NORM_MAP[key]
+    ?? ETAPA_OPTIONS.find((o) => _normBase(o) === key)
+    ?? ETAPA_OPTIONS[0];
+};
+
 const getQuantidadeDisponivelEstoque = (item = {}) => {
   const quantidadeDisponivel = parseFloat(
     item?.quantidadeDisponivel ?? item?.disponivel,
@@ -429,9 +454,28 @@ export default function PedidoDetalhe() {
       setPedido(mapped);
 
       const orcRes = await orcamentosService.buscarPorPedido(id);
+      let produtosOrcamento = [];
       if (orcRes.success && orcRes.data.length > 0) {
-        const ultimo = orcRes.data[orcRes.data.length - 1];
+        const orcAtivos = orcRes.data.filter((o) => o.ativo !== false);
+        const ultimo = orcAtivos.length > 0 ? orcAtivos[orcAtivos.length - 1] : orcRes.data[orcRes.data.length - 1];
         setDescontoOrcamento(parseFloat(ultimo.valorDesconto) || 0);
+        if (ultimo.itens && ultimo.itens.length > 0) {
+          const seen = new Set();
+          produtosOrcamento = ultimo.itens
+            .filter((item) => {
+              if (!item.produtoId || seen.has(item.produtoId)) return false;
+              seen.add(item.produtoId);
+              return true;
+            })
+            .map((item) => ({
+              nome: item.produtoNome || item.descricao || `Produto #${item.produtoId}`,
+              quantidade: parseFloat(item.quantidade) || 1,
+              preco: parseFloat(item.precoUnitario) || 0,
+              estoqueId: item.produtoId,
+              subtotal: parseFloat(item.subtotal) || 0,
+              observacao: item.observacao || "",
+            }));
+        }
       }
 
       let etapa = raw?.servico
@@ -446,17 +490,70 @@ export default function PedidoDetalhe() {
           : mapped.status.nome || "PENDENTE";
       }
 
-      setEtapaOriginal(etapa);
+      const etapaNormalizada = normalizarEtapaParaOption(etapa);
+      setEtapaOriginal(etapaNormalizada);
+
+      // Extrair produtos de agendamentos (apenas ORCAMENTO armazena agendamentoProdutos no backend)
+      const _extrairAgProdutos = (agendamentos) => {
+        const seen = new Set();
+        return agendamentos
+          .flatMap((ag) => ag.agendamentoProdutos ?? ag.produtos ?? [])
+          .filter((ap) => {
+            if (!ap.produto?.id || seen.has(ap.produto.id)) return false;
+            seen.add(ap.produto.id);
+            return true;
+          })
+          .map((ap) => ({
+            nome: ap.produto.nome || `Produto #${ap.produto.id}`,
+            quantidade: parseFloat(ap.quantidadeReservada) || 1,
+            preco: parseFloat(ap.produto.precoUnitario || ap.produto.preco || 0),
+            estoqueId: ap.produto.id,
+            subtotal: 0,
+            observacao: "",
+          }));
+      };
+
+      const _agsAtivas = (raw?.servico?.agendamentos || []).filter(
+        (ag) => ag.statusAgendamento?.nome !== "CANCELADO" && ag.statusAgendamento?.nome !== "INATIVO",
+      );
+
+      // Produtos reservados nos agendamentos de orçamento
+      const produtosAgendamento = _extrairAgProdutos(
+        _agsAtivas.filter((ag) => ag.tipoAgendamento === "ORCAMENTO"),
+      );
+
+      // Mesclar todas as fontes por estoqueId:
+      // base = orcamento_item (planejado), overlay = agendamentoProdutos (reservado, tem prioridade de quantidade)
+      const _mergeById = (base, overlay) => {
+        const map = new Map();
+        for (const p of base) {
+          if (p.estoqueId) map.set(p.estoqueId, { ...p });
+        }
+        for (const p of overlay) {
+          if (!p.estoqueId) continue;
+          if (map.has(p.estoqueId)) {
+            // Quantidade reservada no agendamento substitui a planejada no orçamento
+            map.get(p.estoqueId).quantidade = p.quantidade;
+          } else {
+            map.set(p.estoqueId, { ...p });
+          }
+        }
+        return Array.from(map.values());
+      };
+
+      const produtosMesclados = _mergeById(produtosOrcamento, produtosAgendamento);
+      const produtosFinais = mapped.produtos?.length > 0 ? mapped.produtos : produtosMesclados;
+
       setFormData({
         clienteNome:         mapped.clienteNome           || "",
         ...parseFormaPagamento(mapped.formaPagamento || ""),
         observacoes:         mapped.observacoes           || "",
-        etapaServico:        etapa,
-        produtos:            mapped.produtos              || [],
+        etapaServico:        etapaNormalizada,
+        produtos:            produtosFinais,
         servicoNome:         mapped.servico?.nome         || "",
         servicoDescricao:    mapped.servico?.descricao    || "",
         servicoPrecoBase:    mapped.servico?.precoBase    || 0,
-        servicoAtivo:        (mapped.ativo === false || etapaConcluida(etapa)) ? false : mapped.servico?.ativo !== false,
+        servicoAtivo:        (mapped.ativo === false || etapaConcluida(etapaNormalizada)) ? false : mapped.servico?.ativo !== false,
       });
     } catch (err) {
       console.error("Erro ao buscar pedido:", err);
@@ -584,14 +681,18 @@ export default function PedidoDetalhe() {
               etapaNome: etapaParaSalvar,
             }
           : null,
-        produtos: formData.produtos
-          .filter((p) => p.estoqueId && p.estoqueId > 0)
-          .map((p) => ({
-            estoqueId:              p.estoqueId,
-            quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
-            precoUnitarioNegociado: parseFloat(p.preco)      || 0,
-            observacao:             p.observacao             || "",
-          })),
+        // Só envia item_pedido se o pedido já tinha produtos diretos (rawPedido.produtos).
+        // Produtos derivados de agendamentoProdutos ficam no agendamento, não no pedido.
+        produtos: (rawPedido?.produtos?.length ?? 0) > 0
+          ? formData.produtos
+              .filter((p) => p.estoqueId && p.estoqueId > 0)
+              .map((p) => ({
+                estoqueId:              p.estoqueId,
+                quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
+                precoUnitarioNegociado: parseFloat(p.preco)      || 0,
+                observacao:             p.observacao             || "",
+              }))
+          : [],
       };
 
       console.log("🔄 Enviando salvamento:", requestBody);
@@ -678,9 +779,9 @@ export default function PedidoDetalhe() {
           const usado = produtosUsados[i] !== false;
           const qtdReservada = parseFloat(p.quantidade) || 0;
           const qtdUsada = usado ? (parseFloat(produtosQuantidades[i]) || qtdReservada) : 0;
-          const qtdDevolvida = qtdReservada - qtdUsada;
+          const diff = qtdReservada - qtdUsada;
           const descricao = usado
-            ? `Utilizado: ${qtdUsada} un${qtdDevolvida > 0 ? ` (devolve ${qtdDevolvida} ao estoque)` : ""}`
+            ? `Utilizado: ${qtdUsada} un${diff > 0 ? ` (devolve ${diff.toFixed(2)} ao estoque)` : diff < 0 ? ` (retirou ${Math.abs(diff).toFixed(2)} a mais do estoque)` : ""}`
             : `Não utilizado (devolve ${qtdReservada} ao estoque)`;
           return `${p.nome || `Item #${i + 1}`}: ${descricao}`;
         })
@@ -690,44 +791,49 @@ export default function PedidoDetalhe() {
       obs = `\n\nProdutos utilizados — ${produtosLivres.trim()}`;
     }
 
-    // Tentar atualizar agendamentos vinculados com quantidadeUtilizada real
-    const agendamentosServico = (pedido?.servico?.agendamentos || []).filter(
-      (ag) => ag.tipoAgendamento === "SERVICO" && ag.id,
-    );
-    for (const ag of agendamentosServico) {
-      const agProdutos = ag.agendamentoProdutos ?? ag.produtos ?? [];
-      if (agProdutos.length > 0) {
-        try {
-          const produtosAtualizados = agProdutos.map((ap) => {
-            const idx = formData.produtos.findIndex(
-              (p) => p.estoqueId === ap.produto?.id || p.nome === ap.produto?.nome,
-            );
-            const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
-            const qtdUsada = idx >= 0
-              ? (usado ? (parseFloat(produtosQuantidades[idx]) || ap.quantidadeReservada) : 0)
-              : ap.quantidadeUtilizada ?? 0;
-            return {
-              produtoId: ap.produto?.id,
-              quantidadeUtilizada: qtdUsada,
-              quantidadeReservada: ap.quantidadeReservada,
-            };
-          }).filter((p) => p.produtoId);
-          if (produtosAtualizados.length > 0) {
-            await Api.put(`/agendamentos/${ag.id}`, {
-              servicoId: ag.servico?.id ?? pedido?.servico?.id,
-              tipoAgendamento: ag.tipoAgendamento,
-              dataAgendamento: ag.dataAgendamento,
-              inicioAgendamento: ag.inicioAgendamento,
-              fimAgendamento: ag.fimAgendamento,
-              statusAgendamento: ag.statusAgendamento,
-              observacao: ag.observacao || "",
-              endereco: ag.endereco || {},
-              funcionariosIds: (ag.funcionarios || []).map((f) => f.id),
-              produtos: produtosAtualizados,
-            });
+    // Atualizar quantidadeUtilizada nos agendamentos vinculados
+    // Só tenta o PUT se o pedido tiver produtos diretos (item_pedido) no backend,
+    // pois o endpoint valida isso. Pedidos de serviço guardam produtos via agendamentoProdutos.
+    const pedidoTemProdutosDiretos = (rawPedido?.produtos?.length ?? 0) > 0;
+    if (pedidoTemProdutosDiretos) {
+      const agendamentosServico = (pedido?.servico?.agendamentos || []).filter(
+        (ag) => ag.tipoAgendamento === "SERVICO" && ag.id,
+      );
+      for (const ag of agendamentosServico) {
+        const agProdutos = ag.agendamentoProdutos ?? ag.produtos ?? [];
+        if (agProdutos.length > 0) {
+          try {
+            const produtosAtualizados = agProdutos.map((ap) => {
+              const idx = formData.produtos.findIndex(
+                (p) => p.estoqueId === ap.produto?.id || p.nome === ap.produto?.nome,
+              );
+              const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
+              const qtdUsada = idx >= 0
+                ? (usado ? (parseFloat(produtosQuantidades[idx]) || ap.quantidadeReservada) : 0)
+                : ap.quantidadeUtilizada ?? 0;
+              return {
+                produtoId: ap.produto?.id,
+                quantidadeUtilizada: qtdUsada,
+                quantidadeReservada: ap.quantidadeReservada,
+              };
+            }).filter((p) => p.produtoId);
+            if (produtosAtualizados.length > 0) {
+              await Api.put(`/agendamentos/${ag.id}`, {
+                servicoId: ag.servico?.id ?? pedido?.servico?.id,
+                tipoAgendamento: ag.tipoAgendamento,
+                dataAgendamento: ag.dataAgendamento,
+                inicioAgendamento: ag.inicioAgendamento,
+                fimAgendamento: ag.fimAgendamento,
+                statusAgendamento: ag.statusAgendamento,
+                observacao: ag.observacao || "",
+                endereco: ag.endereco || {},
+                funcionariosIds: (ag.funcionarios || []).map((f) => f.id),
+                produtos: produtosAtualizados,
+              });
+            }
+          } catch (err) {
+            console.warn("Não foi possível atualizar produtos do agendamento:", err);
           }
-        } catch (err) {
-          console.warn("Não foi possível atualizar produtos do agendamento:", err);
         }
       }
     }
@@ -1052,6 +1158,7 @@ export default function PedidoDetalhe() {
                                   label: servicoInfo?.nome || formData.servicoNome || `Pedido #${pedido.id}`,
                                   originalData: rawPedido,
                                 },
+                                produtosIniciais: formData.produtos,
                                 rua: endereco?.rua || "",
                                 numero: endereco?.numero || "",
                                 cep: endereco?.cep || "",
@@ -1139,8 +1246,8 @@ export default function PedidoDetalhe() {
                 <SectionCard
                   title={
                     <>
-                      <span className="text-white/80 pr-2 hidden sm:inline">INSTALAÇÃO</span>
-                      <span className="text-white/80 pr-2 sm:hidden">INST.</span>
+                      <span className="text-white/80 pr-2 hidden sm:inline">PRODUTOS UTILIZADOS</span>
+                      <span className="text-white/80 pr-2 sm:hidden">PROD.</span>
                       <span className="ml-1 bg-white text-[#002A4B] px-2 py-0.5 rounded-full font-extrabold text-xs">
                         {produtosCount}
                       </span>
@@ -1529,6 +1636,7 @@ export default function PedidoDetalhe() {
                       label: formData.servicoNome || rawPedido?.servico?.nome || `Pedido #${pedido.id}`,
                       originalData: rawPedido,
                     },
+                    produtosIniciais: formData.produtos,
                     rua: endereco?.rua || "",
                     cep: endereco?.cep || "",
                     bairro: endereco?.bairro || "",
@@ -1594,7 +1702,6 @@ export default function PedidoDetalhe() {
                             type="number"
                             min={0}
                             step={0.01}
-                            max={p.quantidade ?? undefined}
                             value={produtosQuantidades[i] ?? p.quantidade ?? 1}
                             onChange={(e) =>
                               setProdutosQuantidades((prev) => ({ ...prev, [i]: parseFloat(e.target.value) || 0 }))
@@ -1604,12 +1711,18 @@ export default function PedidoDetalhe() {
                           {(() => {
                             const reservado = parseFloat(p.quantidade) || 0;
                             const utilizado = parseFloat(produtosQuantidades[i] ?? reservado) || 0;
-                            const devolve = reservado - utilizado;
-                            return devolve > 0 ? (
+                            const diff = reservado - utilizado;
+                            if (diff > 0) return (
                               <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
-                                devolve {devolve.toFixed(2)} ao estoque
+                                devolve {diff.toFixed(2)} ao estoque
                               </span>
-                            ) : null;
+                            );
+                            if (diff < 0) return (
+                              <span className="text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full font-medium">
+                                +{Math.abs(diff).toFixed(2)} a mais do estoque
+                              </span>
+                            );
+                            return null;
                           })()}
                         </div>
                       )}

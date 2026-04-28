@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { EtlApi } from "../../../../api/client/Api"; // Ajuste o caminho conforme a sua estrutura de pastas
 import Swal from "sweetalert2";
+import { EtlApi } from "../../../../api/client/Api";
+import FeedbackDialog from "../../../../components/feedback/FeedbackDialog/FeedbackDialog";
 import Button from "../../../../components/ui/Button/Button.component";
-import { modalClasses } from "../../../../components/ui/modal/modalStyles";
 
 const ExportarModal = ({ isOpen, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -22,11 +22,8 @@ const ExportarModal = ({ isOpen, onClose }) => {
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", "relatorio_estoque.xlsx");
-
       document.body.appendChild(link);
-
       link.click();
-
       link.remove();
       window.URL.revokeObjectURL(url);
 
@@ -36,7 +33,7 @@ const ExportarModal = ({ isOpen, onClose }) => {
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Não foi possível exportar o estoque. Tente novamente mais tarde.",
+        text: "NÃ£o foi possÃ­vel exportar o estoque. Tente novamente mais tarde.",
         confirmButtonColor: "#007EA7",
       });
     } finally {
@@ -44,67 +41,39 @@ const ExportarModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleModalContentClick = (e) => {
-    e.stopPropagation();
-  };
-
   return (
-    <div
-      className={modalClasses.overlay}
-      onClick={!isExporting ? onClose : undefined}
-    >
-      <div
-        className={`${modalClasses.panel} mx-auto w-full max-w-lg`}
-        onClick={handleModalContentClick}
-      >
-        <div className={modalClasses.header}>
-          <div className="flex items-center gap-3">
-            <div className={modalClasses.headerIcon}>
-              <Download className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className={modalClasses.headerTitle}>Exportar planilha</h2>
-              <p className={modalClasses.headerSubtitle}>
-                Gere um arquivo com a visao atual do estoque.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className={modalClasses.body}>
-          <p className="text-sm text-gray-700">
-            Você está prestes a exportar a visualização atual do estoque.
-            Confirme para iniciar o download.
-          </p>
-        </div>
-
-        <div className={modalClasses.footer}>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            disabled={isExporting}
-            size="sm"
-          >
+    <FeedbackDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      tone="info"
+      icon={Download}
+      title="Exportar planilha"
+      description="Gere um arquivo com a visao atual do estoque e baixe a planilha em formato Excel."
+      badge="Exportacao"
+      size="md"
+      closeOnOverlay={!isExporting}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={isExporting} fullWidth>
             Cancelar
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleExportar}
-            disabled={isExporting}
-            size="sm"
-          >
+          <Button variant="primary" onClick={handleExportar} disabled={isExporting} fullWidth>
             {isExporting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Exportando...
               </>
             ) : (
-              "Exportar Planilha"
+              "Exportar planilha"
             )}
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
+        O arquivo sera gerado com os dados atualmente exibidos no estoque.
       </div>
-    </div>
+    </FeedbackDialog>
   );
 };
 

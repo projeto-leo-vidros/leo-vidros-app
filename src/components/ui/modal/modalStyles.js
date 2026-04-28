@@ -15,10 +15,14 @@ export const modalClasses = {
     "rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700",
   body: "flex-1 overflow-y-auto px-6 py-5 sm:px-8",
   footer:
-    "flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/90 px-6 py-4 sm:px-8",
+    "flex flex-col-reverse items-stretch justify-between gap-3 border-t border-slate-200 bg-slate-50/90 px-6 py-4 sm:flex-row sm:items-center sm:px-8",
   stepperSection: "border-b border-slate-100 px-6 pb-4 pt-6 sm:px-8",
   errorAlert:
     "flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-left",
+  infoAlert:
+    "flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-left",
+  warningAlert:
+    "flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left",
   alertIcon: "mt-0.5 h-5 w-5 shrink-0",
 };
 

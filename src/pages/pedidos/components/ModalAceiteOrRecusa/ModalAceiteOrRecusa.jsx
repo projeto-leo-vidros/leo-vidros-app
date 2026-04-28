@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { Check, AlertTriangle } from "lucide-react";
-import PropTypes from "prop-types"; // Importação adicionada
+import { Check, TriangleAlert } from "lucide-react";
+import PropTypes from "prop-types";
 import Button from "../../../../components/ui/Button/Button.component";
+import FeedbackDialog from "../../../../components/feedback/FeedbackDialog/FeedbackDialog";
 
 export default function ModalConfirmacao({
   aberto,
@@ -13,61 +13,32 @@ export default function ModalConfirmacao({
   onConfirmar,
   onCancelar,
 }) {
+  const aprovacao = tipo === "aprovar";
+
   return (
-    <AnimatePresence>
-      {aberto && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1300] p-4"
-          onClick={onCancelar}
-        >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-col items-center gap-6">
-              <div className="bg-gray-100 p-2 rounded">
-                {tipo === "aprovar" ? (
-                  <Check className="w-6 h-6 text-gray-700" />
-                ) : (
-                  <AlertTriangle className="w-6 h-6 text-gray-700" />
-                )}
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {titulo}
-                </h3>
-                <p className="text-md text-gray-600">{mensagem}</p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3 justify-end mt-8">
-              <Button
-                variant="ghost"
-                onClick={onCancelar}
-              >
-                {textoBotaoCancelar}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={onConfirmar}
-              >
-                {textoBotaoConfirmar}
-              </Button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <FeedbackDialog
+      isOpen={aberto}
+      onClose={onCancelar}
+      tone={aprovacao ? "success" : "warning"}
+      icon={aprovacao ? Check : TriangleAlert}
+      title={titulo}
+      description={mensagem}
+      badge={aprovacao ? "Confirmacao" : "Atencao"}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onCancelar} fullWidth>
+            {textoBotaoCancelar}
+          </Button>
+          <Button variant={aprovacao ? "primary" : "danger"} onClick={onConfirmar} fullWidth>
+            {textoBotaoConfirmar}
+          </Button>
+        </>
+      }
+    />
   );
 }
 
-// Validação de Props adicionada
 ModalConfirmacao.propTypes = {
   aberto: PropTypes.bool.isRequired,
   tipo: PropTypes.oneOf(["aprovar", "recusar"]),

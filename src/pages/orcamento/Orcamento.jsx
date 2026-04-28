@@ -886,7 +886,7 @@ export default function OrcamentoPage() {
                 className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-[#002A4B] border border-gray-300 text-white rounded-lg hover:bg-[#01345c] transition-colors text-sm font-medium shadow-sm cursor-pointer disabled:opacity-50"
                 type="button"
               >
-                <span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar Rascunho"}</span>
+                <span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar"}</span>
                 <span className="sm:hidden">Salvar</span>
               </button>
 

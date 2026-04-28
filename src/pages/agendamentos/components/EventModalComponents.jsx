@@ -316,7 +316,7 @@ export const EventFooter = ({
           className="mr-auto w-full sm:w-auto"
           startIcon={<Trash2 size={16} />}
         >
-          {isDeleting ? "Cancelando..." : "Cancelar Agendamento"}
+          {isDeleting ? "Cancelando..." : "Cancelar"}
         </Button>
       )}
 
