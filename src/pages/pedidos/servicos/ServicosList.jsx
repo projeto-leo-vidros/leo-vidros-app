@@ -10,6 +10,7 @@ import EditarServicoModal from "../components/EditarServicoModal";
 import PedidosService from "../../../api/services/pedidosService";
 import { formatDate } from "../../../utils/formatters";
 import Button from "../../../components/ui/Button/Button.component";
+import Swal from "sweetalert2";
 
 function StatusPill({ status }) {
   const styles = {
@@ -204,12 +205,10 @@ export default function ServicosList({
         setServicos(servicos.filter((s) => s.id !== targetId));
         fecharTodos();
       } else {
-        console.error("Erro ao excluir serviço:", result.error);
-        alert(`Erro ao excluir serviço: ${result.error}`);
+        Swal.fire({ icon: "error", title: "Erro ao excluir", text: result.error, confirmButtonColor: "#dc2626" });
       }
-    } catch (error) {
-      console.error("Erro inesperado ao excluir serviço:", error);
-      alert("Erro inesperado ao excluir serviço. Tente novamente.");
+    } catch {
+      Swal.fire({ icon: "error", title: "Erro inesperado", text: "Não foi possível excluir o serviço. Tente novamente.", confirmButtonColor: "#dc2626" });
     }
   };
 

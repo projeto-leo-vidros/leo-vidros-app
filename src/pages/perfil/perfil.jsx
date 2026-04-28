@@ -20,6 +20,7 @@ import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import DefaultAvatar from "../../assets/Avatar.jpg";
 import { useUser } from "../../context/UserContext.jsx";
+import Swal from "sweetalert2";
 
 // COMPONENTE INPUT FIELD
 const InputField = ({
@@ -413,10 +414,8 @@ export default function Perfil() {
           confirmarSenha: "",
         });
       })
-      .catch((error) => {
-        console.error("Erro ao salvar:", error);
-        console.error("Detalhes:", error.response?.data);
-        alert("Erro ao salvar as informações. Verifique o console.");
+      .catch(() => {
+        Swal.fire({ icon: "error", title: "Erro ao salvar", text: "Não foi possível salvar as informações. Tente novamente.", confirmButtonColor: "#dc2626" });
       })
       .finally(() => {
         setLoading(false);

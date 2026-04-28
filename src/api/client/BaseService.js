@@ -1,3 +1,5 @@
+import { getErroAmigavel } from "../../utils/errors";
+
 class BaseService {
   constructor(api) {
     this.api = api;
@@ -12,14 +14,14 @@ class BaseService {
         status: response.status,
       };
     } catch (error) {
+      const status = error.response?.status;
+      const backendMessage = error.response?.data?.message;
+      const rawError = backendMessage ?? error.message ?? "Erro na requisição";
       return {
         success: false,
         data: null,
-        error:
-          error.response?.data?.message ??
-          error.message ??
-          "Erro na requisição",
-        status: error.response?.status,
+        error: getErroAmigavel({ message: rawError, status }),
+        status,
       };
     }
   }

@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { muiModalSx } from "../../../../components/ui/modal/modalStyles";
+import Swal from "sweetalert2";
 
 export default function DeleteFuncionario({
   open,
@@ -27,7 +28,7 @@ export default function DeleteFuncionario({
       deletarFuncionario(funcionario.id);
       setOpen(false);
     } else {
-      alert("O nome digitado nao confere com o funcionario.");
+      Swal.fire({ icon: "warning", title: "Nome incorreto", text: "O nome digitado não confere com o nome do funcionário.", confirmButtonColor: "#dc2626" });
     }
   };
 

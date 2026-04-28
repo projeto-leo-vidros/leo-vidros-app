@@ -10,6 +10,7 @@ import PedidosService from '../../api/services/pedidosService';
 import { usePedidosProduto, useDeletarPedido } from '../../hooks/queries/usePedidos';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import Button from '../../components/ui/Button/Button.component';
+import Swal from 'sweetalert2';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -101,7 +102,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, pedidoPar
         if (!targetId) return;
         deletarMutation.mutate(targetId, {
             onSuccess: () => fecharTodos(),
-            onError: (err) => alert(`Erro ao excluir pedido: ${err.message}`),
+            onError: () => Swal.fire({ icon: "error", title: "Erro ao excluir", text: "Não foi possível excluir o pedido. Tente novamente.", confirmButtonColor: "#dc2626" }),
         });
     };
 

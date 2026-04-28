@@ -21,6 +21,7 @@ import {
   Store,
   Plus,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 const MAPS_KEY = import.meta.env.VITE_MAPS_KEY;
 
@@ -198,7 +199,7 @@ export default function RotasResponsivoCompacto() {
     if (!cep) return;
     const clean = cep.replace(/\D/g, "");
     if (addresses.some((a) => a.cep === clean)) {
-      alert("Este CEP já foi adicionado!");
+      Swal.fire({ icon: "info", title: "CEP duplicado", text: "Este CEP já foi adicionado na lista.", confirmButtonColor: "#2563eb" });
       return;
     }
     const result = await geoCodeCepNumero(clean, numero);

@@ -3,6 +3,7 @@ import { Calendar, Clock, Save } from "lucide-react";
 import Button from "../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import { modalClasses } from "../../../components/ui/modal/modalStyles";
+import Swal from "sweetalert2";
 
 const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -29,7 +30,7 @@ const AgendamentoModal = ({ isOpen, onClose, onSave }) => {
 
   const handleSave = () => {
     if (!formData.dataAgendamento || !formData.horaAgendamento) {
-      alert("Por favor, preencha a data e hora do agendamento.");
+      Swal.fire({ icon: "warning", title: "Campos obrigatórios", text: "Por favor, preencha a data e hora do agendamento.", confirmButtonColor: "#2563eb" });
       return;
     }
 

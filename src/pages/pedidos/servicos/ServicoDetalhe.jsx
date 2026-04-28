@@ -20,6 +20,7 @@ import estoqueService from "../../../api/services/estoqueService";
 import PedidosService from "../../../api/services/pedidosService";
 import orcamentosService from "../../../api/services/orcamentosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
+import Swal from "sweetalert2";
 
 const METODOS_COM_PARCELA = ["Cartão de crédito"];
 
@@ -459,7 +460,7 @@ export default function PedidoDetalhe() {
       });
     } catch (err) {
       console.error("Erro ao buscar pedido:", err);
-      alert("Erro ao carregar pedido");
+      await Swal.fire({ icon: "error", title: "Erro ao carregar", text: "Não foi possível carregar os dados do pedido. Tente novamente.", confirmButtonColor: "#dc2626" });
       navigate("/Pedidos");
     } finally {
       setLoading(false);

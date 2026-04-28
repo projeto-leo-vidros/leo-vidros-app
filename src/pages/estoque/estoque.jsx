@@ -23,6 +23,7 @@ import InativarProdutoModal from "./components/ModalEstoque/InativarProdutoModal
 import { formatCurrency, parseCurrency } from "../../utils/formatters";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import { repairEncoding } from "../../utils/fixEncoding";
+import Swal from "sweetalert2";
 
 const ITENS_POR_PAGINA = 6;
 
@@ -274,9 +275,8 @@ export default function Estoque() {
         setTimeout(() => {
           setIsSuccessModalOpen(false);
         }, 3000);
-      } catch (error) {
-        console.error("Erro ao salvar item:", error);
-        alert("Erro ao salvar item. Tente novamente.");
+      } catch {
+        Swal.fire({ icon: "error", title: "Erro ao salvar", text: "Não foi possível salvar o item. Tente novamente.", confirmButtonColor: "#dc2626" });
       }
     },
     [editingItem, fetchEstoque],
@@ -336,9 +336,8 @@ export default function Estoque() {
 
         setIsEntradaSaidaModalOpen(false);
         setSelectedItems([]);
-      } catch (error) {
-        console.error("Falha ao salvar movimentos:", error);
-        alert("Erro ao registrar movimento. Tente novamente.");
+      } catch {
+        Swal.fire({ icon: "error", title: "Erro ao registrar", text: "Não foi possível registrar o movimento. Tente novamente.", confirmButtonColor: "#dc2626" });
       }
     },
     [estoque, fetchEstoque],
@@ -353,9 +352,8 @@ export default function Estoque() {
       await fetchEstoque();
 
       setModalOpen(false);
-    } catch (error) {
-      console.error("Erro ao inativar item:", error);
-      alert("Erro ao inativar item. Tente novamente.");
+    } catch {
+      Swal.fire({ icon: "error", title: "Erro ao inativar", text: "Não foi possível inativar o item. Tente novamente.", confirmButtonColor: "#dc2626" });
     }
   }, [selectedEstoqueId, fetchEstoque]);
 
