@@ -14,8 +14,6 @@ const useProductAPI = () => {
         descricao: produtoData.descricao,
         unidademedida: produtoData.unidadeMedida,
         preco: parseFloat(produtoData.preco),
-        precoCusto: produtoData.precoCusto ? parseFloat(produtoData.precoCusto) : null,
-        precoVenda: produtoData.precoVenda ? parseFloat(produtoData.precoVenda) : null,
         ativo: produtoData.ativo,
         metrica: {
           nivelMinimo: parseInt(produtoData.nivelMinimo) || 0,
@@ -59,8 +57,6 @@ const DEFAULT_FORM_DATA = {
   descricao: "",
   unidadeMedida: "Unidade",
   preco: 0,
-  precoCusto: 0,
-  precoVenda: 0,
   ativo: true,
   atributos: [],
   nivelMinimo: 0,
@@ -318,30 +314,6 @@ const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
                   step="0.01"
                   min="0"
                   value={formData.preco}
-                  onChange={handleChange}
-                />
-              </div>
-              <br />
-              <div className="grid grid-cols-2 gap-6">
-                <UniversalInput
-                  label="Preço de custo"
-                  type="number"
-                  name="precoCusto"
-                  placeholder="0.00"
-                  step="0.01"
-                  min="0"
-                  value={formData.precoCusto}
-                  onChange={handleChange}
-                />
-
-                <UniversalInput
-                  label="Preço de venda"
-                  type="number"
-                  name="precoVenda"
-                  placeholder="0.00"
-                  step="0.01"
-                  min="0"
-                  value={formData.precoVenda}
                   onChange={handleChange}
                 />
               </div>

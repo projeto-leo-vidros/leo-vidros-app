@@ -161,7 +161,6 @@ export const pedidoServicoEtapa0Schema = z
     tipoCliente: z.enum(["existente", "novo", "nenhum"]),
     clienteId: z.union([z.string(), z.number()]).optional(),
     clienteNome: z.string().optional().default(""),
-    clienteTelefone: z.string().optional().default(""),
   })
   .superRefine((data, ctx) => {
     if (data.tipoCliente === "existente" && !data.clienteId) {
@@ -177,13 +176,6 @@ export const pedidoServicoEtapa0Schema = z
           path: ["clienteNome"],
           code: z.ZodIssueCode.custom,
           message: "Nome do cliente e obrigatorio",
-        });
-      }
-      if (!data.clienteTelefone?.trim()) {
-        ctx.addIssue({
-          path: ["clienteTelefone"],
-          code: z.ZodIssueCode.custom,
-          message: "Telefone do cliente e obrigatorio",
         });
       }
     }

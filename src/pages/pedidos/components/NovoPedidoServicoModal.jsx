@@ -5,17 +5,15 @@ import {
   Plus,
   AlertCircle,
   User,
-  MapPin,
   ClipboardList,
 } from "lucide-react";
 import Api from "../../../api/client/Api";
-import { cpfMask, phoneMask, onlyLetters, cepMask } from "../../../utils/masks";
+import { cpfMask, phoneMask, onlyLetters } from "../../../utils/masks";
 import FeedbackModal from "../../../components/feedback/FeedbackModal/FeedbackModal";
 import Button from "../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import {
   pedidoServicoEtapa0Schema,
-  pedidoServicoEtapa1Schema,
   pedidoServicoEtapa2Schema,
   zodFirstError,
 } from "../../../lib/schemas";
@@ -26,9 +24,9 @@ const usePedidoServicoAPI = () => {
     try {
       const response = await Api.post(`/clientes`, {
         nome: clienteData.nome,
-        cpf: clienteData.cpf,
-        email: clienteData.email,
-        telefone: clienteData.telefone.replace(/\D/g, ""),
+        cpf: clienteData.cpf || "",
+        email: clienteData.email || "",
+        telefone: clienteData.telefone ? clienteData.telefone.replace(/\D/g, "") : "",
         status: "Ativo",
         enderecos: clienteData.enderecos || [],
       });
@@ -37,15 +35,6 @@ const usePedidoServicoAPI = () => {
       throw new Error(
         error.response?.data?.message || "Erro ao cadastrar cliente",
       );
-    }
-  };
-
-  const atualizarCliente = async (clienteId, clienteData) => {
-    try {
-      const response = await Api.put(`/clientes/${clienteId}`, clienteData);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "Erro ao atualizar cliente");
     }
   };
 
@@ -70,38 +59,16 @@ const usePedidoServicoAPI = () => {
     }
   };
 
-  return { cadastrarCliente, atualizarCliente, salvarServico, buscarClientes };
+  return { cadastrarCliente, salvarServico, buscarClientes };
 };
 
 const DEFAULT_FORM_DATA = {
   tipoCliente: "",
   clienteId: "",
   clienteNome: "",
-  clienteCpf: "",
-  clienteEmail: "",
-  clienteTelefone: "",
-  endereco: {
-    cep: "",
-    rua: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    uf: "",
-  },
   servicos: [],
   etapa: "PENDENTE",
   prioridade: "Normal",
-};
-
-const EMPTY_ENDERECO = {
-  cep: "",
-  rua: "",
-  numero: "",
-  complemento: "",
-  bairro: "",
-  cidade: "",
-  uf: "",
 };
 
 const NovoPedidoServicoModal = ({
@@ -116,23 +83,19 @@ const NovoPedidoServicoModal = ({
   const [error, setError] = useState(null);
   const [clientesExistentes, setClientesExistentes] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [enderecoPrecisaSincronizar, setEnderecoPrecisaSincronizar] = useState(false);
-  const clienteRequestVersionRef = useRef(0);
 
-  const { cadastrarCliente, atualizarCliente, salvarServico, buscarClientes } =
+  const { cadastrarCliente, salvarServico, buscarClientes } =
     usePedidoServicoAPI();
 
   const steps = [
     { id: 0, name: "Cliente" },
-    { id: 1, name: "Endereco" },
-    { id: 2, name: "Servico" },
-    { id: 3, name: "Revisao" },
+    { id: 1, name: "Servico" },
+    { id: 2, name: "Revisao" },
   ];
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const endereco = clienteInicial?.enderecos?.[0] || {};
     setFormData(
       clienteInicial
         ? {
@@ -140,26 +103,12 @@ const NovoPedidoServicoModal = ({
             tipoCliente: "existente",
             clienteId: clienteInicial.id ?? "",
             clienteNome: clienteInicial.nome ?? "",
-            clienteCpf: clienteInicial.cpf ?? "",
-            clienteEmail: clienteInicial.email ?? "",
-            clienteTelefone: clienteInicial.telefone ?? "",
-            endereco: {
-              cep: endereco.cep ?? "",
-              rua: endereco.rua ?? "",
-              numero: endereco.numero ?? "",
-              complemento: endereco.complemento ?? "",
-              bairro: endereco.bairro ?? "",
-              cidade: endereco.cidade ?? "",
-              uf: endereco.uf ?? "",
-            },
           }
         : DEFAULT_FORM_DATA,
     );
     setCurrentStep(0);
     setError(null);
     setShowSuccessModal(false);
-    setEnderecoPrecisaSincronizar(false);
-    clienteRequestVersionRef.current += 1;
 
     const carregarDados = async () => {
       try {
@@ -177,179 +126,37 @@ const NovoPedidoServicoModal = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    let maskedValue = value;
-
-    if (name === "clienteCpf") maskedValue = cpfMask(value);
-    else if (name === "clienteTelefone") maskedValue = phoneMask(value);
-    else if (name === "clienteNome") maskedValue = onlyLetters(value);
-
-    setFormData((prev) => ({ ...prev, [name]: maskedValue }));
-    setError(null);
-  };
-
-  const handleEnderecoChange = async (e) => {
-    const { name, value } = e.target;
-    const maskedValue = name === "cep" ? cepMask(value) : value;
 
     setFormData((prev) => ({
       ...prev,
-      endereco: { ...prev.endereco, [name]: maskedValue },
+      [name]: name === "clienteNome" ? onlyLetters(value) : value,
     }));
     setError(null);
-
-    if (name === "cep") {
-      const digits = value.replace(/\D/g, "");
-      if (digits.length === 8) {
-        try {
-          const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-          const data = await res.json();
-          if (!data.erro) {
-            setFormData((prev) => ({
-              ...prev,
-              endereco: {
-                ...prev.endereco,
-                cep: cepMask(digits),
-                rua: data.logradouro || prev.endereco.rua,
-                bairro: data.bairro || prev.endereco.bairro,
-                cidade: data.localidade || prev.endereco.cidade,
-                uf: data.uf || prev.endereco.uf,
-              },
-            }));
-          }
-        } catch {
-          // silently ignore ViaCEP errors
-        }
-      }
-    }
   };
 
   const handleTipoClienteChange = (tipo) => {
-    clienteRequestVersionRef.current += 1;
     setFormData((prev) => ({
       ...prev,
       tipoCliente: tipo,
       clienteId: "",
       clienteNome: "",
-      clienteCpf: "",
-      clienteEmail: "",
-      clienteTelefone: "",
-      endereco: EMPTY_ENDERECO,
     }));
-    setEnderecoPrecisaSincronizar(true);
     setError(null);
   };
 
-  const handleClienteExistenteChange = async (e) => {
+  const handleClienteExistenteChange = (e) => {
     const id = e.target.value;
-    clienteRequestVersionRef.current += 1;
-    const requestVersion = clienteRequestVersionRef.current;
-
-    if (!id) {
-      setFormData((prev) => ({
-        ...prev,
-        clienteId: "",
-        clienteNome: "",
-        clienteCpf: "",
-        clienteEmail: "",
-        clienteTelefone: "",
-        endereco: EMPTY_ENDERECO,
-      }));
-      setEnderecoPrecisaSincronizar(true);
-      setError(null);
-      return;
-    }
-
     const selecionado = clientesExistentes.find(
       (cliente) => String(cliente.id) === String(id),
     );
-    if (!selecionado) return;
 
     setFormData((prev) => ({
       ...prev,
-      clienteId: selecionado.id,
-      clienteNome: selecionado.nome,
-      clienteCpf: selecionado.cpf || "",
-      clienteEmail: selecionado.email || "",
-      clienteTelefone: selecionado.telefone || "",
+      clienteId: selecionado?.id ?? "",
+      clienteNome: selecionado?.nome ?? "",
     }));
-
-    try {
-      const response = await Api.get(`/clientes/${id}`);
-      if (requestVersion !== clienteRequestVersionRef.current) return;
-
-      const clienteCompleto = response.data;
-      const end =
-        clienteCompleto.enderecos?.[0] || selecionado.enderecos?.[0] || {};
-
-      setFormData((prev) => ({
-        ...prev,
-        endereco: {
-          cep: end.cep || "",
-          rua: end.rua || "",
-          numero: end.numero || "",
-          complemento: end.complemento || "",
-          bairro: end.bairro || "",
-          cidade: end.cidade || "",
-          uf: end.uf || "",
-        },
-      }));
-    } catch {
-      if (requestVersion !== clienteRequestVersionRef.current) return;
-
-      const end = selecionado.enderecos?.[0] || {};
-      setFormData((prev) => ({
-        ...prev,
-        endereco: {
-          cep: end.cep || "",
-          rua: end.rua || "",
-          numero: end.numero || "",
-          complemento: end.complemento || "",
-          bairro: end.bairro || "",
-          cidade: end.cidade || "",
-          uf: end.uf || "",
-        },
-      }));
-    }
-
-    setEnderecoPrecisaSincronizar(true);
     setError(null);
   };
-
-  useEffect(() => {
-    if (!isOpen || currentStep !== 1 || !enderecoPrecisaSincronizar) return;
-
-    if (formData.tipoCliente !== "existente" || !formData.clienteId) {
-      setFormData((prev) => ({ ...prev, endereco: EMPTY_ENDERECO }));
-      setEnderecoPrecisaSincronizar(false);
-      return;
-    }
-
-    const clienteSelecionado = clientesExistentes.find(
-      (cliente) => String(cliente.id) === String(formData.clienteId),
-    );
-    const endereco = clienteSelecionado?.enderecos?.[0] || EMPTY_ENDERECO;
-
-    setFormData((prev) => ({
-      ...prev,
-      endereco: {
-        cep: endereco.cep || "",
-        rua: endereco.rua || "",
-        numero: endereco.numero || "",
-        complemento: endereco.complemento || "",
-        bairro: endereco.bairro || "",
-        cidade: endereco.cidade || "",
-        uf: endereco.uf || "",
-      },
-    }));
-    setEnderecoPrecisaSincronizar(false);
-  }, [
-    isOpen,
-    currentStep,
-    enderecoPrecisaSincronizar,
-    formData.tipoCliente,
-    formData.clienteId,
-    clientesExistentes,
-  ]);
 
   const handleServicoChange = (index, field, value) => {
     setFormData((prev) => {
@@ -381,7 +188,6 @@ const NovoPedidoServicoModal = ({
 
     const schemas = [
       pedidoServicoEtapa0Schema,
-      pedidoServicoEtapa1Schema,
       pedidoServicoEtapa2Schema,
     ];
 
@@ -414,33 +220,15 @@ const NovoPedidoServicoModal = ({
       if (formData.tipoCliente === "novo") {
         clienteData = await cadastrarCliente({
           nome: formData.clienteNome,
-          cpf: formData.clienteCpf,
-          email: formData.clienteEmail,
-          telefone: formData.clienteTelefone,
-          enderecos: [
-            {
-              ...formData.endereco,
-              pais: "Brasil",
-            },
-          ],
+          cpf: "",
+          email: "",
+          telefone: "",
+          enderecos: [],
         });
       } else {
         clienteData = clientesExistentes.find(
           (cliente) => String(cliente.id) === String(formData.clienteId),
         );
-
-        const enderecoPreenchido = Object.values(formData.endereco).some((v) => v && v.trim?.());
-        if (enderecoPreenchido) {
-          const enderecosAtuais = clienteData.enderecos || [];
-          clienteData = await atualizarCliente(clienteData.id, {
-            nome: clienteData.nome,
-            cpf: clienteData.cpf,
-            email: clienteData.email,
-            telefone: clienteData.telefone,
-            status: clienteData.status || "Ativo",
-            enderecos: [...enderecosAtuais, { ...formData.endereco, pais: "Brasil" }],
-          });
-        }
       }
 
       const total = calcularValorTotal();
@@ -626,113 +414,12 @@ const NovoPedidoServicoModal = ({
                       value={formData.clienteNome}
                       onChange={handleChange}
                     />
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <UniversalInput
-                        name="clienteCpf"
-                        label="CPF"
-                        placeholder="000.000.000-00"
-                        value={formData.clienteCpf}
-                        onChange={handleChange}
-                      />
-                      <UniversalInput
-                        name="clienteTelefone"
-                        label="Telefone"
-                        placeholder="(00) 00000-0000"
-                        value={formData.clienteTelefone}
-                        onChange={handleChange}
-                      />
-                    </div>
-
-                    <UniversalInput
-                      name="clienteEmail"
-                      label="E-mail"
-                      type="email"
-                      placeholder="nome@exemplo.com"
-                      value={formData.clienteEmail}
-                      onChange={handleChange}
-                    />
                   </div>
                 )}
               </div>
             )}
 
             {currentStep === 1 && (
-              <div className="flex flex-col gap-4">
-                <div className="text-left">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Endereco do Servico
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Informe o local onde o servico sera executado.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col gap-4">
-                  <div className="mb-4 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-[#007EA7]" />
-                    <span className="text-sm font-semibold text-slate-800">
-                      Dados do local
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <UniversalInput
-                      name="cep"
-                      label="CEP"
-                      placeholder="00000-000"
-                      value={formData.endereco.cep}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
-                      name="rua"
-                      label="Rua"
-                      placeholder="Digite a rua"
-                      value={formData.endereco.rua}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
-                      name="numero"
-                      label="Número"
-                      placeholder="Digite o número"
-                      value={formData.endereco.numero}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
-                      name="bairro"
-                      label="Bairro"
-                      placeholder="Digite o bairro"
-                      value={formData.endereco.bairro}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
-                      name="cidade"
-                      label="Cidade"
-                      placeholder="Digite a cidade"
-                      value={formData.endereco.cidade}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
-                      name="uf"
-                      label="UF"
-                      placeholder="Digite a UF"
-                      value={formData.endereco.uf}
-                      onChange={handleEnderecoChange}
-                    />
-                    <UniversalInput
-                      name="complemento"
-                      label="Complemento"
-                      placeholder="Digite o complemento"
-                      wrapperClassName="sm:col-span-2"
-                      value={formData.endereco.complemento}
-                      onChange={handleEnderecoChange}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 2 && (
               <div className="flex flex-col gap-4">
                 <div className="text-left">
                   <h3 className="text-base font-semibold text-gray-900">
@@ -797,7 +484,7 @@ const NovoPedidoServicoModal = ({
               </div>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 2 && (
               <div className="flex flex-col gap-4">
                 <div className="text-left">
                   <h3 className="text-base font-semibold text-gray-900">
@@ -816,48 +503,6 @@ const NovoPedidoServicoModal = ({
                   <div className="space-y-2 text-sm text-gray-700">
                     <p>
                       <strong>Nome:</strong> {formData.clienteNome || "Nao informado"}
-                    </p>
-                    {formData.clienteCpf && (
-                      <p>
-                        <strong>CPF:</strong> {formData.clienteCpf}
-                      </p>
-                    )}
-                    {formData.clienteTelefone && (
-                      <p>
-                        <strong>Telefone:</strong> {formData.clienteTelefone}
-                      </p>
-                    )}
-                    {formData.clienteEmail && (
-                      <p>
-                        <strong>E-mail:</strong> {formData.clienteEmail}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-md border bg-gray-50 p-4">
-                  <div className="mb-3 flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-[#007EA7]" />
-                    <h4 className="font-semibold text-gray-900">Endereco</h4>
-                  </div>
-                  <div className="space-y-2 text-sm text-gray-700">
-                    <p>
-                      <strong>Rua:</strong> {formData.endereco.rua}{formData.endereco.numero ? `, ${formData.endereco.numero}` : ""}
-                    </p>
-                    {formData.endereco.complemento && (
-                      <p>
-                        <strong>Complemento:</strong> {formData.endereco.complemento}
-                      </p>
-                    )}
-                    <p>
-                      <strong>Bairro:</strong> {formData.endereco.bairro || "-"}
-                    </p>
-                    <p>
-                      <strong>Cidade/UF:</strong> {formData.endereco.cidade}/
-                      {formData.endereco.uf || "-"}
-                    </p>
-                    <p>
-                      <strong>CEP:</strong> {formData.endereco.cep || "-"}
                     </p>
                   </div>
                 </div>
