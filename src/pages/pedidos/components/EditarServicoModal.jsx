@@ -262,6 +262,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                   {
                     id: servico.clienteInfo.endereco.id || 0,
                     rua: servico.clienteInfo.endereco.rua || "",
+                    numero: servico.clienteInfo.endereco.numero || null,
                     complemento: servico.clienteInfo.endereco.complemento || "",
                     cep: servico.clienteInfo.endereco.cep || "",
                     cidade: servico.clienteInfo.endereco.cidade || "",
@@ -422,6 +423,8 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                     {
                       id: servicoAtualizado.clienteInfo.endereco.id || 0,
                       rua: servicoAtualizado.clienteInfo.endereco.rua || "",
+                      numero:
+                        servicoAtualizado.clienteInfo.endereco.numero || null,
                       complemento:
                         servicoAtualizado.clienteInfo.endereco.complemento ||
                         "",
@@ -846,6 +849,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                               >
                                 <p className="font-medium">
                                   {endereco.rua}
+                                  {endereco.numero ? `, ${endereco.numero}` : ""}
                                   {endereco.complemento &&
                                     ` - ${endereco.complemento}`}
                                 </p>
@@ -991,6 +995,9 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                   <div className="text-sm text-blue-700">
                                     <p className="font-medium">
                                       {agendamento.endereco.rua}
+                                      {agendamento.endereco.numero
+                                        ? `, ${agendamento.endereco.numero}`
+                                        : ""}
                                     </p>
                                     {agendamento.endereco.complemento && (
                                       <p>{agendamento.endereco.complemento}</p>

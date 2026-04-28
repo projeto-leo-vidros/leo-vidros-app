@@ -125,6 +125,7 @@ const DEFAULT_FORM_DATA = {
   clienteTelefone: "",
   cep: "",
   rua: "",
+  numero: "",
   complemento: "",
   bairro: "",
   cidade: "",
@@ -242,6 +243,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         clienteTelefone: clienteCompleto.telefone || "",
         cep: enderecoPrincipal.cep || "",
         rua: enderecoPrincipal.rua || "",
+        numero: enderecoPrincipal.numero || "",
         bairro: enderecoPrincipal.bairro || "",
         cidade: enderecoPrincipal.cidade || "",
         uf: enderecoPrincipal.uf || "",
@@ -360,6 +362,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
           email: formData.clienteEmail,
           telefone: formData.clienteTelefone,
           rua: formData.rua,
+          numero: formData.numero,
           complemento: formData.complemento,
           cep: formData.cep,
           bairro: formData.bairro,
@@ -371,10 +374,10 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
       }
 
       const enderecoCompleto = `${formData.rua}${
-        formData.complemento ? ", " + formData.complemento : ""
-      } - ${formData.bairro}, ${formData.cidade}/${formData.uf} - CEP: ${
-        formData.cep
-      }`;
+        formData.numero ? `, ${formData.numero}` : ""
+      }${formData.complemento ? ", " + formData.complemento : ""} - ${
+        formData.bairro
+      }, ${formData.cidade}/${formData.uf} - CEP: ${formData.cep}`;
 
       const servicoSalvo = await salvarServico({
         clienteId,
@@ -627,6 +630,13 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                   required
                   wrapperClassName="col-span-3"
                 />
+                <UniversalInput
+                  label="Número"
+                  name="numero"
+                  placeholder="123"
+                  value={formData.numero}
+                  onChange={handleChange}
+                />
               </div>
 
               <UniversalInput
@@ -819,6 +829,7 @@ const NovoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 <div className="text-md text-gray-900 flex flex-col gap-1 items-start">
                   <p className="font-medium">
                     {formData.rua}
+                    {formData.numero && `, ${formData.numero}`}
                     {formData.complemento && `, ${formData.complemento}`}
                   </p>
                   <p>
