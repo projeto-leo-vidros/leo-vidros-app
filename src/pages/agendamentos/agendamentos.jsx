@@ -1,40 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-  isSameMonth,
-  addMonths,
-  subMonths,
-  startOfWeek,
-  endOfWeek,
-  addWeeks,
-  subWeeks,
-  parseISO,
-} from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import {
-  Calendar as CalendarIcon,
   Clock,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  MoreHorizontal,
-  User,
-  Check,
-  LayoutGrid,
-  List,
   Loader2,
-  MapPin,
-  Trash2,
-  Edit3,
   AlertTriangle,
-  Eye,
-  ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
@@ -44,7 +15,6 @@ import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import TaskCreateModal from "../../components/ui/misc/TaskCreateModal";
 import Button from "../../components/ui/Button/Button.component";
 import AgendamentoDetailModal from "./components/AgendamentoDetailModal";
-import Kpis from "../../components/kpis/Kpis";
 
 import CalendarView from "./components/CalendarView";
 import MiniCalendar from "./components/MiniCalendar";
@@ -52,9 +22,6 @@ import UpcomingEvents from "./components/UpcomingEvents";
 import EditarAgendamentoSimples from "../pedidos/components/EditarAgendamentoSimples";
 import {
   getAgendamentoDisplayName,
-  isCancelledStatus,
-  isConcludedStatus,
-  isFinalizedStatus,
   isVisibleInDailyAgenda,
 } from "./utils/eventHelpers";
 
@@ -63,158 +30,135 @@ import { useAgendamentos } from "../../hooks/queries/useAgendamentos";
 import agendamentosService from "../../api/services/agendamentosService";
 import PedidosService from "../../api/services/pedidosService";
 
-import {
-  normalizeStatus,
-  statusConfig,
-  getStatusConfig,
-  tipoConfig,
-} from "../../utils/agendamentoStatus";
+/*
+function FinalizarExecucaoModal({ isOpen, onClose, onConfirm, agendamento, isSaving }) {
+  const [horaFim, setHoraFim] = useState("");
 
-function StatusBadge({ status }) {
-  const config = getStatusConfig(status);
+  useEffect(() => {
+    if (isOpen && agendamento) {
+      setHoraFim(agendamento.fimAgendamento?.substring(0, 5) || "");
+    }
+  }, [isOpen, agendamento]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const horaInicio = agendamento?.inicioAgendamento?.substring(0, 5) || "";
+  const horaFimOriginal = agendamento?.fimAgendamento?.substring(0, 5) || "";
+  const horaAtual = format(new Date(), "HH:mm");
+
+  if (!isOpen || !agendamento) return null;
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-        config.color,
-      )}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
-      {config.label}
-    </span>
-  );
-}
-
-function TipoBadge({ tipo }) {
-  const config = tipoConfig[tipo] || tipoConfig.SERVICO;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-        config.color,
-      )}
-    >
-      {config.label}
-    </span>
-  );
-}
-
-function ActionsDropdown({
-  agendamento,
-  onStatusChange,
-  onDelete,
-  onEdit,
-  onView,
-  onLocation,
-}) {
-  const [open, setOpen] = useState(false);
-
-  const statusNome = agendamento?.statusAgendamento?.nome || "";
-  const statusNorm = normalizeStatus(statusNome);
-  const isFinalizado = isFinalizedStatus(statusNome);
-
-  const hasEndereco = (() => {
-    if (!agendamento?.endereco) return false;
-    const e = agendamento.endereco;
-    return [e.rua, e.bairro, e.cidade].some(Boolean);
-  })();
-
-  return (
-    <div className="relative">
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(!open);
-        }}
-        className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-gray-100"
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+        onClick={onClose}
       >
-        <MoreHorizontal className="h-4 w-4 text-gray-500" />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="animate-in fade-in slide-in-from-top-2 absolute top-8 right-0 z-50 w-48 rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl">
-            <button
-              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onView?.(agendamento);
-                setOpen(false);
-              }}
-            >
-              <Eye className="h-4 w-4 text-gray-400" /> Ver informações
-            </button>
-            {hasEndereco && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLocation?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <MapPin className="h-4 w-4 text-gray-400" /> Ver localização
-              </button>
-            )}
-            <div className="my-1 border-t border-gray-100" />
-            {!isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <Edit3 className="h-4 w-4 text-gray-400" /> Editar
-              </button>
-            )}
-            {statusNorm !== "CONFIRMADO" && !isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-green-600 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(agendamento, "CONFIRMADO");
-                  setOpen(false);
-                }}
-              >
-                <Check className="h-4 w-4" /> Confirmar
-              </button>
-            )}
-            {!isConcludedStatus(statusNome) && !isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(agendamento, "CONCLUIDO");
-                  setOpen(false);
-                }}
-              >
-                <Check className="h-4 w-4" /> Concluir
-              </button>
-            )}
-            {!isFinalizado && <div className="my-1 border-t border-gray-100" />}
-            {!isConcludedStatus(statusNome) && !isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <Trash2 className="h-4 w-4" /> Excluir
-              </button>
-            )}
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-4">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Finalizar Execução</h3>
+              <p className="text-xs text-gray-500">Informe o horário real de término</p>
+            </div>
           </div>
-        </>
-      )}
-    </div>
+
+          <div className="px-6 py-5 space-y-4">
+            <div className="flex items-center gap-4 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm">
+              <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+              <span className="text-gray-500">Horário previsto:</span>
+              <span className="font-semibold text-gray-700 ml-auto">{horaInicio} – {horaFimOriginal}</span>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Horário real de término
+              </label>
+              <input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setHoraFim(horaAtual)}
+                className="mt-1.5 text-xs text-[#007EA7] hover:underline cursor-pointer"
+              >
+                Usar horário atual ({horaAtual})
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+            <button
+              onClick={onClose}
+              disabled={isSaving}
+              className="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => onConfirm(horaFim)}
+              disabled={isSaving || !horaFim}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isSaving ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando...</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4" /> Finalizar</>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
+*/
 
 function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
   return (
     <AnimatePresence>
@@ -320,6 +264,48 @@ export default function Agendamentos() {
   const handleEventDeleted = () => refetch();
 
   const [activeKpiFilter, setActiveKpiFilter] = useState(null);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "Escape") return;
+
+      if (deleteTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setDeleteTarget(null);
+        return;
+      }
+
+      if (detailTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setDetailTarget(null);
+        return;
+      }
+
+      if (showReagendarModal) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setShowReagendarModal(false);
+        setAgendamentoToReagendar(null);
+        return;
+      }
+
+      if (showTaskModal) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setShowTaskModal(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [deleteTarget, detailTarget, showReagendarModal, showTaskModal]);
 
   const filteredTasks = useMemo(() => {
     if (!activeKpiFilter) return tasks;
@@ -494,7 +480,7 @@ export default function Agendamentos() {
   const handleTaskSave = useCallback(() => {
     refetch();
   }, [refetch]);
-
+  /*
   const handleStatusChange = useCallback(
     async (apt, newStatusNome) => {
       try {
@@ -531,6 +517,41 @@ export default function Agendamentos() {
     [refetch],
   );
 
+  const handleFinalizarConfirm = useCallback(
+    async (horaFim) => {
+      if (!finalizarTarget) return;
+      setIsFinalizing(true);
+      try {
+        const result = await agendamentosService.update(finalizarTarget.id, {
+          tipoAgendamento: finalizarTarget.tipoAgendamento,
+          dataAgendamento: finalizarTarget.dataAgendamento,
+          inicioAgendamento: finalizarTarget.inicioAgendamento,
+          fimAgendamento: horaFim.length === 5 ? `${horaFim}:00` : horaFim,
+          statusAgendamento: { tipo: "AGENDAMENTO", nome: "CONCLUIDO" },
+          observacao: finalizarTarget.observacao || null,
+        });
+        if (result.success) {
+          refetch();
+          setFinalizarTarget(null);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Erro ao finalizar",
+            text: result.error || "Não foi possível finalizar o agendamento.",
+            timer: 4000,
+            showConfirmButton: true,
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao finalizar agendamento:", err);
+      } finally {
+        setIsFinalizing(false);
+      }
+    },
+    [finalizarTarget, refetch],
+  );
+
+  */
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
@@ -574,9 +595,7 @@ export default function Agendamentos() {
     setAgendamentoToReagendar(null);
     refetch();
   };
-
-
-
+  /*
   const getServicoNome = (apt) => {
     if (apt.servico?.nome) return apt.servico.nome;
     if (apt.servico?.codigo) return apt.servico.codigo;
@@ -596,6 +615,7 @@ export default function Agendamentos() {
   };
 
   const getStatusNome = (apt) => apt.statusAgendamento?.nome || "PENDENTE";
+  */
 
   if (isLoading) {
     return (
@@ -630,7 +650,7 @@ export default function Agendamentos() {
           className="relative flex flex-1 flex-col items-center justify-start gap-10 px-4 transition-all duration-300 sm:px-6 md:px-8"
           style={{ paddingTop: `${headerHeight + 40}px` }}
         >
-          <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-10 pb-4 md:px-6">
+          <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col gap-4 px-4 pt-14 pb-4 md:px-6">
             {/* ====== Header ====== */}
             <div className="text-center w-full mx-auto mb-2">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 gap-2">
@@ -639,32 +659,53 @@ export default function Agendamentos() {
             </div>
 
             {/* ====== Stats ====== */}
-            <div className="w-full shrink-0 [&>div]:!grid-cols-1 [&>div]:!gap-3 sm:[&>div]:!grid-cols-3 sm:[&>div]:!gap-6">
-              <Kpis
-                stats={[
+            <div className="w-full shrink-0">
+              <div className="flex flex-col sm:flex-row w-full rounded-xl border border-gray-300 bg-white shadow-sm overflow-hidden">
+                {[
                   {
-                    title: "Agendamentos de Hoje",
+                    label: "Agendamentos de Hoje",
                     value: stats.today,
-                    icon: CalendarIcon,
-                    onClick: () => handleKpiClick("today"),
-                    isActive: activeKpiFilter === "today",
+                    dotColor: "bg-blue-500",
+                    badgeColor: "bg-gray-100 text-gray-700",
+                    filter: "today",
                   },
                   {
-                    title: "Agendamentos Confirmados",
+                    label: "Agendamentos Confirmados",
                     value: stats.confirmed,
-                    icon: Check,
-                    onClick: () => handleKpiClick("confirmed"),
-                    isActive: activeKpiFilter === "confirmed",
+                    dotColor: "bg-emerald-500",
+                    badgeColor: "bg-emerald-100 text-emerald-700",
+                    filter: "confirmed",
                   },
                   {
-                    title: "Agendamentos Pendentes",
+                    label: "Agendamentos Pendentes",
                     value: stats.pending,
-                    icon: Clock,
-                    onClick: () => handleKpiClick("pending"),
-                    isActive: activeKpiFilter === "pending",
+                    dotColor: "bg-amber-400",
+                    badgeColor: "bg-amber-100 text-amber-700",
+                    filter: "pending",
                   },
-                ]}
-              />
+                ].map((item, idx, arr) => (
+                  <button
+                    key={item.filter}
+                    onClick={() => handleKpiClick(item.filter)}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2.5 px-4 py-3 transition-colors duration-150 cursor-pointer",
+                      "hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400",
+                      activeKpiFilter === item.filter ? "bg-gray-50" : "bg-white",
+                      idx < arr.length - 1
+                        ? "border-b sm:border-b-0 sm:border-r border-gray-400"
+                        : "",
+                    )}
+                  >
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", item.dotColor)} />
+                    <span className="text-sm font-medium text-gray-700 text-left leading-tight">
+                      {item.label}
+                    </span>
+                    <span className={cn("ml-1 shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold", item.badgeColor)}>
+                      {item.value}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* ====== Filter Indicator ====== */}

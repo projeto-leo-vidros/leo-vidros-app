@@ -83,6 +83,43 @@ const categoryOptions = [
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
 ];
 
+const getQuantidadeDisponivel = (item = {}) => {
+  const quantidadeDisponivel = parseFloat(
+    item?.quantidadeDisponivel ?? item?.disponivel,
+  );
+  if (Number.isFinite(quantidadeDisponivel)) return quantidadeDisponivel;
+
+  const quantidade = parseFloat(item?.quantidade ?? 0);
+  const reservado = parseFloat(item?.reservado ?? 0);
+  return quantidade - reservado;
+};
+
+const _produtoEstaDisponivel = (item = {}) => getQuantidadeDisponivel(item) > 0;
+
+const _filtrarProdutosDisponiveis = (produtos = [], options = []) => {
+  const idsDisponiveis = new Set(options.map((option) => String(option.value)));
+  return (produtos || []).filter((produto) =>
+    idsDisponiveis.has(String(produto.id)),
+  );
+};
+
+const _normalizarProdutosOrcamento = (agendamentos = []) =>
+  agendamentos
+    .filter(
+      (ag) =>
+        ag.tipoAgendamento === "ORCAMENTO" &&
+        ag.statusAgendamento?.nome !== "CANCELADO" &&
+        ag.statusAgendamento?.nome !== "INATIVO",
+    )
+    .flatMap((ag) => ag.produtos || [])
+    .filter((ap) => ap.produto?.id)
+    .map((ap) => ({
+      id: ap.produto.id,
+      nome: ap.produto.nome || `Produto #${ap.produto.id}`,
+      quantidade: parseFloat(ap.quantidadeReservada) || 1,
+      origemPedido: true,
+    }));
+
 const normalizePedidoProdutos = (pedidoData) => {
   const produtos = pedidoData?.produtos || [];
 
@@ -112,7 +149,14 @@ const mergeProdutosPedidoComSelecionados = (
   return [...produtosPedido, ...extras];
 };
 
-const getProdutosIniciais = (initialData = {}) => {
+const isTipoOrcamento = (tipoAgendamento) =>
+  (tipoAgendamento?.value || tipoAgendamento) === "ORCAMENTO";
+
+const _getProdutosIniciais = (initialData = {}) => {
+  if (!isTipoOrcamento(initialData?.tipoAgendamento)) {
+    return [];
+  }
+
   const produtosPedido = normalizePedidoProdutos(initialData?.pedido?.originalData);
 
   if ((initialData?.produtos || []).length === 0) {
@@ -138,6 +182,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     startTime: "",
     endTime: "",
     rua: "",
+    numero: "",
     cep: "",
     complemento: "",
     bairro: "",
@@ -154,12 +199,14 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   const [funcionariosOptions, setFuncionariosOptions] = useState([]);
   const [pedidoOptions, setPedidoOptions] = useState([]);
-  const [produtosOptions, setProdutosOptions] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedFuncionarios, setSelectedFuncionarios] = useState([]);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingFuncionarios, setLoadingFuncionarios] = useState(false);
   const [useExistingAddress, setUseExistingAddress] = useState(true);
+  const [estoqueOptions, setEstoqueOptions] = useState([]);
+  const [loadingEstoque, setLoadingEstoque] = useState(false);
+  const [produtoSearch, setProdutoSearch] = useState("");
   const [savedAddress, setSavedAddress] = useState(null);
   const [clienteInfo, setClienteInfo] = useState(null);
 
@@ -190,7 +237,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           setFuncionariosOptions(
             response.data.map((func) => ({ value: func.id, label: func.nome })),
           );
-        } catch (fallbackError) {
+        } catch (_fallbackError) {
           setFuncionariosOptions([]);
         }
       } finally {
@@ -215,7 +262,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           const responseServicos = await Api.get("/pedidos/servicos");
           const raw = responseServicos.data;
           allOrders = raw?.content ?? (Array.isArray(raw) ? raw : []);
-        } catch (error) {
+        } catch (_error) {
           console.warn(
             "⚠️ Endpoint /Pedidos/servicos não disponível, tentando alternativa...",
           );
@@ -340,27 +387,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     [initialData],
   );
 
-  const fetchProdutos = useCallback(async () => {
-    try {
-      const response = await Api.get("/estoques", { params: { size: 500 } });
-      const raw = response.data;
-      const dados = raw?.content ?? (Array.isArray(raw) ? raw : []);
-      setProdutosOptions(
-        dados
-          .filter((item) => item.produto?.id)
-          .map((item) => ({
-            value: item.produto.id,
-            label: item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.produto.id}`,
-            estoqueId: item.id,
-            originalData: item,
-          })),
-      );
-    } catch (error) {
-      console.error("Erro ao buscar produtos:", error);
-      setProdutosOptions([]);
-    }
-  }, []);
-
   useEffect(() => {
     const tipoValue =
       formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
@@ -393,23 +419,20 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   ]);
 
   const handleTypeChange = (selectedOption) => {
-    const typeValue = selectedOption?.value || selectedOption;
     setFormData((prev) => ({
       ...prev,
       tipoAgendamento: selectedOption,
       pedido: null,
+      produtos: [],
     }));
     setSelectedFuncionarios([]);
-    fetchOpcoesPedido(typeValue);
+    setStep(1);
+    fetchOpcoesPedido(selectedOption?.value || selectedOption);
   };
 
   const handlePedidoChange = (selectedPedidoOption) => {
     if (selectedPedidoOption?.originalData) {
       const data = selectedPedidoOption.originalData;
-      const tipoValue =
-        formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
-      const produtosPedido =
-        tipoValue === "SERVICO" ? normalizePedidoProdutos(data) : [];
 
       const cliente = data.cliente || data.servico?.cliente;
       if (cliente) {
@@ -443,11 +466,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         setFormData((prev) => ({
           ...prev,
           pedido: selectedPedidoOption,
-          produtos: mergeProdutosPedidoComSelecionados(
-            produtosPedido,
-            prev.produtos,
-          ),
+          produtos: [],
           rua: end.rua || end.logradouro || "",
+          numero: end.numero || "",
           cep: end.cep || "",
           bairro: end.bairro || "",
           cidade: end.cidade || "",
@@ -461,10 +482,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         setFormData((prev) => ({
           ...prev,
           pedido: selectedPedidoOption,
-          produtos: mergeProdutosPedidoComSelecionados(
-            produtosPedido,
-            prev.produtos,
-          ),
+          produtos: [],
         }));
       }
     } else {
@@ -484,6 +502,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setFormData((prev) => ({
         ...prev,
         rua: "",
+        numero: "",
         cep: "",
         bairro: "",
         cidade: "",
@@ -496,6 +515,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setFormData((prev) => ({
         ...prev,
         rua: savedAddress.rua || savedAddress.logradouro || "",
+        numero: savedAddress.numero || "",
         cep: savedAddress.cep || "",
         bairro: savedAddress.bairro || "",
         cidade: savedAddress.cidade || "",
@@ -536,53 +556,59 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     }
   };
 
-  const handleProdutosSelectChange = (selectedIds) => {
-    setFormData((prev) => {
-      const currentProducts = prev.produtos || [];
-      const keptProducts = currentProducts.filter((p) =>
-        selectedIds.includes(p.id),
-      );
-      const newIds = selectedIds.filter(
-        (id) => !currentProducts.some((p) => p.id === id),
-      );
-      const newProducts = newIds.map((id) => {
-        const option = produtosOptions.find((opt) => opt.value === id);
-        const existingInitData =
-          currentProducts.find((p) => p.id === id) ||
-          normalizePedidoProdutos(formData?.pedido?.originalData).find(
-            (p) => p.id === id,
-          ) ||
-          initialData?.produtos?.find((p) => p.id === id);
-        return {
-          id: id,
-          nome: option
-            ? option.label
-            : existingInitData
-              ? existingInitData.nome
-              : "Produto",
-          quantidade: existingInitData ? existingInitData.quantidade : 1,
-          origemPedido: existingInitData?.origemPedido ?? false,
-        };
-      });
-      return { ...prev, produtos: [...keptProducts, ...newProducts] };
-    });
-  };
+  const tipoAtual = formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
+  const showProdutosStep = tipoAtual === "SERVICO";
+  const totalSteps = showProdutosStep ? 3 : 2;
 
-  const handleRemoveProduto = (id) => {
+  const handleProdutosSelectChange = (estoqueItem) => {
+    const jaExiste = formData.produtos.some((p) => p.id === estoqueItem.produtoId);
+    if (jaExiste) return;
     setFormData((prev) => ({
       ...prev,
-      produtos: prev.produtos.filter((p) => p.id !== id),
+      produtos: [
+        ...prev.produtos,
+        { id: estoqueItem.produtoId, nome: estoqueItem.nomeProduto || estoqueItem.nome, quantidade: 1 },
+      ],
+    }));
+    setProdutoSearch("");
+  };
+
+  const handleRemoveProduto = (idx) => {
+    setFormData((prev) => ({
+      ...prev,
+      produtos: prev.produtos.filter((_, i) => i !== idx),
     }));
   };
 
-  const handleProdutoQuantidadeChange = (id, quantidade) => {
+  const handleProdutoQuantidadeChange = (idx, qty) => {
     setFormData((prev) => ({
       ...prev,
-      produtos: prev.produtos.map((p) =>
-        p.id === id ? { ...p, quantidade: parseFloat(quantidade) || 1 } : p,
-      ),
+      produtos: prev.produtos.map((p, i) => (i === idx ? { ...p, quantidade: qty } : p)),
     }));
   };
+
+  // Busca produtos do estoque quando entra no step 3
+  useEffect(() => {
+    if (showProdutosStep && step === 3 && estoqueOptions.length === 0) {
+      setLoadingEstoque(true);
+      Api.get("/estoques", { params: { page: 0, size: 200 } })
+        .then((res) => {
+          const items = res.data?.content ?? (Array.isArray(res.data) ? res.data : []);
+          setEstoqueOptions(
+            items
+              .filter((i) => (i.quantidadeDisponivel ?? i.disponivel ?? 0) > 0)
+              .map((i) => ({
+                produtoId: i.produto?.id ?? i.id,
+                nomeProduto: i.produto?.nome ?? i.nome ?? "Produto",
+                disponivel: parseFloat(i.quantidadeDisponivel ?? i.disponivel ?? 0),
+              }))
+          );
+        })
+        .catch(() => setEstoqueOptions([]))
+        .finally(() => setLoadingEstoque(false));
+    }
+  }, [step, showProdutosStep, estoqueOptions.length]);
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -590,11 +616,35 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         tipoAgendamento: initialData?.tipoAgendamento || "",
         pedido: initialData?.pedido || null,
         funcionarios: initialData?.funcionarios || [],
-        produtos: getProdutosIniciais(initialData),
+        produtos: (() => {
+          const tipo = initialData?.tipoAgendamento?.value || initialData?.tipoAgendamento;
+          if (tipo === "SERVICO") {
+            // Prioridade 1: lista já mesclada passada pelo ServicoDetalhe
+            if (initialData?.produtosIniciais?.length > 0) {
+              return initialData.produtosIniciais.map((p) => ({
+                id: p.estoqueId || p.produtoId || p.id,
+                nome: p.nome,
+                quantidade: parseFloat(p.quantidade) || 1,
+                origemPedido: true,
+              }));
+            }
+            // Prioridade 2: extrair de agendamentos de ORCAMENTO
+            const agendamentos = initialData?.pedido?.originalData?.servico?.agendamentos || [];
+            const seen = new Set();
+            const deProdutos = agendamentos
+              .filter((ag) => ag.tipoAgendamento === "ORCAMENTO" && ag.statusAgendamento?.nome !== "CANCELADO" && ag.statusAgendamento?.nome !== "INATIVO")
+              .flatMap((ag) => ag.agendamentoProdutos ?? ag.produtos ?? [])
+              .filter((ap) => { if (!ap.produto?.id || seen.has(ap.produto.id)) return false; seen.add(ap.produto.id); return true; })
+              .map((ap) => ({ id: ap.produto.id, nome: ap.produto.nome || `Produto #${ap.produto.id}`, quantidade: parseFloat(ap.quantidadeReservada) || 1, origemPedido: true }));
+            return deProdutos;
+          }
+          return _getProdutosIniciais(initialData);
+        })(),
         eventDate: initialData?.eventDate || "",
         startTime: initialData?.startTime || "",
         endTime: initialData?.endTime || "",
         rua: initialData?.rua || "",
+        numero: initialData?.numero || "",
         cep: initialData?.cep || "",
         complemento: initialData?.complemento || "",
         bairro: initialData?.bairro || "",
@@ -610,6 +660,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setClienteInfo(null);
       setSavedAddress(null);
       setUseExistingAddress(true);
+      setEstoqueOptions([]);
+      setProdutoSearch("");
       if (initialData?.tipoAgendamento) {
         const typeValue =
           initialData.tipoAgendamento.value || initialData.tipoAgendamento;
@@ -621,12 +673,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         }
       }
 
-      const tipoVal = initialData?.tipoAgendamento?.value || initialData?.tipoAgendamento;
-      if (tipoVal === "SERVICO" || initialData?.produtos?.length > 0) {
-        fetchProdutos();
-      }
     }
-  }, [isOpen, initialData, fetchOpcoesPedido, fetchProdutos]);
+  }, [isOpen, initialData, fetchOpcoesPedido]);
 
   const validateStep = (currentStep) => {
     const newErrors = {};
@@ -684,32 +732,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       if (!formData?.rua?.trim()) newErrors.rua = "* Rua obrigatória";
       if (!formData?.cep?.trim()) newErrors.cep = "* CEP obrigatório";
     }
-    if (currentStep === 3) {
-      const produtosInvalidos = (formData?.produtos || [])
-        .map((produto) => {
-          const option = produtosOptions.find((opt) => opt.value === produto.id);
-          const disponivel = parseFloat(
-            option?.originalData?.quantidadeDisponivel ?? 0,
-          );
-          const reservado = parseFloat(produto.quantidade) || 0;
-
-          if (reservado <= 0) {
-            return `${produto.nome}: informe uma quantidade maior que zero.`;
-          }
-
-          if (reservado > disponivel) {
-            return `${produto.nome}: disponivel ${disponivel}, solicitado ${reservado}.`;
-          }
-
-          return null;
-        })
-        .filter(Boolean);
-
-      if (produtosInvalidos.length > 0) {
-        newErrors.submit = `A selecao dos itens nao pode passar do disponivel. Ajuste as quantidades: ${produtosInvalidos.join(" ")}`;
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -734,14 +756,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
       const pedidoCompleto = formData.pedido?.originalData || null;
 
-      const produtosPayload = formData.produtos
-        .filter((p) => p.id != null)
-        .map((p) => ({
-          produtoId: parseInt(p.id, 10),
-          quantidadeUtilizada: 0.0,
-          quantidadeReservada: Math.max(0.01, parseFloat(p.quantidade) || 1),
-        }));
-
       const payload = {
         servicoId: pedidoCompleto?.servico?.id || pedidoCompleto?.id || null,
         tipoAgendamento: tipoValor,
@@ -752,6 +766,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         observacao: formData.observacao || null,
         endereco: {
           rua: formData.rua || "",
+          numero: formData.numero || null,
           complemento: formData.complemento || null,
           cep: formData.cep || "",
           cidade: formData.cidade || "",
@@ -760,7 +775,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           pais: formData.pais || "Brasil",
         },
         funcionariosIds: selectedFuncionarios,
-        produtos: produtosPayload,
+        produtos: (formData.produtos || [])
+          .filter((p) => p.id)
+          .map((p) => ({
+            produtoId: p.id,
+            quantidadeReservada: parseFloat(p.quantidade) || 1,
+            quantidadeUtilizada: 0,
+          })),
       };
 
       let result;
@@ -831,24 +852,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     e?.preventDefault();
     if (!validateStep(step)) return;
 
-    const tipoValue =
-      formData?.tipoAgendamento?.value || formData?.tipoAgendamento;
-    const isOrcamento = tipoValue === "ORCAMENTO";
-
-    if (step === 2 && isOrcamento) {
-      await submitToBackend();
-      return;
-    }
-
-    if (step === 2) {
-      setLoading(true);
-      await fetchProdutos();
-      setLoading(false);
-      setStep(3);
-      return;
-    }
-
-    if (step < 3) {
+    if (step < totalSteps) {
       setStep((s) => s + 1);
       return;
     }
@@ -962,19 +966,17 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                     : "font-medium text-gray-500"
                 }`}
               >
-                Endereco
+                Endereço
               </span>
             </div>
 
-            {(formData?.tipoAgendamento?.value === "SERVICO" ||
-              formData?.tipoAgendamento === "SERVICO") && (
+            {showProdutosStep && (
               <>
                 <div
                   className={`mx-3 mb-6 h-1 flex-1 rounded-full ${
                     step >= 3 ? "bg-[#007EA7]" : "bg-gray-200"
                   }`}
                 />
-
                 <div className="flex flex-1 flex-col items-center gap-2">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all ${
@@ -1231,6 +1233,27 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 )}
               </div>
               </div>
+
+              {/* Produtos do orçamento — visível quando agendamento de serviço */}
+              {(formData?.tipoAgendamento?.value || formData?.tipoAgendamento) === "SERVICO" && formData.produtos.length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-[#007EA7]" />
+                    <span className="text-sm font-semibold text-slate-800">
+                      Produtos do Orçamento ({formData.produtos.length})
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">Produtos reservados com base no orçamento aprovado.</p>
+                  <div className="divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+                    {formData.produtos.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span className="font-medium text-gray-800">{p.nome}</span>
+                        <span className="text-gray-500 text-xs">{p.quantidade} un</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1256,7 +1279,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                       </p>
                       {useExistingAddress && (
                         <p className="text-xs text-blue-700">
-                          {savedAddress.rua} -{" "}
+                          {savedAddress.rua}{savedAddress.numero ? `, ${savedAddress.numero}` : ""} -{" "}
                           {savedAddress.bairro}, {savedAddress.cidade}/
                           {savedAddress.uf}
                         </p>
@@ -1313,7 +1336,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   error={errors?.rua}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <UniversalInput
+                  label="Número"
+                  value={formData?.numero}
+                  onChange={(e) => handleInputChange("numero", e?.target?.value)}
+                  placeholder="Número"
+                />
                 <UniversalInput
                   label="Complemento"
                   value={formData?.complemento}
@@ -1322,6 +1351,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   }
                   placeholder="Apto, Bloco..."
                 />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
                 <UniversalInput
                   label="Bairro"
                   value={formData?.bairro}
@@ -1366,86 +1397,109 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             </div>
           )}
 
-          {/* STEP 3 */}
-          {step === 3 && (
-            <div className="flex h-full flex-col gap-4">
+          {/* STEP 3 — Produtos (apenas SERVICO) */}
+          {showProdutosStep && step === 3 && (
+            <div className="flex flex-col gap-4">
               <div className="text-left">
-                <h3 className="text-base font-semibold text-gray-900">
-                  Produtos Reservados
-                </h3>
+                <h3 className="text-base font-semibold text-gray-900">Produtos para o Serviço</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Os produtos vinculados ao pedido sao carregados automaticamente, e voce ainda pode adicionar ou remover outros itens.
+                  Produtos pré-carregados do orçamento e pedido. Ajuste quantidades ou adicione itens extras.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Adicionar Produtos (Opcional)
-                  </label>
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">
-                    {formData.produtos.length} itens selecionados
+              {/* Busca de produto */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-[#007EA7]" />
+                    <span className="text-sm font-semibold text-slate-800">Adicionar produto</span>
+                  </div>
+                  <span className="rounded bg-[#e6f4f8] px-2 py-0.5 text-xs font-medium text-[#007EA7]">
+                    {formData.produtos.length} alocado{formData.produtos.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                <MultipleSelectCheckmarks
-                  options={produtosOptions}
-                  value={formData.produtos.map((p) => p.id)}
-                  onChange={handleProdutosSelectChange}
-                  placeholder="Pesquise e selecione produtos..."
-                  className="mb-4"
+
+                <input
+                  type="text"
+                  value={produtoSearch}
+                  onChange={(e) => setProdutoSearch(e.target.value)}
+                  placeholder="Buscar produto no estoque..."
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[#007EA7] focus:outline-none focus:ring-2 focus:ring-[#007EA7]/30"
                 />
-              </div>
-              <div className="flex flex-1 flex-col overflow-hidden rounded-md border border-gray-200">
-                <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  <div className="col-span-7 flex items-center gap-2 text-left">
-                    <Package size={14} /> Produto
+
+                {loadingEstoque && (
+                  <p className="animate-pulse text-xs text-blue-600">Buscando produtos...</p>
+                )}
+
+                {produtoSearch.trim().length >= 2 && (
+                  <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-sm">
+                    {estoqueOptions
+                      .filter((o) =>
+                        o.nomeProduto.toLowerCase().includes(produtoSearch.toLowerCase()) &&
+                        !formData.produtos.some((p) => p.id === o.produtoId)
+                      )
+                      .slice(0, 10)
+                      .map((o) => (
+                        <button
+                          key={o.produtoId}
+                          type="button"
+                          onClick={() => handleProdutosSelectChange(o)}
+                          className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                        >
+                          <span className="font-medium text-gray-800">{o.nomeProduto}</span>
+                          <span className="text-xs text-gray-400">{o.disponivel} disponível</span>
+                        </button>
+                      ))}
+                    {estoqueOptions.filter((o) =>
+                        o.nomeProduto.toLowerCase().includes(produtoSearch.toLowerCase()) &&
+                        !formData.produtos.some((p) => p.id === o.produtoId)
+                      ).length === 0 && (
+                      <p className="px-3 py-2 text-sm text-gray-400 italic">Nenhum produto encontrado.</p>
+                    )}
                   </div>
-                  <div className="col-span-4 text-center">Qtd. Reserva</div>
-                  <div className="col-span-1 text-center">Ação</div>
+                )}
+              </div>
+
+              {/* Lista de produtos alocados */}
+              <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200">
+                <div className="grid grid-cols-12 border-b border-gray-200 bg-gray-50 px-4 py-2.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  <div className="col-span-7 flex items-center gap-2"><Package size={12} /> Produto</div>
+                  <div className="col-span-4 text-center">Qtd. prevista</div>
+                  <div className="col-span-1" />
                 </div>
-                <div className="flex-1 overflow-y-auto bg-gray-50/30">
+                <div className="max-h-56 overflow-y-auto bg-white">
                   {formData.produtos.length === 0 ? (
-                    <div className="flex h-full flex-col items-center justify-center p-8 text-gray-400">
-                      <Package size={40} className="mb-2 opacity-20" />
-                      <p className="text-sm">Nenhum produto selecionado.</p>
-                      <p className="mt-1 text-xs">
-                        Clique em "Finalizar" para pular esta etapa.
-                      </p>
+                    <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                      <Package size={36} className="mb-2 opacity-20" />
+                      <p className="text-sm">Nenhum produto alocado.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-100">
-                      {formData.produtos.map((prod) => (
-                        <div
-                          key={prod.id}
-                          className="grid grid-cols-12 items-center gap-4 bg-white px-4 py-3 transition-colors hover:bg-white"
-                        >
-                          <div
-                            className="col-span-7 truncate text-left text-sm font-medium text-gray-900"
-                            title={prod.nome}
-                          >
+                      {formData.produtos.map((prod, idx) => (
+                        <div key={prod.id ?? idx} className="grid grid-cols-12 items-center gap-2 px-4 py-2.5">
+                          <div className="col-span-7 truncate text-sm font-medium text-gray-900" title={prod.nome}>
                             {prod.nome}
+                            {prod.origemPedido && (
+                              <span className="ml-2 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600 font-medium">orçamento</span>
+                            )}
                           </div>
                           <div className="col-span-4">
-                            <UniversalInput
+                            <input
                               type="number"
+                              min={0.01}
+                              step={0.01}
                               value={prod.quantidade}
-                              onChange={(e) =>
-                                handleProdutoQuantidadeChange(
-                                  prod.id,
-                                  e.target.value,
-                                )
-                              }
-                              className="text-center"
-                              min={1}
+                              onChange={(e) => handleProdutoQuantidadeChange(idx, parseFloat(e.target.value) || 1)}
+                              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-center text-sm focus:border-[#007EA7] focus:outline-none focus:ring-1 focus:ring-[#007EA7]"
                             />
                           </div>
-                          <div className="col-span-1 text-center">
+                          <div className="col-span-1 flex justify-center">
                             <button
                               type="button"
-                              className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                              onClick={() => handleRemoveProduto(prod.id)}
+                              onClick={() => handleRemoveProduto(idx)}
+                              className="rounded-full p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </div>
@@ -1478,13 +1532,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               >
                 {loading
                   ? "Salvando..."
-                  : step === 2 &&
-                      (formData?.tipoAgendamento?.value === "ORCAMENTO" ||
-                        formData?.tipoAgendamento === "ORCAMENTO")
-                    ? "Finalizar"
-                    : step < 3
-                      ? "Próxima Etapa"
-                      : "Finalizar"}
+                  : step < totalSteps
+                    ? "Próxima Etapa"
+                    : "Finalizar"}
               </Button>
             </div>
           </div>

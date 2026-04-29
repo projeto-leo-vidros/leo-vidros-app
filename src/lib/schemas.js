@@ -41,6 +41,7 @@ const ufRequired = z
 export const enderecoSchema = z.object({
   cep: cepRaw,
   rua: z.string().min(1, "Rua e obrigatoria"),
+  numero: z.string().optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
   cidade: z.string().min(1, "Cidade e obrigatoria"),
@@ -51,6 +52,7 @@ export const enderecoSchema = z.object({
 export const enderecoOpcionalSchema = z.object({
   cep: cepRaw,
   rua: z.string().optional().default(""),
+  numero: z.string().optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().optional().default(""),
   cidade: z.string().optional().default(""),
@@ -72,10 +74,27 @@ export const clienteSchema = z.object({
   status: z.enum(["Ativo", "Inativo", "Finalizado"]).default("Inativo"),
   cep: cepRequired,
   rua: z.string().trim().min(1, "Rua e obrigatoria"),
+  numero: z.string().optional().default(""),
   complemento: z.string().optional().default(""),
   bairro: z.string().trim().min(1, "Bairro e obrigatorio"),
   cidade: z.string().trim().min(1, "Cidade e obrigatoria"),
   uf: ufRequired,
+});
+
+// Schema relaxado para editar clientes avulsos (sem dados completos)
+export const clienteAvulsoSchema = z.object({
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  cpf: z.string().optional().transform((v) => (v ? v.replace(/\D/g, "") : "")).refine((v) => v === "" || v.length === 11, { message: "CPF invalido" }),
+  contato: z.string().optional().transform((v) => (v ? v.replace(/\D/g, "") : "")).refine((v) => v === "" || v.length === 10 || v.length === 11, { message: "Telefone invalido" }),
+  email: z.string().trim().optional().refine((v) => !v || v === "" || z.string().email().safeParse(v).success, { message: "Email invalido" }).default(""),
+  status: z.enum(["Ativo", "Inativo", "Finalizado", "Avulso"]).default("Avulso"),
+  cep: cepRaw,
+  rua: z.string().optional().default(""),
+  numero: z.string().optional().default(""),
+  complemento: z.string().optional().default(""),
+  bairro: z.string().optional().default(""),
+  cidade: z.string().optional().default(""),
+  uf: ufField,
 });
 
 export const clientePayloadSchema = clienteSchema.transform((data) => ({
@@ -88,6 +107,7 @@ export const clientePayloadSchema = clienteSchema.transform((data) => ({
     {
       cep: data.cep,
       rua: data.rua,
+      numero: data.numero,
       complemento: data.complemento,
       bairro: data.bairro,
       cidade: data.cidade,
@@ -157,7 +177,6 @@ export const pedidoServicoEtapa0Schema = z
     tipoCliente: z.enum(["existente", "novo", "nenhum"]),
     clienteId: z.union([z.string(), z.number()]).optional(),
     clienteNome: z.string().optional().default(""),
-    clienteTelefone: z.string().optional().default(""),
   })
   .superRefine((data, ctx) => {
     if (data.tipoCliente === "existente" && !data.clienteId) {
@@ -175,13 +194,6 @@ export const pedidoServicoEtapa0Schema = z
           message: "Nome do cliente e obrigatorio",
         });
       }
-      if (!data.clienteTelefone?.trim()) {
-        ctx.addIssue({
-          path: ["clienteTelefone"],
-          code: z.ZodIssueCode.custom,
-          message: "Telefone do cliente e obrigatorio",
-        });
-      }
     }
     if (data.tipoCliente === "nenhum" && !data.clienteNome?.trim()) {
       ctx.addIssue({
@@ -195,6 +207,7 @@ export const pedidoServicoEtapa0Schema = z
 export const pedidoServicoEtapa1Schema = z.object({
   endereco: z.object({
     rua: z.string().min(1, "Endereco e obrigatorio"),
+    numero: z.coerce.string().optional().default(""),
     cidade: z.string().min(1, "Cidade e obrigatoria"),
     cep: z.string().optional().default(""),
     complemento: z.string().optional().default(""),
@@ -215,4 +228,4 @@ export const pedidoServicoEtapa2Schema = z.object({
 });
 
 export const zodFirstError = (zodError) =>
-  zodError.errors[0]?.message ?? "Dados invalidos";
+  (zodError.issues ?? zodError.errors)?.[0]?.message ?? "Dados invalidos";

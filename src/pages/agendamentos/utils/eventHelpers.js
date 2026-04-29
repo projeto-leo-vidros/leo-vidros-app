@@ -64,7 +64,9 @@ export const formatAddress = (endereco) => {
 
   const parts = [];
 
-  if (endereco.rua) parts.push(endereco.rua);
+  const ruaComNumero = [endereco.rua, endereco.numero].filter(Boolean).join(", ");
+
+  if (ruaComNumero) parts.push(ruaComNumero);
   if (endereco.complemento) parts.push(endereco.complemento);
 
   const linha1 = parts.join(", ");

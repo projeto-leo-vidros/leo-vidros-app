@@ -1,4 +1,3 @@
-import React from "react";
 import {
   MapPin,
   FileText,
@@ -11,6 +10,7 @@ import {
   Package,
   X,
   Tag,
+  CheckCircle2,
 } from "lucide-react";
 import { getAgendamentoDisplayName, getInitials } from "../utils/eventHelpers";
 import Button from "../../../components/ui/Button/Button.component";
@@ -37,7 +37,7 @@ export const EventInfoRow = ({
   );
 };
 
-export const EventHeader = ({ title, badges, onClose }) => {
+export const EventHeader = ({ title, badges, onClose: _onClose }) => {
   return (
     <div className="flex flex-row items-center justify-between border-b border-gray-100 px-6 pt-5 pb-4">
       <div className="flex flex-col gap-2">
@@ -81,8 +81,9 @@ export const EventInfo = ({
   const formatEndereco = (endereco) => {
     if (!endereco) return "Endereço não informado";
 
+    const ruaComNumero = [endereco.rua, endereco.numero].filter(Boolean).join(", ");
     const parts = [
-      endereco.rua,
+      ruaComNumero || undefined,
       endereco.complemento,
       endereco.bairro,
       endereco.cidade,
@@ -297,11 +298,13 @@ export const EventFooter = ({
   onDelete,
   onViewMap,
   onEdit,
+  onFinalizar,
   isDeleting,
   isLoading,
   hasAddress,
   canDelete = true,
   canEdit = true,
+  canFinalizar = false,
 }) => {
   return (
     <div className="mt-4 flex flex-wrap-reverse items-center justify-end gap-3 rounded-b-xl border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-nowrap">
@@ -313,7 +316,7 @@ export const EventFooter = ({
           className="mr-auto w-full sm:w-auto"
           startIcon={<Trash2 size={16} />}
         >
-          {isDeleting ? "Cancelando..." : "Cancelar Agendamento"}
+          {isDeleting ? "Cancelando..." : "Cancelar"}
         </Button>
       )}
 
@@ -326,6 +329,18 @@ export const EventFooter = ({
           startIcon={<Edit size={16} />}
         >
           Editar Detalhes
+        </Button>
+      )}
+
+      {canFinalizar && (
+        <Button
+          variant="outline"
+          onClick={onFinalizar}
+          disabled={isLoading}
+          className="w-full border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 sm:w-auto"
+          startIcon={<CheckCircle2 size={16} />}
+        >
+          Finalizar Execução
         </Button>
       )}
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useModal } from '../../hooks/useModal';
 import { usePagination } from '../../hooks/usePagination';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Package, Trash2, AlertTriangle, FileText, Pencil } from 'lucide-react';
+import { Package, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import SkeletonLoader from '../../components/feedback/Skeleton/SkeletonLoader';
 import NovoPedidoProdutoModal from './components/NovoPedidoProdutoModal';
 import EditarPedidoModal from './components/EditarPedidoModal';
@@ -10,6 +10,7 @@ import PedidosService from '../../api/services/pedidosService';
 import { usePedidosProduto, useDeletarPedido } from '../../hooks/queries/usePedidos';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import Button from '../../components/ui/Button/Button.component';
+import Swal from 'sweetalert2';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -49,7 +50,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, pedidoPar
             openModal('novo');
             onNovoRegistroHandled();
         }
-    }, [triggerNovoRegistro, onNovoRegistroHandled]);
+    }, [triggerNovoRegistro, onNovoRegistroHandled, openModal]);
 
     useEffect(() => {
         if (!pedidoParaAbrirId || !pedidos.length) return;
@@ -101,7 +102,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, pedidoPar
         if (!targetId) return;
         deletarMutation.mutate(targetId, {
             onSuccess: () => fecharTodos(),
-            onError: (err) => alert(`Erro ao excluir pedido: ${err.message}`),
+            onError: () => Swal.fire({ icon: "error", title: "Erro ao excluir", text: "Não foi possível excluir o pedido. Tente novamente.", confirmButtonColor: "#dc2626" }),
         });
     };
 

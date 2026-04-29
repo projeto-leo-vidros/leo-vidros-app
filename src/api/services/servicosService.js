@@ -136,6 +136,7 @@ class ServicosService extends BaseService {
       "Aguardando aprovação": { atual: 5, total: 6 },
       Concluído: { atual: 6, total: 6 },
       Finalizado: { atual: 6, total: 6 },
+      Inativo: { atual: 6, total: 6 },
     };
 
     return etapas[nomeEtapa] || { atual: 1, total: 6 };
@@ -205,7 +206,7 @@ class ServicosService extends BaseService {
   }
 
   getStatusDisponiveis() {
-    return ["Ativo", "Finalizado", "Cancelado"];
+    return ["Ativo", "Inativo", "Cancelado"];
   }
 }
 

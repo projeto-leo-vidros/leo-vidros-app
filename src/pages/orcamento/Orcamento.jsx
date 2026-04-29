@@ -1,22 +1,18 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import PropTypes from "prop-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/queryKeys";
 import Api from "../../api/client/Api";
 import OrcamentosService from "../../api/services/orcamentosService";
 import { useOrcamentoProgress } from "../../context/OrcamentoProgressContext.jsx";
 import {
-  Trash2,
   Plus,
   ArrowLeft,
   Package,
   AlertCircle,
-  Save,
   CheckCircle,
   Download,
   Loader2,
-  ClipboardList,
 } from "lucide-react";
 import Header from "../../components/layout/Header/Header";
 import Sidebar from "../../components/layout/Sidebar/Sidebar";
@@ -121,12 +117,11 @@ const OrcamentoHeader = ({ isEdicao = false, onBack }) => (
       Voltar
     </button>
 
-    <div className="text-center drop-shadow-sm flex flex-col items-center justify-center gap-4">
-      <p className="text-2xl font-semibold text-gray-800 leading-tight flex items-center justify-center gap-3">
-        <ClipboardList className="w-[18px] h-[18px] text-[#007EA7]" />
-        {isEdicao ? "Editar Orçamento" : "Gerar Novo Orçamento"}
-      </p>
-      <p className="text-md text-gray-500 mt-6">
+    <div className="text-center flex flex-col items-center justify-center gap-2">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2 flex items-center justify-center gap-2">
+        {isEdicao ? "Editar Orçamento" : "Criar Orçamento"}
+      </h1>
+      <p className="text-gray-500 text-sm sm:text-base">
         {isEdicao
           ? "Revise os dados, itens e valores antes de salvar alterações."
           : "Organize os itens e gere um orçamento de um serviço."}
@@ -393,7 +388,7 @@ const OrcamentoResumo = ({
   totalFinal,
   onDescontoChange,
 }) => (
-  <SectionCard title="Resumo Financeiro" className="sticky top-24">
+  <SectionCard title="Resumo Financeiro" className="self-start xl:sticky xl:top-24">
     <div className="flex flex-col gap-8 p-6 bg-[#f5fbfe] border-t border-[#deedf3]">
       <UniversalInput
         label="Desconto Geral (R$)"
@@ -732,7 +727,7 @@ export default function OrcamentoPage() {
         if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
         setLastSaved(new Date());
         queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-        setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
+        setToast({ message: "Orçamento salvo com sucesso!", type: "success" });
         setTimeout(() => {
           setToast(null);
           navigate(returnTo ?? `/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
@@ -741,7 +736,7 @@ export default function OrcamentoPage() {
         setToast({ message: result.error || "Erro ao salvar rascunho.", type: "error" });
         setTimeout(() => setToast(null), 3000);
       }
-    } catch (e) {
+    } catch {
       setToast({ message: "Erro ao salvar rascunho.", type: "error" });
       setTimeout(() => setToast(null), 3000);
     } finally {
@@ -809,7 +804,7 @@ export default function OrcamentoPage() {
         setToast(null);
         navigate(`/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);
       }, 2000);
-    } catch (e) {
+    } catch {
       setToast({ message: "Erro ao gerar orçamento.", type: "error" });
       setTimeout(() => setToast(null), 4000);
     } finally {
@@ -878,11 +873,11 @@ export default function OrcamentoPage() {
             <div className="flex flex-wrap items-center gap-2 ml-auto">
               <button
                 onClick={() => navigate(returnTo ?? -1)}
-                className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm cursor-pointer"
+                className="flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg shadow-sm cursor-pointer sm:px-5 hover:bg-gray-50"
                 type="button"
               >
-                <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Cancelar</span>
+                <span className="sm:hidden">Cancelar</span>
               </button>
 
               <button
@@ -891,7 +886,7 @@ export default function OrcamentoPage() {
                 className="flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-[#002A4B] border border-gray-300 text-white rounded-lg hover:bg-[#01345c] transition-colors text-sm font-medium shadow-sm cursor-pointer disabled:opacity-50"
                 type="button"
               >
-                <span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar Rascunho"}</span>
+                <span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar"}</span>
                 <span className="sm:hidden">Salvar</span>
               </button>
 

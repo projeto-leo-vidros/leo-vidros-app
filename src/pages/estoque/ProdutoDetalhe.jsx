@@ -32,6 +32,7 @@ import { formatCurrency } from "../../utils/formatters";
 import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import { repairEncoding } from "../../utils/fixEncoding";
+import Swal from "sweetalert2";
 
 const formatObservacao = (observacao) => {
   if (!observacao) return "N/A";
@@ -99,9 +100,8 @@ export default function ProductDetailPage() {
             setChartData(chartPoints.reverse());
           }
         }
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-        alert("Erro ao carregar produto");
+      } catch {
+        await Swal.fire({ icon: "error", title: "Erro ao carregar", text: "Não foi possível carregar os dados do produto. Tente novamente.", confirmButtonColor: "#dc2626" });
         navigate("/estoque");
       } finally {
         setLoading(false);
@@ -730,32 +730,6 @@ export default function ProductDetailPage() {
                       <EditableField
                         field="preco"
                         value={produto.preco}
-                        type="number"
-                        prefix="R$ "
-                        isProductField={true}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-left text-sm font-bold text-gray-700 mb-2">
-                        Preço de Custo
-                      </label>
-                      <EditableField
-                        field="precoCusto"
-                        value={produto.precoCusto ?? 0}
-                        type="number"
-                        prefix="R$ "
-                        isProductField={true}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-left text-sm font-bold text-gray-700 mb-2">
-                        Preço de Venda
-                      </label>
-                      <EditableField
-                        field="precoVenda"
-                        value={produto.precoVenda ?? 0}
                         type="number"
                         prefix="R$ "
                         isProductField={true}

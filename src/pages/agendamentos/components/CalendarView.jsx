@@ -1,20 +1,26 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { format, addDays, startOfWeek, addMonths, parseISO } from "date-fns";
+import { format, addDays, addMonths, addWeeks, endOfWeek, parseISO, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { createPortal } from "react-dom";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   Plus,
-  Clock,
   Loader2,
   AlertTriangle,
   Calendar as CalendarIcon,
   X,
+  Maximize2,
+  Minimize2,
   List,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
+import agendamentosService from "../../../api/services/agendamentosService";
+import Swal from "sweetalert2";
 import {
   useEventDetails,
   useDeleteAgendamento,
@@ -44,6 +50,24 @@ const DeleteConfirmationModal = ({
   onConfirm,
   isDeleting,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
   return (
     <AnimatePresence>
@@ -108,6 +132,117 @@ const DeleteConfirmationModal = ({
   );
 };
 
+// --- MODAL DE FINALIZAÇÃO ---
+const FinalizarExecucaoModal = ({ isOpen, onClose, onConfirm, agendamento, isSaving }) => {
+  const [horaFim, setHoraFim] = useState("");
+
+  useEffect(() => {
+    if (isOpen && agendamento) {
+      setHoraFim(agendamento.fimAgendamento?.substring(0, 5) || agendamento.endTime?.substring(0, 5) || "");
+    }
+  }, [isOpen, agendamento]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onClose?.();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const horaInicio = agendamento?.inicioAgendamento?.substring(0, 5) || agendamento?.startTime?.substring(0, 5) || "";
+  const horaFimOriginal = agendamento?.fimAgendamento?.substring(0, 5) || agendamento?.endTime?.substring(0, 5) || "";
+  const horaAtual = format(new Date(), "HH:mm");
+
+  if (!isOpen || !agendamento) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[10200] flex items-center justify-center bg-black/50 p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-4">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Finalizar Execução</h3>
+              <p className="text-xs text-gray-500">Informe o horário real de término</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 px-6 py-5">
+            <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+              <Clock className="h-4 w-4 shrink-0 text-gray-400" />
+              <span className="text-gray-500">Horário previsto:</span>
+              <span className="ml-auto font-semibold text-gray-700">{horaInicio} – {horaFimOriginal}</span>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Horário real de término
+              </label>
+              <input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setHoraFim(horaAtual)}
+                className="mt-1.5 cursor-pointer text-xs text-[#007EA7] hover:underline"
+              >
+                Usar horário atual ({horaAtual})
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+            <button
+              onClick={onClose}
+              disabled={isSaving}
+              className="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => onConfirm(horaFim)}
+              disabled={isSaving || !horaFim}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isSaving ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando...</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4" /> Finalizar</>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
+  );
+};
+
 // --- MODAL DE DETALHES DO EVENTO ---
 const EventDetailsModal = ({
   initialEvent,
@@ -126,8 +261,11 @@ const EventDetailsModal = ({
   const { deleteAgendamento, deleting } = useDeleteAgendamento(onDeleteSuccess);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isFinalizarModalOpen, setIsFinalizarModalOpen] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
 
   const isFinalizado = isFinalizedStatus(details?.statusAgendamento);
+  const canFinalizar = !isFinalizado;
 
   const handleDeleteClick = () => {
     if (isFinalizado) return;
@@ -140,6 +278,64 @@ const EventDetailsModal = ({
       setIsDeleteModalOpen(false);
     }
   };
+
+  const handleFinalizarConfirm = async (horaFim) => {
+    if (!details) return;
+    setIsFinalizing(true);
+    try {
+      const result = await agendamentosService.update(details.id, {
+        tipoAgendamento: details.tipoAgendamento,
+        dataAgendamento: details.dataAgendamento,
+        inicioAgendamento: details.inicioAgendamento || details.startTime,
+        fimAgendamento: horaFim.length === 5 ? `${horaFim}:00` : horaFim,
+        statusAgendamento: { tipo: "AGENDAMENTO", nome: "CONCLUIDO" },
+        observacao: details.observacao || null,
+      });
+      if (result.success) {
+        setIsFinalizarModalOpen(false);
+        onEventDeleted?.(details.id);
+        onClose?.();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Erro ao finalizar",
+          text: result.error || "Não foi possível finalizar o agendamento.",
+          timer: 4000,
+          showConfirmButton: true,
+        });
+      }
+    } catch (err) {
+      console.error("Erro ao finalizar agendamento:", err);
+    } finally {
+      setIsFinalizing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!details) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "Escape") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (isFinalizarModalOpen) {
+        setIsFinalizarModalOpen(false);
+        return;
+      }
+      if (isDeleteModalOpen) {
+        setIsDeleteModalOpen(false);
+        return;
+      }
+      onClose?.();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [details, isDeleteModalOpen, isFinalizarModalOpen, onClose]);
 
   if (!details) return null;
 
@@ -172,7 +368,7 @@ const EventDetailsModal = ({
       )
     : "—";
 
-  return (
+  const modalContent = (
     <>
       <AnimatePresence>
         {details && (
@@ -181,7 +377,7 @@ const EventDetailsModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9999] bg-black/50"
+            className="fixed inset-0 z-[10100] bg-black/50"
             onClick={onClose}
           >
             <div className="flex min-h-screen items-center justify-center p-4">
@@ -190,9 +386,17 @@ const EventDetailsModal = ({
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                className="relative flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Fechar detalhes da atividade"
+                >
+                  <X size={16} />
+                </button>
                 <EventHeader
                   title={details.title}
                   badges={badges}
@@ -226,11 +430,13 @@ const EventDetailsModal = ({
                   onDelete={handleDeleteClick}
                   onViewMap={() => onGeoLocationClick?.(details.endereco)}
                   onEdit={() => onEdit?.(details)}
+                  onFinalizar={() => setIsFinalizarModalOpen(true)}
                   isDeleting={deleting}
                   isLoading={loading}
                   hasAddress={!!details.endereco}
                   canDelete={!isFinalizado}
                   canEdit={!isFinalizado}
+                  canFinalizar={canFinalizar}
                 />
               </motion.div>
             </div>
@@ -244,8 +450,18 @@ const EventDetailsModal = ({
         onConfirm={handleConfirmDelete}
         isDeleting={deleting}
       />
+
+      <FinalizarExecucaoModal
+        isOpen={isFinalizarModalOpen}
+        onClose={() => setIsFinalizarModalOpen(false)}
+        onConfirm={handleFinalizarConfirm}
+        agendamento={details}
+        isSaving={isFinalizing}
+      />
     </>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 const CalendarView = ({
@@ -262,8 +478,6 @@ const CalendarView = ({
   onToggleUpcomingEvents,
 }) => {
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
-  const [internalViewType, setInternalViewType] = useState("month");
-  const viewType = externalViewType || internalViewType;
 
   const [internalSelectedEvent, setInternalSelectedEvent] = useState(null);
   const selectedEvent =
@@ -278,24 +492,70 @@ const CalendarView = ({
 
   const [editingEvent, setEditingEvent] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
+  const viewType = isFullscreen ? "month" : externalViewType || "month";
+  const timeSlots = Array.from({ length: 17 }, (_, index) =>
+    `${String(index + 7).padStart(2, "0")}:00`,
+  );
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsViewDropdownOpen(false);
       }
-    }
+    };
+
     if (isViewDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isViewDropdownOpen]);
+
+  useEffect(() => {
+    if (isFullscreen) {
+      setIsViewDropdownOpen(false);
+    }
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "Escape") return;
+
+      if (isViewDropdownOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setIsViewDropdownOpen(false);
+        return;
+      }
+
+      if (showEditModal) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setShowEditModal(false);
+        setEditingEvent(null);
+        return;
+      }
+
+      if (isFullscreen) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen, isViewDropdownOpen, showEditModal]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -303,28 +563,24 @@ const CalendarView = ({
     }
   }, [selectedDate]);
 
-  const timeSlots = useMemo(() => {
-    const slots = [];
-    for (let h = 7; h < 24; h++) {
-      slots.push(`${String(h).padStart(2, "0")}:00`);
-    }
-    return slots;
-  }, []);
-
   const handlePrev = () => {
     const newDate =
-      viewType === "month"
-        ? addMonths(currentDate, -1)
-        : addDays(currentDate, viewType === "week" ? -7 : -1);
+      viewType === "week"
+        ? addWeeks(currentDate, -1)
+        : viewType === "day"
+          ? addDays(currentDate, -1)
+          : addMonths(currentDate, -1);
     setCurrentDate(newDate);
     onDateSelect?.(newDate);
   };
 
   const handleNext = () => {
     const newDate =
-      viewType === "month"
-        ? addMonths(currentDate, 1)
-        : addDays(currentDate, viewType === "week" ? 7 : 1);
+      viewType === "week"
+        ? addWeeks(currentDate, 1)
+        : viewType === "day"
+          ? addDays(currentDate, 1)
+          : addMonths(currentDate, 1);
     setCurrentDate(newDate);
     onDateSelect?.(newDate);
   };
@@ -334,23 +590,28 @@ const CalendarView = ({
     setCurrentDate(today);
     onDateSelect?.(today);
   };
-  const handleViewChange = (type) => {
-    if (onViewChange) onViewChange(type);
-    else setInternalViewType(type);
+
+  const handleViewTypeChange = (nextView) => {
+    if (isFullscreen) return;
+    onViewChange?.(nextView);
   };
 
   const renderHeaderTitle = () => {
-    if (viewType === "month")
-      return format(currentDate, "MMMM yyyy", { locale: ptBR });
     if (viewType === "week") {
-      const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-      const end = addDays(start, 6);
-      return `${format(start, "d MMM", { locale: ptBR })} - ${format(end, "d MMM", { locale: ptBR })}`;
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+      return `${format(weekStart, "d MMM", { locale: ptBR })} - ${format(weekEnd, "d MMM yyyy", { locale: ptBR })}`;
     }
-    if (viewType === "day")
-      return format(currentDate, "d 'de' MMMM yyyy", { locale: ptBR });
-    if (viewType === "list") return "Lista de Agendamentos";
-    return "";
+
+    if (viewType === "day") {
+      return format(currentDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+    }
+
+    if (viewType === "list") {
+      return "Lista de Agendamentos";
+    }
+
+    return format(currentDate, "MMMM yyyy", { locale: ptBR });
   };
 
   const handleDayClick = (day) => {
@@ -406,44 +667,30 @@ const CalendarView = ({
     }
   };
 
-  return (
+  const calendarContent = (
     <motion.div
-      initial={{ opacity: 0, scale: 0.99 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative flex h-full flex-col overflow-hidden border border-gray-200 bg-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className={`relative flex flex-col bg-white ${isFullscreen ? "h-full w-full overflow-hidden rounded-[28px] border border-white/10 shadow-2xl" : "h-full overflow-hidden border border-gray-200"}`}
     >
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-white px-3 sm:px-6 py-2">
         <div className="flex items-center gap-3 sm:gap-6">
-          {viewType === "month" && onToggleUpcomingEvents && (
+          {viewType === "month" && onToggleUpcomingEvents && !isFullscreen && (
             <button
               type="button"
               onClick={onToggleUpcomingEvents}
               className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900"
-              title={
-                isUpcomingEventsCollapsed
-                  ? "Mostrar proximos eventos"
-                  : "Ocultar proximos eventos"
-              }
-              aria-label={
-                isUpcomingEventsCollapsed
-                  ? "Mostrar proximos eventos"
-                  : "Ocultar proximos eventos"
-              }
+              title={isUpcomingEventsCollapsed ? "Mostrar proximos eventos" : "Ocultar proximos eventos"}
+              aria-label={isUpcomingEventsCollapsed ? "Mostrar proximos eventos" : "Ocultar proximos eventos"}
             >
-              {isUpcomingEventsCollapsed ? (
-                <ChevronLeft size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {isUpcomingEventsCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
               <span className="hidden sm:inline">
-                {isUpcomingEventsCollapsed
-                  ? "Mostrar proximos eventos"
-                  : "Ocultar proximos eventos"}
+                {isUpcomingEventsCollapsed ? "Mostrar proximos eventos" : "Ocultar proximos eventos"}
               </span>
             </button>
           )}
-          {viewType === "month" && onToggleUpcomingEvents && (
+          {viewType === "month" && onToggleUpcomingEvents && !isFullscreen && (
             <div className="h-6 w-px bg-gray-300" />
           )}
           <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-1">
@@ -473,126 +720,121 @@ const CalendarView = ({
           </div>
         </div>
         <div className="flex items-center gap-3 sm:gap-7 bg-white p-1">
-          <Button
-            variant="primary"
-            onClick={handleCreateClick}
-            startIcon={<Plus size={18} className="shrink-0" />}
-          >
-            <span className="hidden md:inline">Novo Agendamento</span>
-          </Button>
-
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
-              className="flex w-36 cursor-pointer items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:border-[#134074ff] focus:ring-1 focus:ring-[#134074ff] focus:outline-none"
+          {!isFullscreen && (
+            <Button
+              variant="primary"
+              onClick={handleCreateClick}
+              startIcon={<Plus size={18} className="shrink-0" />}
             >
-              <div className="flex items-center gap-2">
-                {viewType === "list" ? (
-                  <List size={18} />
-                ) : (
-                  <CalendarIcon size={18} />
-                )}
-                <span>
-                  {
-                    {
+              <span className="hidden md:inline">Novo Agendamento</span>
+            </Button>
+          )}
+
+          {!isFullscreen && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsViewDropdownOpen((current) => !current)}
+                className="flex w-36 cursor-pointer items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:border-[#134074ff] focus:ring-1 focus:ring-[#134074ff] focus:outline-none"
+              >
+                <div className="flex items-center gap-2">
+                  {viewType === "list" ? (
+                    <List size={18} />
+                  ) : (
+                    <CalendarIcon size={18} />
+                  )}
+                  <span>
+                    {{
                       list: "Agenda",
                       day: "Dia",
                       week: "Semana",
                       month: "Mês",
-                    }[viewType]
-                  }
-                </span>
-              </div>
-              <ChevronDown
-                size={16}
-                className={`text-gray-500 transition-transform ${isViewDropdownOpen ? "rotate-180" : ""}`}
-              />
-            </button>
+                    }[viewType]}
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`text-gray-500 transition-transform ${isViewDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
 
-            <AnimatePresence>
-              {isViewDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
-                >
-                  {["month", "week", "day", "list"].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        handleViewChange(type);
-                        setIsViewDropdownOpen(false);
-                      }}
-                      className={`flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${viewType === type ? "bg-[#134074ff]/10 font-medium text-[#134074ff]" : "text-gray-700 hover:bg-gray-100"}`}
-                    >
-                      {type === "list" ? (
-                        <List size={16} />
-                      ) : (
-                        <CalendarIcon size={16} />
-                      )}
-                      {
-                        {
+              <AnimatePresence>
+                {isViewDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
+                  >
+                    {["month", "week", "day", "list"].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          handleViewTypeChange(type);
+                          setIsViewDropdownOpen(false);
+                        }}
+                        className={`flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${viewType === type ? "bg-[#134074ff]/10 font-medium text-[#134074ff]" : "text-gray-700 hover:bg-gray-100"}`}
+                      >
+                        {type === "list" ? (
+                          <List size={16} />
+                        ) : (
+                          <CalendarIcon size={16} />
+                        )}
+                        {{
                           list: "Agenda",
                           day: "Dia",
                           week: "Semana",
                           month: "Mês",
-                        }[type]
-                      }
-                      {viewType === type && (
-                        <div className="ml-auto flex h-1.5 w-1.5 rounded-full bg-[#134074ff]" />
-                      )}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                        }[type]}
+                        {viewType === type && (
+                          <div className="ml-auto flex h-1.5 w-1.5 rounded-full bg-[#134074ff]" />
+                        )}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {viewType === "month" && (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen((v) => !v)}
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900"
+              title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              <span className="hidden sm:inline">{isFullscreen ? "Sair" : "Tela cheia"}</span>
+            </button>
+          )}
+
         </div>
       </div>
 
       <div className="relative flex-1 overflow-hidden bg-gray-50/50">
         <AnimatePresence mode="wait">
-          {viewType === "list" && (
-            <motion.div
-              key="list"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 flex flex-col"
-            >
-              <ListView events={events} onEventClick={handleEventClick} />
-            </motion.div>
-          )}
-          {viewType === "day" && (
-            <motion.div
-              key="day"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 flex flex-col"
-            >
-              <DayView
-                currentDay={currentDate}
-                timeSlots={timeSlots}
+          <motion.div
+            key={viewType}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="absolute inset-0 flex flex-col"
+          >
+            {viewType === "month" && (
+              <MonthView
+                currentMonth={currentDate}
                 events={events}
+                onDateClick={isFullscreen ? undefined : handleDayClick}
                 onEventClick={handleEventClick}
-                onTimeSlotClick={handleTimeSlotClick}
+                isFullscreen={isFullscreen}
               />
-            </motion.div>
-          )}
-          {viewType === "week" && (
-            <motion.div
-              key="week"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 flex flex-col"
-            >
+            )}
+
+            {viewType === "week" && (
               <WeekView
                 currentDate={currentDate}
                 timeSlots={timeSlots}
@@ -600,25 +842,22 @@ const CalendarView = ({
                 onEventClick={handleEventClick}
                 onTimeSlotClick={handleTimeSlotClick}
               />
-            </motion.div>
-          )}
-          {viewType === "month" && (
-            <motion.div
-              key="month"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 flex flex-col"
-            >
-              <MonthView
-                currentMonth={currentDate}
+            )}
+
+            {viewType === "day" && (
+              <DayView
+                currentDay={currentDate}
+                timeSlots={timeSlots}
                 events={events}
-                onDateClick={handleDayClick}
                 onEventClick={handleEventClick}
+                onTimeSlotClick={handleTimeSlotClick}
               />
-            </motion.div>
-          )}
+            )}
+
+            {viewType === "list" && (
+              <ListView events={events} onEventClick={handleEventClick} />
+            )}
+          </motion.div>
         </AnimatePresence>
       </div>
 
@@ -631,6 +870,7 @@ const CalendarView = ({
               if (!endereco) return;
               const addressParts = [
                 endereco.rua,
+                endereco.numero,
                 endereco.complemento,
                 endereco.bairro,
                 endereco.cidade,
@@ -663,6 +903,25 @@ const CalendarView = ({
         onSuccess={handleEditSuccess}
       />
     </motion.div>
+  );
+
+  return (
+    <>
+      {isFullscreen &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[10040] bg-slate-900/12"
+              onClick={() => setIsFullscreen(false)}
+            />
+            <div className="fixed inset-0 z-[10041] p-2 sm:p-4">
+              {calendarContent}
+            </div>
+          </>,
+          document.body,
+        )}
+      {!isFullscreen && calendarContent}
+    </>
   );
 };
 

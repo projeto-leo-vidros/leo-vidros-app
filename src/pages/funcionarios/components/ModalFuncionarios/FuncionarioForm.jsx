@@ -4,6 +4,7 @@ import { IMaskInput } from "react-imask";
 import Button from "../../../../components/ui/Button/Button.component";
 import UniversalInput from "../../../../components/ui/Input/UniversalInput";
 import { modalClasses } from "../../../../components/ui/modal/modalStyles";
+import Swal from "sweetalert2";
 
 const CONTRATO_REGISTRADO = "Registrado";
 const CONTRATO_TEMPORARIO = "Temporário";
@@ -74,7 +75,7 @@ export default function FuncionarioForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!novoFuncionario.nome.trim()) {
-      alert("Digite o nome do funcionário.");
+      Swal.fire({ icon: "warning", title: "Campo obrigatório", text: "Por favor, informe o nome do funcionário.", confirmButtonColor: "#2563eb" });
       return;
     }
     salvarFuncionario(novoFuncionario);
@@ -142,7 +143,7 @@ export default function FuncionarioForm({
                   label="Função"
                   required
                   name="funcao"
-                  placeholder="Ex: Cozinheiro"
+                  placeholder="Ex: Técnico de Instalação"
                   value={novoFuncionario.funcao}
                   onChange={handleChange}
                 />

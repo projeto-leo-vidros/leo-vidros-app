@@ -18,7 +18,9 @@ import TaskCreateModal from "../../../components/ui/misc/TaskCreateModal";
 import Api from "../../../api/client/Api";
 import estoqueService from "../../../api/services/estoqueService";
 import PedidosService from "../../../api/services/pedidosService";
+import orcamentosService from "../../../api/services/orcamentosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
+import Swal from "sweetalert2";
 
 const METODOS_COM_PARCELA = ["Cartão de crédito"];
 
@@ -52,6 +54,8 @@ const isAgendamentoBloqueante = (status = "") => {
   return s === "PENDENTE" || s === "EM ANDAMENTO";
 };
 
+const etapaConcluida = (etapa = "") => normalizeStatus(etapa) === "CONCLUIDO";
+
 const STEPS = [
   { label: "PENDENTE" },
   { label: "AGUARDANDO ORÇAMENTO" },
@@ -63,6 +67,42 @@ const STEPS = [
 ];
 
 const ETAPA_OPTIONS = STEPS.map((step) => step.label);
+
+const _normBase = (s = "") =>
+  String(s)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/_/g, " ")
+    .trim()
+    .toUpperCase();
+
+const ETAPA_NORM_MAP = {
+  "PENDENTE":              "PENDENTE",
+  "AGUARDANDO ORCAMENTO":  "AGUARDANDO ORÇAMENTO",
+  "ANALISE DO ORCAMENTO":  "ANÁLISE DO ORÇAMENTO",
+  "ORCAMENTO APROVADO":    "ORÇAMENTO APROVADO",
+  "SERVICO AGENDADO":      "SERVIÇO AGENDADO",
+  "SERVICO EM EXECUCAO":   "SERVIÇO EM EXECUÇÃO",
+  "CONCLUIDO":             "CONCLUÍDO",
+};
+
+const normalizarEtapaParaOption = (etapa = "") => {
+  const key = _normBase(etapa);
+  return ETAPA_NORM_MAP[key]
+    ?? ETAPA_OPTIONS.find((o) => _normBase(o) === key)
+    ?? ETAPA_OPTIONS[0];
+};
+
+const getQuantidadeDisponivelEstoque = (item = {}) => {
+  const quantidadeDisponivel = parseFloat(
+    item?.quantidadeDisponivel ?? item?.disponivel,
+  );
+  if (Number.isFinite(quantidadeDisponivel)) return quantidadeDisponivel;
+
+  const quantidade = parseFloat(item?.quantidade ?? 0);
+  const reservado = parseFloat(item?.reservado ?? 0);
+  return quantidade - reservado;
+};
 
 function getStepIndex(status) {
   if (!status) return 0;
@@ -149,11 +189,12 @@ function AgendamentoTabs({ agendamentos }) {
   const getEnderecoTexto = (endereco) => {
     if (!endereco) return "";
     const rua    = endereco.rua    || endereco.logradouro || "";
+    const numero = endereco.numero || "";
     const bairro = endereco.bairro || "";
     const cidade = endereco.cidade || "";
     const uf     = endereco.uf     || "";
 
-    const linhaPrincipal  = rua || "";
+    const linhaPrincipal  = [rua, numero].filter(Boolean).join(", ");
     const linhaSecundaria = [bairro, cidade, uf].filter(Boolean).join(" - ");
     return [linhaPrincipal, linhaSecundaria].filter(Boolean).join(" • ");
   };
@@ -238,7 +279,10 @@ function AgendamentoTabs({ agendamentos }) {
             Nenhum agendamento
           </div>
         ) : (
-          current.map((ag, i) => (
+          current.map((ag, i) => {
+            const produtosAgendamento = ag.agendamentoProdutos ?? ag.produtos ?? [];
+
+            return (
             <div
               key={`${activeTab}-${ag.id || i}`}
               className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex flex-col gap-4"
@@ -287,8 +331,29 @@ function AgendamentoTabs({ agendamentos }) {
                   <p className="text-xs text-gray-600 leading-relaxed">{ag.observacao}</p>
                 </div>
               )}
+
+              {produtosAgendamento.length > 0 && (
+                <div className="rounded-md border border-gray-200 bg-white px-5 py-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-3">
+                    Produtos da Instalação
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {produtosAgendamento.map((ap, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-gray-700 font-medium">
+                          {ap.produto?.nome || `Produto #${ap.produto?.id}`}
+                        </span>
+                        <span className="text-gray-500">
+                          Qtd: {ap.quantidadeUtilizada > 0 ? ap.quantidadeUtilizada : (ap.quantidadeReservada || "—")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </>
@@ -340,6 +405,7 @@ export default function PedidoDetalhe() {
   const [produtoBusca, setProdutoBusca] = useState({});
   const [produtoDropdownOpen, setProdutoDropdownOpen] = useState({});
   const [produtoDropdownPos, setProdutoDropdownPos] = useState({});
+  const [descontoOrcamento, setDescontoOrcamento] = useState(0);
 
   const toggleSidebar = () => setSidebarOpen((p) => !p);
   const mensagemBloqueioInativacao = "Nao e possivel inativar com agendamento pendente ou em andamento. Cancele/finalize o agendamento antes.";
@@ -387,6 +453,32 @@ export default function PedidoDetalhe() {
       const mapped = PedidosService.mapearParaFrontend(raw);
       setPedido(mapped);
 
+      const orcRes = await orcamentosService.buscarPorPedido(id);
+      let produtosOrcamento = [];
+      if (orcRes.success && orcRes.data.length > 0) {
+        const orcAtivos = orcRes.data.filter((o) => o.ativo !== false);
+        const ultimo = orcAtivos.length > 0 ? orcAtivos[orcAtivos.length - 1] : orcRes.data[orcRes.data.length - 1];
+        setDescontoOrcamento(parseFloat(ultimo.valorDesconto) || 0);
+        if (ultimo.itens && ultimo.itens.length > 0) {
+          const seen = new Set();
+          produtosOrcamento = ultimo.itens
+            .filter((item) => {
+              if (!item.produtoId || seen.has(item.produtoId)) return false;
+              seen.add(item.produtoId);
+              return true;
+            })
+            .map((item) => ({
+              nome: item.produtoNome || item.descricao || `Produto #${item.produtoId}`,
+              quantidade: parseFloat(item.quantidade) || 1,
+              preco: parseFloat(item.precoUnitario) || 0,
+              estoqueId: item.estoqueId ?? item.produtoId,
+              produtoId: item.produtoId,
+              subtotal: parseFloat(item.subtotal) || 0,
+              observacao: item.observacao || "",
+            }));
+        }
+      }
+
       let etapa = raw?.servico
         ? PedidosService.calcularEtapaServicoPorAgendamentos(
             raw.servico,
@@ -399,21 +491,103 @@ export default function PedidoDetalhe() {
           : mapped.status.nome || "PENDENTE";
       }
 
-      setEtapaOriginal(etapa);
+      const etapaNormalizada = normalizarEtapaParaOption(etapa);
+      setEtapaOriginal(etapaNormalizada);
+
+      // Extrair produtos de agendamentos (apenas ORCAMENTO armazena agendamentoProdutos no backend)
+      const _extrairAgProdutos = (agendamentos) => {
+        const seen = new Set();
+        return agendamentos
+          .flatMap((ag) => ag.agendamentoProdutos ?? ag.produtos ?? [])
+          .filter((ap) => {
+            if (!ap.produto?.id || seen.has(ap.produto.id)) return false;
+            seen.add(ap.produto.id);
+            return true;
+          })
+          .map((ap) => ({
+            nome: ap.produto.nome || `Produto #${ap.produto.id}`,
+            quantidade: parseFloat(ap.quantidadeReservada) || 1,
+            preco: parseFloat(ap.produto.precoUnitario || ap.produto.preco || 0),
+            estoqueId: ap.produto.id,
+            produtoId: ap.produto.id,
+            subtotal: 0,
+            observacao: "",
+          }));
+      };
+
+      const _agsAtivas = (raw?.servico?.agendamentos || []).filter(
+        (ag) => ag.statusAgendamento?.nome !== "CANCELADO" && ag.statusAgendamento?.nome !== "INATIVO",
+      );
+
+      // Produtos reservados nos agendamentos de orçamento
+      const produtosAgendamento = _extrairAgProdutos(
+        _agsAtivas.filter((ag) => ag.tipoAgendamento === "ORCAMENTO"),
+      );
+
+      // Mesclar todas as fontes por estoqueId:
+      // base = orcamento_item (planejado), overlay = agendamentoProdutos (reservado, tem prioridade de quantidade)
+      const _mergeById = (base, overlay) => {
+        const map = new Map();
+        for (const p of base) {
+          if (p.estoqueId) map.set(p.estoqueId, { ...p });
+        }
+        for (const p of overlay) {
+          if (!p.estoqueId) continue;
+          if (map.has(p.estoqueId)) {
+            // Quantidade reservada no agendamento substitui a planejada no orçamento
+            map.get(p.estoqueId).quantidade = p.quantidade;
+          } else {
+            map.set(p.estoqueId, { ...p });
+          }
+        }
+        return Array.from(map.values());
+      };
+
+      const mergeProdutosByProdutoId = (base, overlay) => {
+        const map = new Map();
+
+        for (const produto of base) {
+          const key = produto.produtoId ?? produto.estoqueId;
+          if (key) map.set(key, { ...produto });
+        }
+
+        for (const produto of overlay) {
+          const key = produto.produtoId ?? produto.estoqueId;
+          if (!key) continue;
+
+          if (map.has(key)) {
+            map.get(key).quantidade = produto.quantidade;
+          } else {
+            map.set(key, { ...produto });
+          }
+        }
+
+        return Array.from(map.values());
+      };
+
+      const produtosMesclados = mergeProdutosByProdutoId(
+        produtosOrcamento,
+        produtosAgendamento,
+      );
+      const produtosFinais = mapped.produtos?.length > 0 ? mapped.produtos : produtosMesclados;
+
       setFormData({
         clienteNome:         mapped.clienteNome           || "",
         ...parseFormaPagamento(mapped.formaPagamento || ""),
         observacoes:         mapped.observacoes           || "",
-        etapaServico:        etapa,
-        produtos:            mapped.produtos              || [],
+        etapaServico:        etapaNormalizada,
+        produtos:            produtosFinais.map((produto) => ({
+          ...produto,
+          produtoId: produto.produtoId ?? null,
+        })),
         servicoNome:         mapped.servico?.nome         || "",
         servicoDescricao:    mapped.servico?.descricao    || "",
         servicoPrecoBase:    mapped.servico?.precoBase    || 0,
-        servicoAtivo:        mapped.servico?.ativo !== false,
+        servicoAtivo:        (mapped.ativo === false || etapaConcluida(etapaNormalizada)) ? false : mapped.servico?.ativo !== false,
       });
     } catch (err) {
       console.error("Erro ao buscar pedido:", err);
-      alert("Erro ao carregar pedido");
+      await Swal.fire({ icon: "error", title: "Erro ao carregar", text: "Não foi possível carregar os dados do pedido. Tente novamente.", confirmButtonColor: "#dc2626" });
       navigate("/Pedidos");
     } finally {
       setLoading(false);
@@ -422,6 +596,7 @@ export default function PedidoDetalhe() {
 
   useEffect(() => {
     fetchPedido();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -435,11 +610,43 @@ export default function PedidoDetalhe() {
     });
   }, []);
 
-  const calcularValorTotal = () =>
+  useEffect(() => {
+    if (estoqueItems.length === 0) return;
+
+    setFormData((prev) => {
+      let changed = false;
+      const produtos = prev.produtos.map((produto) => {
+        if (produto.produtoId) return produto;
+
+        const itemEstoque = estoqueItems.find((item) => item.id === produto.estoqueId);
+        if (!itemEstoque?.produto?.id) return produto;
+
+        changed = true;
+        return { ...produto, produtoId: itemEstoque.produto.id };
+      });
+
+      return changed ? { ...prev, produtos } : prev;
+    });
+  }, [estoqueItems]);
+
+  const resolveProdutoId = (produto = {}) => {
+    if (produto.produtoId) return produto.produtoId;
+
+    const itemEstoque = estoqueItems.find((item) => item.id === produto.estoqueId);
+    return itemEstoque?.produto?.id ?? null;
+  };
+
+  const calcularTotalInstalacao = () =>
     formData.produtos.reduce(
       (acc, p) => acc + (parseFloat(p.quantidade) || 0) * (parseFloat(p.preco) || 0),
       0
     );
+
+  const calcularValorTotal = () => {
+    const precoBase = parseFloat(formData.servicoPrecoBase) || 0;
+    const totalInstalacao = calcularTotalInstalacao();
+    return Math.max(0, precoBase + totalInstalacao - descontoOrcamento);
+  };
 
   const handleFieldChange = (field, value) =>
     setFormData((p) => ({ ...p, [field]: value }));
@@ -464,7 +671,7 @@ export default function PedidoDetalhe() {
       ...p,
       produtos: [
         ...p.produtos,
-        { nome: "", quantidade: 1, preco: 0, estoqueId: 0, observacao: "" },
+        { nome: "", quantidade: 1, preco: 0, estoqueId: 0, produtoId: null, observacao: "" },
       ],
     }));
 
@@ -502,20 +709,22 @@ export default function PedidoDetalhe() {
         etapaTravadaPorAgendamento && etapaObrigatoriaPorAgendamento
           ? etapaObrigatoriaPorAgendamento
           : formData.etapaServico || rawPedido?.servico?.etapa?.nome || "PENDENTE";
+      const servicoDeveFicarAtivo = etapaConcluida(etapaParaSalvar)
+        ? false
+        : formData.servicoAtivo !== undefined
+          ? formData.servicoAtivo
+          : (rawPedido?.servico?.ativo !== false);
       requestBody = {
         pedido: {
           valorTotal,
-          ativo:
-            formData.servicoAtivo !== undefined
-              ? formData.servicoAtivo
-              : (rawPedido?.ativo !== undefined ? rawPedido.ativo : true),
+          ativo: servicoDeveFicarAtivo,
           formaPagamento: composeFormaPagamento(formData.formaPagamento, formData.parcelas),
           observacao:     formData.observacoes + produtosObs,
           clienteId:      pedido.clienteId || pedido.clienteInfo?.id || null,
           clienteNome:    formData.clienteNome,
           status: {
             tipo: pedido.statusOriginal?.tipo || "PEDIDO",
-            nome: pedido.statusOriginal?.nome || "ATIVO",
+            nome: servicoDeveFicarAtivo ? "ATIVO" : "INATIVO",
           },
         },
         servico: rawPedido?.servico
@@ -524,18 +733,22 @@ export default function PedidoDetalhe() {
               nome: formData.servicoNome || rawPedido.servico.nome || "",
               descricao: formData.servicoDescricao !== undefined ? formData.servicoDescricao : (rawPedido.servico.descricao || ""),
               precoBase: formData.servicoPrecoBase !== undefined ? formData.servicoPrecoBase : (rawPedido.servico.precoBase || 0),
-              ativo: formData.servicoAtivo !== undefined ? formData.servicoAtivo : (rawPedido.servico.ativo !== false),
+              ativo: servicoDeveFicarAtivo,
               etapaNome: etapaParaSalvar,
             }
           : null,
-        produtos: formData.produtos
-          .filter((p) => p.estoqueId && p.estoqueId > 0)
-          .map((p) => ({
-            estoqueId:              p.estoqueId,
-            quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
-            precoUnitarioNegociado: parseFloat(p.preco)      || 0,
-            observacao:             p.observacao             || "",
-          })),
+        // Só envia item_pedido se o pedido já tinha produtos diretos (rawPedido.produtos).
+        // Produtos derivados de agendamentoProdutos ficam no agendamento, não no pedido.
+        produtos: (rawPedido?.produtos?.length ?? 0) > 0
+          ? formData.produtos
+              .filter((p) => p.estoqueId && p.estoqueId > 0)
+              .map((p) => ({
+                estoqueId:              p.estoqueId,
+                quantidadeSolicitada:   parseFloat(p.quantidade) || 0,
+                precoUnitarioNegociado: parseFloat(p.preco)      || 0,
+                observacao:             p.observacao             || "",
+              }))
+          : [],
       };
 
       console.log("🔄 Enviando salvamento:", requestBody);
@@ -622,9 +835,9 @@ export default function PedidoDetalhe() {
           const usado = produtosUsados[i] !== false;
           const qtdReservada = parseFloat(p.quantidade) || 0;
           const qtdUsada = usado ? (parseFloat(produtosQuantidades[i]) || qtdReservada) : 0;
-          const qtdDevolvida = qtdReservada - qtdUsada;
+          const diff = qtdReservada - qtdUsada;
           const descricao = usado
-            ? `Utilizado: ${qtdUsada} un${qtdDevolvida > 0 ? ` (devolve ${qtdDevolvida} ao estoque)` : ""}`
+            ? `Utilizado: ${qtdUsada} un${diff > 0 ? ` (devolve ${diff.toFixed(2)} ao estoque)` : diff < 0 ? ` (retirou ${Math.abs(diff).toFixed(2)} a mais do estoque)` : ""}`
             : `Não utilizado (devolve ${qtdReservada} ao estoque)`;
           return `${p.nome || `Item #${i + 1}`}: ${descricao}`;
         })
@@ -634,43 +847,49 @@ export default function PedidoDetalhe() {
       obs = `\n\nProdutos utilizados — ${produtosLivres.trim()}`;
     }
 
-    // Tentar atualizar agendamentos vinculados com quantidadeUtilizada real
-    const agendamentosServico = (pedido?.servico?.agendamentos || []).filter(
-      (ag) => ag.tipoAgendamento === "SERVICO" && ag.id,
-    );
-    for (const ag of agendamentosServico) {
-      const agProdutos = ag.agendamentoProdutos ?? ag.produtos ?? [];
-      if (agProdutos.length > 0) {
-        try {
-          const produtosAtualizados = agProdutos.map((ap) => {
-            const idx = formData.produtos.findIndex(
-              (p) => p.estoqueId === ap.estoque?.id || p.nome === ap.produto?.nome,
-            );
-            const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
-            const qtdUsada = idx >= 0
-              ? (usado ? (parseFloat(produtosQuantidades[idx]) || ap.quantidadeReservada) : 0)
-              : ap.quantidadeUtilizada ?? 0;
-            return {
-              produtoId: ap.produto?.id,
-              quantidadeUtilizada: qtdUsada,
-              quantidadeReservada: ap.quantidadeReservada,
-            };
-          }).filter((p) => p.produtoId);
-          if (produtosAtualizados.length > 0) {
-            await Api.put(`/agendamentos/${ag.id}`, {
-              tipoAgendamento: ag.tipoAgendamento,
-              dataAgendamento: ag.dataAgendamento,
-              inicioAgendamento: ag.inicioAgendamento,
-              fimAgendamento: ag.fimAgendamento,
-              statusAgendamento: ag.statusAgendamento,
-              observacao: ag.observacao || "",
-              endereco: ag.endereco || {},
-              funcionariosIds: (ag.funcionarios || []).map((f) => f.id),
-              produtos: produtosAtualizados,
-            });
+    // Atualizar quantidadeUtilizada nos agendamentos vinculados
+    // Só tenta o PUT se o pedido tiver produtos diretos (item_pedido) no backend,
+    // pois o endpoint valida isso. Pedidos de serviço guardam produtos via agendamentoProdutos.
+    const pedidoTemProdutosDiretos = (rawPedido?.produtos?.length ?? 0) > 0;
+    if (pedidoTemProdutosDiretos) {
+      const agendamentosServico = (pedido?.servico?.agendamentos || []).filter(
+        (ag) => ag.tipoAgendamento === "SERVICO" && ag.id,
+      );
+      for (const ag of agendamentosServico) {
+        const agProdutos = ag.agendamentoProdutos ?? ag.produtos ?? [];
+        if (agProdutos.length > 0) {
+          try {
+            const produtosAtualizados = agProdutos.map((ap) => {
+              const idx = formData.produtos.findIndex(
+                (p) => resolveProdutoId(p) === ap.produto?.id || p.nome === ap.produto?.nome,
+              );
+              const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
+              const qtdUsada = idx >= 0
+                ? (usado ? (parseFloat(produtosQuantidades[idx]) || ap.quantidadeReservada) : 0)
+                : ap.quantidadeUtilizada ?? 0;
+              return {
+                produtoId: ap.produto?.id,
+                quantidadeUtilizada: qtdUsada,
+                quantidadeReservada: ap.quantidadeReservada,
+              };
+            }).filter((p) => p.produtoId);
+            if (produtosAtualizados.length > 0) {
+              await Api.put(`/agendamentos/${ag.id}`, {
+                servicoId: ag.servico?.id ?? pedido?.servico?.id,
+                tipoAgendamento: ag.tipoAgendamento,
+                dataAgendamento: ag.dataAgendamento,
+                inicioAgendamento: ag.inicioAgendamento,
+                fimAgendamento: ag.fimAgendamento,
+                statusAgendamento: ag.statusAgendamento,
+                observacao: ag.observacao || "",
+                endereco: ag.endereco || {},
+                funcionariosIds: (ag.funcionarios || []).map((f) => f.id),
+                produtos: produtosAtualizados,
+              });
+            }
+          } catch (err) {
+            console.warn("Não foi possível atualizar produtos do agendamento:", err);
           }
-        } catch (err) {
-          console.warn("Não foi possível atualizar produtos do agendamento:", err);
         }
       }
     }
@@ -810,8 +1029,9 @@ export default function PedidoDetalhe() {
                               {endereco.rua || "—"}
                             </div>
                           </FieldGroup>
-                          <FieldGroup label="">
-                            <div className="hidden">
+                          <FieldGroup label="Número">
+                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 shadow-sm">
+                              {endereco.numero || "—"}
                             </div>
                           </FieldGroup>
                         </div>
@@ -882,8 +1102,14 @@ export default function PedidoDetalhe() {
                         />
                       </FieldGroup>
                       <FieldGroup label="Preço Total">
-                        <div className="px-3 py-2 bg-white border border-[#b9deeb] rounded-md text-sm text-[#007EA7] font-semibold shadow-sm">
+                        <div className="relative group px-3 py-2 bg-white border border-[#b9deeb] rounded-md text-sm text-[#007EA7] font-semibold shadow-sm cursor-default">
                           {formatCurrency(valorTotal || 0)}
+                          <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex flex-col gap-1 bg-gray-900 text-white text-xs rounded-md px-3 py-2 shadow-lg whitespace-nowrap z-10">
+                            <span>Base: {formatCurrency(parseFloat(formData.servicoPrecoBase) || 0)}</span>
+                            <span>Instalação: {formatCurrency(calcularTotalInstalacao())}</span>
+                            {descontoOrcamento > 0 && <span>Desconto: − {formatCurrency(descontoOrcamento)}</span>}
+                            <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-900" />
+                          </div>
                         </div>
                       </FieldGroup>
                     </div>
@@ -981,19 +1207,6 @@ export default function PedidoDetalhe() {
                             setError(null);
                             if (normalizeStatus(novaEtapa) === "SERVICO AGENDADO") {
                               const endereco = pedido?.clienteInfo?.endereco;
-                              const produtosPedido = (rawPedido?.produtos || [])
-                                .filter((p) => p.estoqueId)
-                                .map((p) => {
-                                  const estoqueItem = estoqueItems.find((e) => e.id === p.estoqueId);
-                                  const produtoId = estoqueItem?.produto?.id;
-                                  if (!produtoId) return null;
-                                  return {
-                                    id: produtoId,
-                                    nome: estoqueItem?.produto?.nome || p.nomeProduto || `Produto #${produtoId}`,
-                                    quantidade: p.quantidadeSolicitada || p.quantidade || 1,
-                                  };
-                                })
-                                .filter(Boolean);
                               setTaskModalInitialData({
                                 tipoAgendamento: "SERVICO",
                                 pedido: {
@@ -1001,8 +1214,9 @@ export default function PedidoDetalhe() {
                                   label: servicoInfo?.nome || formData.servicoNome || `Pedido #${pedido.id}`,
                                   originalData: rawPedido,
                                 },
-                                produtos: produtosPedido,
+                                produtosIniciais: formData.produtos,
                                 rua: endereco?.rua || "",
+                                numero: endereco?.numero || "",
                                 cep: endereco?.cep || "",
                                 bairro: endereco?.bairro || "",
                                 cidade: endereco?.cidade || "",
@@ -1013,7 +1227,11 @@ export default function PedidoDetalhe() {
                               setShowTaskModal(true);
                               return;
                             }
-                            handleFieldChange("etapaServico", novaEtapa);
+                            setFormData((prev) => ({
+                              ...prev,
+                              etapaServico: novaEtapa,
+                              servicoAtivo: etapaConcluida(novaEtapa) ? false : prev.servicoAtivo,
+                            }));
                           }}
                           className={`w-full px-3 py-2 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] bg-white outline-none shadow-sm transition-all ${
                             temMudancaEtapa
@@ -1037,8 +1255,12 @@ export default function PedidoDetalhe() {
                           Status do Serviço
                         </label>
                         <select
-                          value={formData.servicoAtivo !== undefined ? (formData.servicoAtivo ? "Ativo" : "Inativo") : (servicoInfo?.ativo ? "Ativo" : "Inativo")}
+                          value={etapaConcluida(formData.etapaServico) ? "Inativo" : (formData.servicoAtivo !== undefined ? (formData.servicoAtivo ? "Ativo" : "Inativo") : (servicoInfo?.ativo ? "Ativo" : "Inativo"))}
                           onChange={(e) => {
+                            if (etapaConcluida(formData.etapaServico) && e.target.value === "Ativo") {
+                              setError("Serviço concluído deve permanecer com status Inativo.");
+                              return;
+                            }
                             const novoAtivo = e.target.value === "Ativo";
                             if (!novoAtivo && possuiAgendamentoBloqueante()) {
                               setError(mensagemBloqueioInativacao);
@@ -1048,10 +1270,16 @@ export default function PedidoDetalhe() {
                             setFormData((prev) => ({ ...prev, servicoAtivo: novoAtivo }));
                           }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] bg-white outline-none shadow-sm"
+                          disabled={etapaConcluida(formData.etapaServico)}
                         >
                           <option value="Ativo">Ativo</option>
                           <option value="Inativo">Inativo</option>
                         </select>
+                        {etapaConcluida(formData.etapaServico) && (
+                          <p className="mt-2 text-xs text-[#64748b]">
+                            Ao concluir a etapa, o serviço fica inativo automaticamente.
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -1074,8 +1302,8 @@ export default function PedidoDetalhe() {
                 <SectionCard
                   title={
                     <>
-                      <span className="text-white/80 pr-2 hidden sm:inline">INSTALAÇÃO</span>
-                      <span className="text-white/80 pr-2 sm:hidden">INST.</span>
+                      <span className="text-white/80 pr-2 hidden sm:inline">PRODUTOS UTILIZADOS</span>
+                      <span className="text-white/80 pr-2 sm:hidden">PROD.</span>
                       <span className="ml-1 bg-white text-[#002A4B] px-2 py-0.5 rounded-full font-extrabold text-xs">
                         {produtosCount}
                       </span>
@@ -1150,14 +1378,33 @@ export default function PedidoDetalhe() {
                                         const busca = produtoBusca[index] || "";
                                         const filtrados = estoqueItems.filter((item) => {
                                           const nome = item.produto?.nome || item.nomeProduto || item.nome || "";
-                                          return nome.toLowerCase().includes(busca.toLowerCase());
+                                          return (
+                                            getQuantidadeDisponivelEstoque(item) > 0 &&
+                                            nome.toLowerCase().includes(busca.toLowerCase())
+                                          );
                                         });
+                                        const itemSelecionado = estoqueItems.find(
+                                          (item) =>
+                                            item.id === produto.estoqueId ||
+                                            item.produto?.id === produto.produtoId,
+                                        );
+                                        const podeManterSelecionado =
+                                          itemSelecionado &&
+                                          !filtrados.some((item) => item.id === itemSelecionado.id);
+                                        const itensDropdown = podeManterSelecionado
+                                          ? [itemSelecionado, ...filtrados]
+                                          : filtrados;
+                                        const itensUnicos = itensDropdown.filter(
+                                          (item, itemIndex, arr) =>
+                                            arr.findIndex((candidate) => candidate.id === item.id) === itemIndex,
+                                        );
                                         if (estoqueItems.length === 0)
                                           return <p className="px-3 py-2 text-xs text-gray-400">Carregando produtos...</p>;
-                                        if (filtrados.length === 0)
-                                          return <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto encontrado</p>;
-                                        return filtrados.slice(0, 50).map((item) => {
+                                        if (itensUnicos.length === 0)
+                                          return <p className="px-3 py-2 text-xs text-gray-400">Nenhum produto disponivel</p>;
+                                        return itensUnicos.slice(0, 50).map((item) => {
                                           const nome = item.produto?.nome || item.nomeProduto || item.nome || `Produto #${item.id}`;
+                                          const quantidadeDisponivel = getQuantidadeDisponivelEstoque(item);
                                           return (
                                             <button
                                               key={item.id}
@@ -1167,6 +1414,7 @@ export default function PedidoDetalhe() {
                                                 updated[index] = {
                                                   ...updated[index],
                                                   estoqueId: item.id,
+                                                  produtoId: item.produto?.id ?? null,
                                                   nome,
                                                   preco: item.produto?.preco ?? item.produto?.precoVenda ?? item.preco ?? updated[index].preco ?? 0,
                                                 };
@@ -1175,7 +1423,12 @@ export default function PedidoDetalhe() {
                                               }}
                                               className="w-full text-left px-3 py-2 text-xs hover:bg-[#eef8fc] hover:text-[#007EA7] transition-colors cursor-pointer border-b border-gray-50 last:border-0"
                                             >
-                                              {nome}
+                                              <div className="flex items-center justify-between gap-3">
+                                                <span className="truncate">{nome}</span>
+                                                <span className="shrink-0 text-[10px] text-gray-400">
+                                                  Disp. {quantidadeDisponivel}
+                                                </span>
+                                              </div>
                                             </button>
                                           );
                                         });
@@ -1227,8 +1480,8 @@ export default function PedidoDetalhe() {
                     {formData.produtos.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-gray-200 flex justify-end">
                         <p className="text-sm font-bold text-gray-800">
-                          Total:{" "}
-                          <span className="text-[#007EA7]">{formatCurrency(valorTotal)}</span>
+                          Total instalação:{" "}
+                          <span className="text-[#007EA7]">{formatCurrency(calcularTotalInstalacao())}</span>
                         </p>
                       </div>
                     )}
@@ -1390,6 +1643,7 @@ export default function PedidoDetalhe() {
                       originalData: rawPedido,
                     },
                     rua: endereco?.rua || "",
+                    numero: endereco?.numero || "",
                     cep: endereco?.cep || "",
                     bairro: endereco?.bairro || "",
                     cidade: endereco?.cidade || "",
@@ -1442,7 +1696,9 @@ export default function PedidoDetalhe() {
                       label: formData.servicoNome || rawPedido?.servico?.nome || `Pedido #${pedido.id}`,
                       originalData: rawPedido,
                     },
+                    produtosIniciais: formData.produtos,
                     rua: endereco?.rua || "",
+                    numero: endereco?.numero || "",
                     cep: endereco?.cep || "",
                     bairro: endereco?.bairro || "",
                     cidade: endereco?.cidade || "",
@@ -1507,7 +1763,6 @@ export default function PedidoDetalhe() {
                             type="number"
                             min={0}
                             step={0.01}
-                            max={p.quantidade ?? undefined}
                             value={produtosQuantidades[i] ?? p.quantidade ?? 1}
                             onChange={(e) =>
                               setProdutosQuantidades((prev) => ({ ...prev, [i]: parseFloat(e.target.value) || 0 }))
@@ -1517,12 +1772,18 @@ export default function PedidoDetalhe() {
                           {(() => {
                             const reservado = parseFloat(p.quantidade) || 0;
                             const utilizado = parseFloat(produtosQuantidades[i] ?? reservado) || 0;
-                            const devolve = reservado - utilizado;
-                            return devolve > 0 ? (
+                            const diff = reservado - utilizado;
+                            if (diff > 0) return (
                               <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
-                                devolve {devolve.toFixed(2)} ao estoque
+                                devolve {diff.toFixed(2)} ao estoque
                               </span>
-                            ) : null;
+                            );
+                            if (diff < 0) return (
+                              <span className="text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full font-medium">
+                                +{Math.abs(diff).toFixed(2)} a mais do estoque
+                              </span>
+                            );
+                            return null;
                           })()}
                         </div>
                       )}

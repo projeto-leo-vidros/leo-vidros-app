@@ -23,6 +23,7 @@ const normalizeClienteStatus = (status) => {
   if (normalized === "ATIVO") return "Ativo";
   if (normalized === "INATIVO") return "Inativo";
   if (normalized === "FINALIZADO") return "Finalizado";
+  if (normalized === "AVULSO") return "Avulso";
 
   return status || "Inativo";
 };
@@ -36,7 +37,7 @@ const InfoItem = ({ label, value }) => (
   </div>
 );
 
-const HistoryCard = ({ hist }) => (
+const _HistoryCard = ({ hist }) => (
   <div className="w-full p-6 border border-gray-200 rounded-2xl bg-white">
     <div className="flex flex-col md:flex-row justify-between mb-4">
       <div className="max-w-[65%]">
@@ -168,9 +169,14 @@ export default function Clientes() {
     if (modoEdicao && clienteSelecionado) {
       try {
         const enderecoExistente = clienteSelecionado?.enderecos?.[0];
-        const enderecoAtualizado = dadosCliente.enderecos?.[0]
-          ? { ...(enderecoExistente?.id ? { id: enderecoExistente.id } : {}), ...dadosCliente.enderecos[0] }
-          : enderecoExistente;
+        const enderecoFormulario = dadosCliente.enderecos?.[0];
+
+        const enderecoTemDados = enderecoFormulario &&
+          (enderecoFormulario.rua?.trim() || enderecoFormulario.cep?.trim() || enderecoFormulario.cidade?.trim());
+
+        const enderecoAtualizado = enderecoTemDados
+          ? { ...(enderecoExistente?.id ? { id: enderecoExistente.id } : {}), ...enderecoFormulario }
+          : (enderecoExistente?.rua?.trim() ? enderecoExistente : null);
 
         const clienteAtualizado = {
           ...clienteSelecionado,
@@ -239,7 +245,7 @@ export default function Clientes() {
     }
   };
 
-  const abrirModalVisualizar = (cliente) => {
+  const _abrirModalVisualizar = (cliente) => {
     setClienteDetalhes(cliente);
     setOpenDetails(true);
   };
@@ -312,6 +318,7 @@ export default function Clientes() {
                       { value: "Ativo", label: "Ativo" },
                       { value: "Inativo", label: "Inativo" },
                       { value: "Finalizado", label: "Finalizado" },
+                      { value: "Avulso", label: "Avulso" },
                     ]}
                   />
                   <Button
@@ -382,7 +389,9 @@ export default function Clientes() {
                                     ? "bg-green-100 text-green-800"
                                     : c.status === "Inativo"
                                       ? "bg-red-100 text-red-800"
-                                      : "bg-gray-100 text-gray-800"
+                                      : c.status === "Avulso"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-gray-100 text-gray-800"
                                 }`}
                               >
                                 {c.status}

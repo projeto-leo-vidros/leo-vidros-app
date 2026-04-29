@@ -10,13 +10,16 @@ import EditarServicoModal from "../components/EditarServicoModal";
 import PedidosService from "../../../api/services/pedidosService";
 import { formatDate } from "../../../utils/formatters";
 import Button from "../../../components/ui/Button/Button.component";
+import Swal from "sweetalert2";
 
 function StatusPill({ status }) {
   const styles = {
     Ativo:
       "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
+    Inativo:
+      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#e2e8f0] text-[#475569]",
     Finalizado:
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]",
+      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#e2e8f0] text-[#475569]",
     "Em Andamento":
       "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]",
     Cancelado:
@@ -112,8 +115,8 @@ export default function ServicosList({
 
       const todos = [...servicosMapeados, ...servicosSemDuplicata];
 
-      if (todos.length === 0 && !resultPedidos.success && !resultServicos.success) {
-        setError(resultPedidos.error || resultServicos.error);
+      if (todos.length === 0 && !resultPedidos.success) {
+        setError(resultPedidos.error);
         setServicos([]);
       } else {
         const servicosOrdenados = todos.sort((a, b) => {
@@ -148,6 +151,7 @@ export default function ServicosList({
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -155,7 +159,7 @@ export default function ServicosList({
       openModal("novo");
       onNovoRegistroHandled();
     }
-  }, [triggerNovoRegistro, onNovoRegistroHandled]);
+  }, [triggerNovoRegistro, onNovoRegistroHandled, openModal]);
 
   const listaFiltrada = useMemo(() => {
     return PedidosService.filtrarServicos(servicos, {
@@ -201,12 +205,10 @@ export default function ServicosList({
         setServicos(servicos.filter((s) => s.id !== targetId));
         fecharTodos();
       } else {
-        console.error("Erro ao excluir serviço:", result.error);
-        alert(`Erro ao excluir serviço: ${result.error}`);
+        Swal.fire({ icon: "error", title: "Erro ao excluir", text: result.error, confirmButtonColor: "#dc2626" });
       }
-    } catch (error) {
-      console.error("Erro inesperado ao excluir serviço:", error);
-      alert("Erro inesperado ao excluir serviço. Tente novamente.");
+    } catch {
+      Swal.fire({ icon: "error", title: "Erro inesperado", text: "Não foi possível excluir o serviço. Tente novamente.", confirmButtonColor: "#dc2626" });
     }
   };
 

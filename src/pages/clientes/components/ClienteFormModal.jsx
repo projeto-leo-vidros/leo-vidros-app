@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PropTypes from "prop-types";
 import { User } from "lucide-react";
-import { clienteSchema } from "../../../lib/schemas";
+import { clienteSchema, clienteAvulsoSchema } from "../../../lib/schemas";
 import UniversalInput from "../../../components/ui/Input/UniversalInput";
 import Button from "../../../components/ui/Button/Button.component";
 import { modalClasses } from "../../../components/ui/modal/modalStyles";
@@ -19,9 +19,13 @@ const normalizeClienteStatus = (status) => {
   if (normalized === "ATIVO") return "Ativo";
   if (normalized === "INATIVO") return "Inativo";
   if (normalized === "FINALIZADO") return "Finalizado";
+  if (normalized === "AVULSO") return "Avulso";
 
   return "Inativo";
 };
+
+const isAvulso = (status) =>
+  String(status ?? "").trim().toUpperCase() === "AVULSO";
 
 const DEFAULT_VALUES = {
   nome: "",
@@ -31,6 +35,7 @@ const DEFAULT_VALUES = {
   status: "Inativo",
   cep: "",
   rua: "",
+  numero: "",
   complemento: "",
   bairro: "",
   cidade: "",
@@ -48,6 +53,9 @@ export default function ClienteFormModal({
   const [cepApiError, setCepApiError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const clienteEhAvulso = modoEdicao && isAvulso(clienteInicial?.status);
+  const schemaAtivo = clienteEhAvulso ? clienteAvulsoSchema : clienteSchema;
+
   const {
     register,
     handleSubmit,
@@ -56,7 +64,7 @@ export default function ClienteFormModal({
     watch,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(clienteSchema),
+    resolver: zodResolver(schemaAtivo),
     defaultValues: DEFAULT_VALUES,
     mode: "onBlur",
   });
@@ -79,6 +87,7 @@ export default function ClienteFormModal({
         status: normalizeClienteStatus(clienteInicial.status),
         cep: cepMask(endereco.cep ?? ""),
         rua: endereco.rua ?? "",
+        numero: endereco.numero ?? "",
         complemento: endereco.complemento ?? "",
         bairro: endereco.bairro ?? "",
         cidade: endereco.cidade ?? "",
@@ -130,23 +139,27 @@ export default function ClienteFormModal({
     setSubmitting(true);
 
     try {
+      const enderecoTemDados = data.rua?.trim() || data.cep?.trim() || data.cidade?.trim();
       const payload = {
         nome: data.nome,
         cpf: data.cpf || undefined,
         email: data.email || undefined,
         telefone: data.contato || undefined,
         status: data.status,
-        enderecos: [
-          {
-            cep: data.cep,
-            rua: data.rua,
-            complemento: data.complemento,
-            bairro: data.bairro,
-            cidade: data.cidade,
-            uf: data.uf?.toUpperCase(),
-            pais: "Brasil",
-          },
-        ],
+        enderecos: enderecoTemDados
+          ? [
+              {
+                cep: data.cep || "",
+                rua: data.rua || "",
+                numero: data.numero,
+                complemento: data.complemento,
+                bairro: data.bairro || "",
+                cidade: data.cidade || "",
+                uf: data.uf?.toUpperCase() || "",
+                pais: "Brasil",
+              },
+            ]
+          : [],
       };
 
       const result = onSubmit(payload);
@@ -176,9 +189,16 @@ export default function ClienteFormModal({
             <div className={modalClasses.headerIcon}>
               <User className="h-6 w-6" />
             </div>
-            <h2 className={modalClasses.headerTitle}>
-              {modoEdicao ? "Editar Cliente" : "Adicionar novo cliente"}
-            </h2>
+            <div>
+              <h2 className={modalClasses.headerTitle}>
+                {modoEdicao ? "Editar Cliente" : "Adicionar novo cliente"}
+              </h2>
+              {clienteEhAvulso && (
+                <p className="text-xs text-amber-600 font-medium mt-0.5">
+                  Cliente avulso — preencha os dados para completar o cadastro
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -206,7 +226,7 @@ export default function ClienteFormModal({
 
                 <UniversalInput
                   label="CPF"
-                  required
+                  required={!clienteEhAvulso}
                   error={errors.cpf}
                   type="text"
                   inputMode="numeric"
@@ -223,7 +243,7 @@ export default function ClienteFormModal({
 
                 <UniversalInput
                   label="Telefone"
-                  required
+                  required={!clienteEhAvulso}
                   error={errors.contato}
                   type="text"
                   inputMode="tel"
@@ -240,7 +260,7 @@ export default function ClienteFormModal({
 
                 <UniversalInput
                   label="Email"
-                  required
+                  required={!clienteEhAvulso}
                   type="email"
                   registration={register("email")}
                   error={errors.email}
@@ -257,7 +277,7 @@ export default function ClienteFormModal({
               <div className="grid grid-cols-2 gap-4">
                 <UniversalInput
                   label="CEP"
-                  required
+                  required={!clienteEhAvulso}
                   error={
                     errors.cep ||
                     (cepApiError ? { message: cepApiError } : undefined)
@@ -288,15 +308,22 @@ export default function ClienteFormModal({
 
                 <UniversalInput
                   label="Rua"
-                  required
+                  required={!clienteEhAvulso}
                   registration={register("rua")}
                   error={errors.rua}
                   placeholder="Digite a rua"
                 />
 
                 <UniversalInput
+                  label="Número"
+                  registration={register("numero")}
+                  error={errors.numero}
+                  placeholder="Digite o número"
+                />
+
+                <UniversalInput
                   label="Bairro"
-                  required
+                  required={!clienteEhAvulso}
                   registration={register("bairro")}
                   error={errors.bairro}
                   placeholder="Digite o bairro"
@@ -311,7 +338,7 @@ export default function ClienteFormModal({
 
                 <UniversalInput
                   label="Cidade"
-                  required
+                  required={!clienteEhAvulso}
                   registration={register("cidade")}
                   error={errors.cidade}
                   placeholder="Digite a cidade"
@@ -319,7 +346,7 @@ export default function ClienteFormModal({
 
                 <UniversalInput
                   label="UF"
-                  required
+                  required={!clienteEhAvulso}
                   registration={register("uf")}
                   error={errors.uf}
                   placeholder="Digite a UF"
@@ -331,16 +358,34 @@ export default function ClienteFormModal({
 
             <section className="flex flex-col gap-3">
               <h3 className="text-md font-semibold text-gray-700">Status</h3>
-              <UniversalInput
-                as="toggle"
-                label={`Possui servico em andamento (Status: ${statusAtual})`}
-                checked={statusAtual === "Ativo"}
-                onChange={(e) =>
-                  setValue("status", e.target.checked ? "Ativo" : "Inativo", {
-                    shouldValidate: true,
-                  })
-                }
-              />
+              {clienteEhAvulso ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-gray-500">
+                    Status atual: <span className="font-medium text-amber-600">Avulso</span>
+                  </p>
+                  <UniversalInput
+                    as="toggle"
+                    label="Promover para cliente Ativo (preencha os dados acima)"
+                    checked={statusAtual === "Ativo"}
+                    onChange={(e) =>
+                      setValue("status", e.target.checked ? "Ativo" : "Avulso", {
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </div>
+              ) : (
+                <UniversalInput
+                  as="toggle"
+                  label={`Possui servico em andamento (Status: ${statusAtual})`}
+                  checked={statusAtual === "Ativo"}
+                  onChange={(e) =>
+                    setValue("status", e.target.checked ? "Ativo" : "Inativo", {
+                      shouldValidate: true,
+                    })
+                  }
+                />
+              )}
             </section>
           </div>
 

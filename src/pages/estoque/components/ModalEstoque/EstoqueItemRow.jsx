@@ -1,12 +1,12 @@
 import { memo } from "react";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import UniversalInput from "../../../../components/ui/Input/UniversalInput";
 
 const EstoqueItemRow = ({
   item,
   isSelected,
   onToggle,
-  onEdit,
+  onEdit: _onEdit,
   onDelete,
   onViewDetails,
 }) => {

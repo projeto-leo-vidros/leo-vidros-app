@@ -35,6 +35,7 @@ export default function Acesso() {
 
   useEffect(() => {
     fetchSolicitacoes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   async function fetchSolicitacoes() {

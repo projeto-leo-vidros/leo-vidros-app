@@ -1,13 +1,10 @@
 import {
-  X,
-  Calendar,
   User,
   Package,
   TrendingUp,
   TrendingDown,
   MessageCircle,
   CreditCard,
-  MapPin,
   Phone,
   Mail,
   ShoppingCart,

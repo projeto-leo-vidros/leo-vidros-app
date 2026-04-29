@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { X, Plus } from "lucide-react";
 import { queryKeys } from "../../../api/queryKeys";
 import agendamentosService from "../../../api/services/agendamentosService";
+import { appRouter } from "../../../router/AppRouter";
 import { useAgendamentos } from "../../../hooks/queries/useAgendamentos";
 import AgendamentoNotification from "../../ui/misc/AgendamentoNotification";
 import { useAgendamentoNotifications } from "../../../pages/agendamentos/hooks/useAgendamentoNotifications";
@@ -17,10 +18,11 @@ const buildPayload = (agendamento, nomeStatus) => ({
   inicioAgendamento: agendamento.inicioAgendamento,
   fimAgendamento: agendamento.fimAgendamento,
   statusAgendamento: { tipo: "AGENDAMENTO", nome: nomeStatus },
-  observacao: agendamento.observacao || " ",
+  observacao: agendamento.observacao?.trim() || "Sem observações",
   endereco: agendamento.endereco
     ? {
         rua: agendamento.endereco.rua || "",
+        numero: agendamento.endereco.numero != null ? String(agendamento.endereco.numero) : "",
         bairro: agendamento.endereco.bairro || "",
         cidade: agendamento.endereco.cidade || "",
         uf: agendamento.endereco.uf || "",
@@ -28,9 +30,15 @@ const buildPayload = (agendamento, nomeStatus) => ({
         pais: agendamento.endereco.pais || "Brasil",
         complemento: agendamento.endereco.complemento || "",
       }
-    : { rua: "", bairro: "", cidade: "", uf: "", cep: "", pais: "Brasil", complemento: "" },
+    : { rua: "", numero: "", bairro: "", cidade: "", uf: "", cep: "", pais: "Brasil", complemento: "" },
   funcionariosIds: (agendamento.funcionarios || []).map((f) => f.id),
-  produtos: [],
+  produtos: (agendamento.agendamentoProdutos || [])
+    .filter((ap) => ap.produto?.id != null)
+    .map((ap) => ({
+      produtoId: ap.produto.id,
+      quantidadeUtilizada: ap.quantidadeUtilizada ?? 0,
+      quantidadeReservada: ap.quantidadeReservada ?? 0,
+    })),
 });
 
 export default function AgendamentoNotificationLayer() {
@@ -172,13 +180,23 @@ export default function AgendamentoNotificationLayer() {
       try {
         await handleAtualizarStatus(agendamento, "CONCLUÍDO");
         dismissNotification(`${agendamento.id}:finalizar`);
-        Swal.fire({
+
+        const pedidoId = agendamento.servico?.pedidoId;
+        const result = await Swal.fire({
           icon: "success",
-          title: "Agendamento finalizado",
-          text: "O agendamento foi concluído.",
-          timer: 2000,
-          showConfirmButton: false,
+          title: "Vistoria concluída!",
+          text: "Deseja gerar o orçamento agora?",
+          showConfirmButton: true,
+          confirmButtonText: "Gerar Orçamento",
+          confirmButtonColor: "#007EA7",
+          showDenyButton: true,
+          denyButtonText: "Agora não",
+          denyButtonColor: "#6b7280",
         });
+
+        if (result.isConfirmed && pedidoId) {
+          appRouter.navigate(`/pedidos/${pedidoId}/orcamento`);
+        }
       } catch (err) {
         Swal.fire({ icon: "error", title: "Erro ao finalizar", text: err.message });
       }

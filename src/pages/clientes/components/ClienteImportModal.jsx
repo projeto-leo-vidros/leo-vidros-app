@@ -54,7 +54,7 @@ export default function ClienteImportModal({ open, onClose, onSuccess }) {
       } else {
         setError(response.error || "Erro ao importar planilha.");
       }
-    } catch (err) {
+    } catch {
       setError("Erro inesperado ao enviar arquivo.");
     } finally {
       setUploading(false);

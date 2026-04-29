@@ -20,6 +20,7 @@ import Button from "../../components/ui/Button/Button.component";
 import UniversalInput from "../../components/ui/Input/UniversalInput";
 import DefaultAvatar from "../../assets/Avatar.jpg";
 import { useUser } from "../../context/UserContext.jsx";
+import Swal from "sweetalert2";
 
 // COMPONENTE INPUT FIELD
 const InputField = ({
@@ -114,6 +115,7 @@ export default function Perfil() {
     novaSenha: "",
     confirmarSenha: "",
     rua: "",
+    numero: "",
     cep: "",
     bairro: "",
     cidade: "",
@@ -235,6 +237,7 @@ export default function Perfil() {
           cargo: "Gerente Administrativo",
 
           rua: endereco.rua || endereco.logradouro || "",
+          numero: endereco.numero || "",
           cep: endereco.cep || "",
           bairro: endereco.bairro || "",
           cidade: endereco.cidade || "",
@@ -254,6 +257,7 @@ export default function Perfil() {
       .finally(() => {
         setLoading(false);
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInputChange = (e) => {
@@ -349,6 +353,7 @@ export default function Perfil() {
 
     const enderecoRequest = {
       rua: formData.rua,
+      numero: formData.numero,
       cep: formData.cep,
       cidade: formData.cidade,
       bairro: formData.bairro,
@@ -397,6 +402,7 @@ export default function Perfil() {
           telefone: userData.telefone || "",
           cargo: "Gerente Administrativo",
           rua: endereco.rua || "",
+          numero: endereco.numero || "",
           cep: endereco.cep || "",
           bairro: endereco.bairro || "",
           cidade: endereco.cidade || "",
@@ -408,10 +414,8 @@ export default function Perfil() {
           confirmarSenha: "",
         });
       })
-      .catch((error) => {
-        console.error("Erro ao salvar:", error);
-        console.error("Detalhes:", error.response?.data);
-        alert("Erro ao salvar as informações. Verifique o console.");
+      .catch(() => {
+        Swal.fire({ icon: "error", title: "Erro ao salvar", text: "Não foi possível salvar as informações. Tente novamente.", confirmButtonColor: "#dc2626" });
       })
       .finally(() => {
         setLoading(false);
@@ -663,7 +667,17 @@ export default function Perfil() {
                             onChange={handleInputChange}
                             disabled={!isEditing}
                             inputClassName={lockedInputClassName}
-                            className="lg:col-span-4 text-start"
+                            className="lg:col-span-3 text-start"
+                          />
+
+                          <InputField
+                            label="Número"
+                            name="numero"
+                            value={formData.numero}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            inputClassName={lockedInputClassName}
+                            className="lg:col-span-1 text-start"
                           />
 
                           <div className="lg:col-span-2 text-start flex flex-col">

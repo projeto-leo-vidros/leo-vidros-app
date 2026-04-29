@@ -172,8 +172,6 @@ class OrcamentosService extends BaseService {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let eventCount = 0;
-        let currentEvent = {};
         
         try {
           while (true) {
@@ -191,26 +189,21 @@ class OrcamentosService extends BaseService {
             
             for (const event of events) {
               if (!event.trim()) continue; 
-              
-              
               const lines = event.split("\n");
-              let eventName = "";
               let eventData = null;
               
               for (const line of lines) {
-                if (line.startsWith("event:") || line.startsWith("event: ")) {
-                  eventName = line.substring(line.indexOf(":") + 1).trim();
-                } else if (line.startsWith("data:") || line.startsWith("data: ")) {
+                if (line.startsWith("data:") || line.startsWith("data: ")) {
                   try {
                     const dataStr = line.substring(line.indexOf(":") + 1).trim();
                     eventData = JSON.parse(dataStr);
-                  } catch (e) {
+                  } catch {
+                    eventData = null;
                   }
                 }
               }
 
               if (eventData) {
-                eventCount++;
                 onProgress(eventData);
               }
             }

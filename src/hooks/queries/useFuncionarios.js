@@ -104,7 +104,7 @@ export function useRemoverFuncionarioDeAgendamento(options = {}) {
   return useMutation({
     mutationFn: ({ agendamentoId, funcionarioId }) =>
       funcionariosService.removerDeAgendamento(agendamentoId, funcionarioId),
-    onSuccess: (_, { funcionarioId }) => {
+    onSuccess: () => {
       // Invalida a agenda do funcionário e os agendamentos
       qc.invalidateQueries({ queryKey: queryKeys.funcionarios.all() });
       qc.invalidateQueries({ queryKey: queryKeys.agendamentos.all() });

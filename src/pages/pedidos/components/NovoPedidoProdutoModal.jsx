@@ -48,22 +48,11 @@ const usePedidoAPI = () => {
     try {
       const response = await Api.post(`/clientes`, {
         nome: nomeCliente,
-        cpf: "",
-        email: "",
-        telefone: "",
+        cpf: null,
+        email: null,
+        telefone: null,
         status: "Avulso",
-        enderecos: [
-          {
-            rua: "",
-            complemento: "",
-            cep: "",
-            cidade: "",
-            bairro: "",
-            uf: "",
-            pais: "Brasil",
-            numero: 0,
-          },
-        ],
+        enderecos: [],
       });
       return response.data;
     } catch (error) {
@@ -161,6 +150,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
       setError(null);
       carregarDados();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const carregarDados = async () => {
@@ -364,18 +354,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
           cpf: formData.clienteCpf,
           email: formData.clienteEmail,
           telefone: formData.clienteTelefone,
-          enderecos: [
-            {
-              rua: "",
-              complemento: "",
-              cep: "",
-              cidade: "",
-              bairro: "",
-              uf: "",
-              pais: "Brasil",
-              numero: 0,
-            },
-          ],
+          enderecos: [],
         });
 
         clienteData = novoCliente;

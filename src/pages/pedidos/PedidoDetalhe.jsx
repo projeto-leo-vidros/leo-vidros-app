@@ -18,6 +18,7 @@ import Api from "../../api/client/Api";
 import PedidosService from "../../api/services/pedidosService";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import ProdutoSearchSelect from "../../components/ui/misc/ProdutoSearchSelect";
+import Swal from "sweetalert2";
 
 const METODOS_COM_PARCELA = ["Cartão de crédito"];
 
@@ -93,7 +94,7 @@ export default function PedidoDetalhe() {
         });
       } catch (err) {
         console.error("Erro ao buscar pedido:", err);
-        alert("Erro ao carregar pedido");
+        await Swal.fire({ icon: "error", title: "Erro ao carregar", text: "Não foi possível carregar os dados do pedido. Tente novamente.", confirmButtonColor: "#dc2626" });
         navigate("/Pedidos");
       } finally {
         setLoading(false);
@@ -309,7 +310,8 @@ export default function PedidoDetalhe() {
 
   const statusColors = {
     Ativo: "from-blue-500 to-blue-600 border-blue-700",
-    Finalizado: "from-green-500 to-green-600 border-green-700",
+    Finalizado: "from-slate-500 to-slate-600 border-slate-700",
+    Inativo: "from-slate-500 to-slate-600 border-slate-700",
     "Em Andamento": "from-yellow-500 to-yellow-600 border-yellow-700",
     Cancelado: "from-red-500 to-red-600 border-red-700",
   };

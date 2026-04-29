@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { format } from "date-fns";
 import { getEventDate } from "../utils/eventHelpers";
 import Api from "../../../api/client/Api";
 
@@ -59,7 +58,7 @@ export const useDeleteAgendamento = (onSuccess) => {
 
     setDeleting(true);
     try {
-      const response = await Api.delete(`/agendamentos/${id}`);
+      await Api.delete(`/agendamentos/${id}`);
 
       if (onSuccess) {
         onSuccess(id);

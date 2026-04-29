@@ -302,7 +302,9 @@ class PedidosService extends BaseService {
         (ag) =>
           ag.statusAgendamento?.nome &&
           ag.statusAgendamento.nome !== "CANCELADO" &&
-          ag.statusAgendamento.nome !== "INATIVO",
+          ag.statusAgendamento.nome !== "INATIVO" &&
+          ag.statusAgendamento.nome !== "CONCLUÍDO" &&
+          ag.statusAgendamento.nome !== "CONCLUIDO",
       );
       temAgendamentoAtivo = agendamentosAtivos.length > 0;
 
@@ -345,7 +347,7 @@ class PedidosService extends BaseService {
         nome: dadosBackend.servico.nome || "Serviço sem nome",
         descricao: dadosBackend.servico.descricao || "",
         precoBase: dadosBackend.servico.precoBase || 0,
-        ativo: temAgendamentoAtivo ? true : dadosBackend.servico.ativo,
+        ativo: dadosBackend.ativo === false ? false : (temAgendamentoAtivo ? true : dadosBackend.servico.ativo),
         etapa: etapaCalculada, 
         agendamentos: agendamentosTodos, 
       };
@@ -388,7 +390,10 @@ class PedidosService extends BaseService {
           progressoValor = 0;
           break;
         default:
-          etapaAtual = etapaCalculada;
+          etapaAtual = String(etapaCalculada || "Pendente")
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase());
           progressoValor = 1;
       }
     }
@@ -401,7 +406,8 @@ class PedidosService extends BaseService {
         statusMapeado = "Ativo";
         break;
       case "FINALIZADO":
-        statusMapeado = "Finalizado";
+      case "INATIVO":
+        statusMapeado = "Inativo";
         break;
       case "PENDENTE":
         statusMapeado = "Ativo";
@@ -415,6 +421,14 @@ class PedidosService extends BaseService {
 
     if (isServico && temAgendamentoAtivo) {
       statusMapeado = "Ativo";
+    }
+
+    if (etapaAtual === "Concluído") {
+      statusMapeado = "Inativo";
+    }
+
+    if (dadosBackend.ativo === false) {
+      statusMapeado = "Inativo";
     }
 
     let dataCompra = dadosBackend.dataCompra;
@@ -452,7 +466,7 @@ class PedidosService extends BaseService {
       itensCount: itensCount,
       valorTotal: dadosBackend.valorTotal || 0,
       status: statusMapeado,
-      ativo: isServico && temAgendamentoAtivo ? true : dadosBackend.ativo !== false,
+      ativo: etapaAtual === "Concluído" ? false : isServico && temAgendamentoAtivo ? true : dadosBackend.ativo !== false,
       tipoPedido:
         dadosBackend.tipoPedido || (isProduto ? "produto" : "servico"),
 
@@ -549,9 +563,38 @@ class PedidosService extends BaseService {
         ? filtros.status
         : [filtros.status];
       if (!statusArray.includes("Todos")) {
-        servicosFiltrados = servicosFiltrados.filter((servico) =>
-          statusArray.includes(servico.status),
-        );
+        const wantAtivos = statusArray.includes("Ativos");
+        const wantInativos = statusArray.includes("Inativos");
+
+        const ehInativo = (servico) => {
+          const isCompleted =
+            servico.etapa === "Concluído" || servico.status === "Cancelado";
+          const hasActiveAgendamento = (
+            servico.servico?.agendamentos || []
+          ).some(
+            (ag) =>
+              ag.statusAgendamento?.nome &&
+              ag.statusAgendamento.nome !== "CANCELADO" &&
+              ag.statusAgendamento.nome !== "INATIVO",
+          );
+          const isInactive =
+            servico.ativo === false ||
+            servico.servico?.ativo === false ||
+            String(servico.status || "").toLowerCase() === "inativo";
+          return (isInactive && !hasActiveAgendamento) || isCompleted;
+        };
+
+        if (wantAtivos && !wantInativos) {
+          servicosFiltrados = servicosFiltrados.filter(
+            (servico) => !ehInativo(servico),
+          );
+        } else if (wantInativos && !wantAtivos) {
+          servicosFiltrados = servicosFiltrados.filter(ehInativo);
+        } else if (!wantAtivos && !wantInativos) {
+          servicosFiltrados = servicosFiltrados.filter((servico) =>
+            statusArray.includes(servico.status),
+          );
+        }
       }
     }
 
@@ -580,8 +623,36 @@ class PedidosService extends BaseService {
       );
     }
 
+    const isTodosFilter =
+      !filtros.status ||
+      filtros.status === "Todos" ||
+      filtros.status.length === 0;
+    if (isTodosFilter) {
+      const ehInativoSort = (servico) => {
+        const isCompleted =
+          servico.etapa === "Concluído" || servico.status === "Cancelado";
+        const hasActiveAgendamento = (
+          servico.servico?.agendamentos || []
+        ).some(
+          (ag) =>
+            ag.statusAgendamento?.nome &&
+            ag.statusAgendamento.nome !== "CANCELADO" &&
+            ag.statusAgendamento.nome !== "INATIVO",
+        );
+        const isInactive =
+          servico.ativo === false ||
+          servico.servico?.ativo === false ||
+          String(servico.status || "").toLowerCase() === "inativo";
+        return (isInactive && !hasActiveAgendamento) || isCompleted;
+      };
+      servicosFiltrados.sort(
+        (a, b) => (ehInativoSort(a) ? 1 : 0) - (ehInativoSort(b) ? 1 : 0),
+      );
+    }
+
     return servicosFiltrados;
   }
 }
 
 export default new PedidosService();
+

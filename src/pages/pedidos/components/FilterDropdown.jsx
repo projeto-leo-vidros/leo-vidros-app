@@ -26,7 +26,7 @@ const FilterDropdown = ({
   const filterOptionsServicos = {
     situacao: {
       title: "Situação do Serviço",
-      options: ["Ativo", "Em Andamento", "Aguardando", "Finalizado", "Cancelado"],
+      options: ["Ativos", "Inativos"],
     },
     etapa: {
       title: "Etapa do Serviço",
