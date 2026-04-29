@@ -727,7 +727,7 @@ export default function OrcamentoPage() {
         if (!savedOrcamentoId && result.data?.id) setSavedOrcamentoId(result.data.id);
         setLastSaved(new Date());
         queryClient.invalidateQueries({ queryKey: queryKeys.orcamentos.all() });
-        setToast({ message: "Rascunho salvo com sucesso!", type: "success" });
+        setToast({ message: "Orçamento salvo com sucesso!", type: "success" });
         setTimeout(() => {
           setToast(null);
           navigate(returnTo ?? `/Servicos/${pedidoId || dadosGerais.pedido_id}/orcamentos`);

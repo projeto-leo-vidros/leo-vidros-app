@@ -210,7 +210,7 @@ export default function PaginaInicial() {
             <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-2">
               <div className="flex self-start flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between bg-[#002A4B] px-5 py-3 text-white">
-                  <h2 className="text-base font-semibold">Próximos Agendamentos</h2>
+                  <h2 className="text-base font-semibold">Próximos Agendamentos Desta Semana</h2>
                   <span className="rounded-full bg-blue-900/60 px-3 py-1 text-sm font-semibold">
                     Total: {agendamentosDaSemana.length}
                   </span>
