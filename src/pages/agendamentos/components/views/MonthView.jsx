@@ -409,7 +409,7 @@ const MonthView = ({
   const [expandedDay, setExpandedDay] = useState(null);
 
   const weekDaysNames = isFullscreen
-    ? ["Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"]
+    ? ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
     : ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
   return (

@@ -1,42 +1,11 @@
-/* eslint-disable no-unused-vars */
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-  isSameMonth,
-  addMonths,
-  subMonths,
-  startOfWeek,
-  endOfWeek,
-  addWeeks,
-  subWeeks,
-  parseISO,
-} from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import {
-  Calendar as CalendarIcon,
   Clock,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  MoreHorizontal,
-  User,
-  Check,
-  LayoutGrid,
-  List,
   Loader2,
-  MapPin,
-  Trash2,
-  Edit3,
   AlertTriangle,
-  Eye,
-  ExternalLink,
-  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
@@ -46,7 +15,6 @@ import Sidebar from "../../components/layout/Sidebar/Sidebar";
 import TaskCreateModal from "../../components/ui/misc/TaskCreateModal";
 import Button from "../../components/ui/Button/Button.component";
 import AgendamentoDetailModal from "./components/AgendamentoDetailModal";
-import Kpis from "../../components/kpis/Kpis";
 
 import CalendarView from "./components/CalendarView";
 import MiniCalendar from "./components/MiniCalendar";
@@ -54,9 +22,6 @@ import UpcomingEvents from "./components/UpcomingEvents";
 import EditarAgendamentoSimples from "../pedidos/components/EditarAgendamentoSimples";
 import {
   getAgendamentoDisplayName,
-  isCancelledStatus,
-  isConcludedStatus,
-  isFinalizedStatus,
   isVisibleInDailyAgenda,
 } from "./utils/eventHelpers";
 
@@ -65,158 +30,7 @@ import { useAgendamentos } from "../../hooks/queries/useAgendamentos";
 import agendamentosService from "../../api/services/agendamentosService";
 import PedidosService from "../../api/services/pedidosService";
 
-import {
-  normalizeStatus,
-  statusConfig,
-  getStatusConfig,
-  tipoConfig,
-} from "../../utils/agendamentoStatus";
-
-function StatusBadge({ status }) {
-  const config = getStatusConfig(status);
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-        config.color,
-      )}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
-      {config.label}
-    </span>
-  );
-}
-
-function TipoBadge({ tipo }) {
-  const config = tipoConfig[tipo] || tipoConfig.SERVICO;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-        config.color,
-      )}
-    >
-      {config.label}
-    </span>
-  );
-}
-
-function ActionsDropdown({
-  agendamento,
-  onStatusChange,
-  onDelete,
-  onEdit,
-  onView,
-  onLocation,
-  onFinalizar,
-}) {
-  const [open, setOpen] = useState(false);
-
-  const statusNome = agendamento?.statusAgendamento?.nome || "";
-  const statusNorm = normalizeStatus(statusNome);
-  const isFinalizado = isFinalizedStatus(statusNome);
-
-  const hasEndereco = (() => {
-    if (!agendamento?.endereco) return false;
-    const e = agendamento.endereco;
-    return [e.rua, e.bairro, e.cidade].some(Boolean);
-  })();
-
-  return (
-    <div className="relative">
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(!open);
-        }}
-        className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-gray-100"
-      >
-        <MoreHorizontal className="h-4 w-4 text-gray-500" />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="animate-in fade-in slide-in-from-top-2 absolute top-8 right-0 z-50 w-48 rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl">
-            <button
-              className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onView?.(agendamento);
-                setOpen(false);
-              }}
-            >
-              <Eye className="h-4 w-4 text-gray-400" /> Ver informações
-            </button>
-            {hasEndereco && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLocation?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <MapPin className="h-4 w-4 text-gray-400" /> Ver localização
-              </button>
-            )}
-            <div className="my-1 border-t border-gray-100" />
-            {!isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <Edit3 className="h-4 w-4 text-gray-400" /> Editar
-              </button>
-            )}
-            {statusNorm !== "CONFIRMADO" && !isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-green-600 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(agendamento, "CONFIRMADO");
-                  setOpen(false);
-                }}
-              >
-                <Check className="h-4 w-4" /> Confirmar
-              </button>
-            )}
-            {!isConcludedStatus(statusNome) && !isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-blue-600 transition-colors hover:bg-gray-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onFinalizar?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <CheckCircle2 className="h-4 w-4" /> Finalizar execução
-              </button>
-            )}
-            {!isFinalizado && <div className="my-1 border-t border-gray-100" />}
-            {!isConcludedStatus(statusNome) && !isFinalizado && (
-              <button
-                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(agendamento);
-                  setOpen(false);
-                }}
-              >
-                <Trash2 className="h-4 w-4" /> Excluir
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
+/*
 function FinalizarExecucaoModal({ isOpen, onClose, onConfirm, agendamento, isSaving }) {
   const [horaFim, setHoraFim] = useState("");
 
@@ -324,6 +138,7 @@ function FinalizarExecucaoModal({ isOpen, onClose, onConfirm, agendamento, isSav
     </AnimatePresence>
   );
 }
+*/
 
 function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
   useEffect(() => {
@@ -441,8 +256,6 @@ export default function Agendamentos() {
 
   const [showReagendarModal, setShowReagendarModal] = useState(false);
   const [agendamentoToReagendar, setAgendamentoToReagendar] = useState(null);
-  const [finalizarTarget, setFinalizarTarget] = useState(null);
-  const [isFinalizing, setIsFinalizing] = useState(false);
   const [tasks, setTasks] = useState([]);
   const autoOpenFromServiceRef = useRef(false);
 
@@ -456,14 +269,6 @@ export default function Agendamentos() {
     const handleKeyDown = (event) => {
       if (event.defaultPrevented) return;
       if (event.key !== "Escape") return;
-
-      if (finalizarTarget) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation?.();
-        setFinalizarTarget(null);
-        return;
-      }
 
       if (deleteTarget) {
         event.preventDefault();
@@ -500,7 +305,7 @@ export default function Agendamentos() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [finalizarTarget, deleteTarget, detailTarget, showReagendarModal, showTaskModal]);
+  }, [deleteTarget, detailTarget, showReagendarModal, showTaskModal]);
 
   const filteredTasks = useMemo(() => {
     if (!activeKpiFilter) return tasks;
@@ -675,7 +480,7 @@ export default function Agendamentos() {
   const handleTaskSave = useCallback(() => {
     refetch();
   }, [refetch]);
-
+  /*
   const handleStatusChange = useCallback(
     async (apt, newStatusNome) => {
       try {
@@ -746,6 +551,7 @@ export default function Agendamentos() {
     [finalizarTarget, refetch],
   );
 
+  */
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
@@ -789,9 +595,7 @@ export default function Agendamentos() {
     setAgendamentoToReagendar(null);
     refetch();
   };
-
-
-
+  /*
   const getServicoNome = (apt) => {
     if (apt.servico?.nome) return apt.servico.nome;
     if (apt.servico?.codigo) return apt.servico.codigo;
@@ -811,6 +615,7 @@ export default function Agendamentos() {
   };
 
   const getStatusNome = (apt) => apt.statusAgendamento?.nome || "PENDENTE";
+  */
 
   if (isLoading) {
     return (

@@ -32,11 +32,13 @@ const buildPayload = (agendamento, nomeStatus) => ({
       }
     : { rua: "", numero: "", bairro: "", cidade: "", uf: "", cep: "", pais: "Brasil", complemento: "" },
   funcionariosIds: (agendamento.funcionarios || []).map((f) => f.id),
-  produtos: (agendamento.agendamentoProdutos || []).map((ap) => ({
-    produtoId: ap.produto?.id,
-    quantidadeUtilizada: ap.quantidadeUtilizada ?? 0,
-    quantidadeReservada: ap.quantidadeReservada ?? 0,
-  })),
+  produtos: (agendamento.agendamentoProdutos || [])
+    .filter((ap) => ap.produto?.id != null)
+    .map((ap) => ({
+      produtoId: ap.produto.id,
+      quantidadeUtilizada: ap.quantidadeUtilizada ?? 0,
+      quantidadeReservada: ap.quantidadeReservada ?? 0,
+    })),
 });
 
 export default function AgendamentoNotificationLayer() {

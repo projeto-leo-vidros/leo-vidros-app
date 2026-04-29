@@ -33,7 +33,7 @@ export default function Header({ toggleSidebar, sidebarOpen: _sidebarOpen }) {
 
   const { user, logout } = useUser();
   const queryClient = useQueryClient();
-  const userName = user.name || "UsuÃ¡rio LÃ©o Vidros";
+  const userName = user.name || "Usuário Léo Vidros";
   const userEmail = user.email || "";
   const userPhoto = user.photo || DefaultAvatar;
 
@@ -99,7 +99,7 @@ export default function Header({ toggleSidebar, sidebarOpen: _sidebarOpen }) {
 
           <img
             src={Logo}
-            alt="Logo LÃ©o Vidros"
+            alt="Logo Léo Vidros"
             className="h-8 sm:h-9 md:h-10 cursor-pointer transition-all duration-300 hover:opacity-80"
             onClick={() => navigate("/pagina-inicial")}
           />

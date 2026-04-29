@@ -49,6 +49,7 @@ article {
 .app-scroll-area {
   width: 100%;
   min-width: 0;
+  overflow-y: auto;
   overflow-x: clip;
 }
 

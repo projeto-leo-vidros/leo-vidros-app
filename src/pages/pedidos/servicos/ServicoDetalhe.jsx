@@ -471,7 +471,8 @@ export default function PedidoDetalhe() {
               nome: item.produtoNome || item.descricao || `Produto #${item.produtoId}`,
               quantidade: parseFloat(item.quantidade) || 1,
               preco: parseFloat(item.precoUnitario) || 0,
-              estoqueId: item.produtoId,
+              estoqueId: item.estoqueId ?? item.produtoId,
+              produtoId: item.produtoId,
               subtotal: parseFloat(item.subtotal) || 0,
               observacao: item.observacao || "",
             }));
@@ -508,6 +509,7 @@ export default function PedidoDetalhe() {
             quantidade: parseFloat(ap.quantidadeReservada) || 1,
             preco: parseFloat(ap.produto.precoUnitario || ap.produto.preco || 0),
             estoqueId: ap.produto.id,
+            produtoId: ap.produto.id,
             subtotal: 0,
             observacao: "",
           }));
@@ -541,7 +543,32 @@ export default function PedidoDetalhe() {
         return Array.from(map.values());
       };
 
-      const produtosMesclados = _mergeById(produtosOrcamento, produtosAgendamento);
+      const mergeProdutosByProdutoId = (base, overlay) => {
+        const map = new Map();
+
+        for (const produto of base) {
+          const key = produto.produtoId ?? produto.estoqueId;
+          if (key) map.set(key, { ...produto });
+        }
+
+        for (const produto of overlay) {
+          const key = produto.produtoId ?? produto.estoqueId;
+          if (!key) continue;
+
+          if (map.has(key)) {
+            map.get(key).quantidade = produto.quantidade;
+          } else {
+            map.set(key, { ...produto });
+          }
+        }
+
+        return Array.from(map.values());
+      };
+
+      const produtosMesclados = mergeProdutosByProdutoId(
+        produtosOrcamento,
+        produtosAgendamento,
+      );
       const produtosFinais = mapped.produtos?.length > 0 ? mapped.produtos : produtosMesclados;
 
       setFormData({
@@ -549,7 +576,10 @@ export default function PedidoDetalhe() {
         ...parseFormaPagamento(mapped.formaPagamento || ""),
         observacoes:         mapped.observacoes           || "",
         etapaServico:        etapaNormalizada,
-        produtos:            produtosFinais,
+        produtos:            produtosFinais.map((produto) => ({
+          ...produto,
+          produtoId: produto.produtoId ?? null,
+        })),
         servicoNome:         mapped.servico?.nome         || "",
         servicoDescricao:    mapped.servico?.descricao    || "",
         servicoPrecoBase:    mapped.servico?.precoBase    || 0,
@@ -579,6 +609,32 @@ export default function PedidoDetalhe() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (estoqueItems.length === 0) return;
+
+    setFormData((prev) => {
+      let changed = false;
+      const produtos = prev.produtos.map((produto) => {
+        if (produto.produtoId) return produto;
+
+        const itemEstoque = estoqueItems.find((item) => item.id === produto.estoqueId);
+        if (!itemEstoque?.produto?.id) return produto;
+
+        changed = true;
+        return { ...produto, produtoId: itemEstoque.produto.id };
+      });
+
+      return changed ? { ...prev, produtos } : prev;
+    });
+  }, [estoqueItems]);
+
+  const resolveProdutoId = (produto = {}) => {
+    if (produto.produtoId) return produto.produtoId;
+
+    const itemEstoque = estoqueItems.find((item) => item.id === produto.estoqueId);
+    return itemEstoque?.produto?.id ?? null;
+  };
 
   const calcularTotalInstalacao = () =>
     formData.produtos.reduce(
@@ -615,7 +671,7 @@ export default function PedidoDetalhe() {
       ...p,
       produtos: [
         ...p.produtos,
-        { nome: "", quantidade: 1, preco: 0, estoqueId: 0, observacao: "" },
+        { nome: "", quantidade: 1, preco: 0, estoqueId: 0, produtoId: null, observacao: "" },
       ],
     }));
 
@@ -805,7 +861,7 @@ export default function PedidoDetalhe() {
           try {
             const produtosAtualizados = agProdutos.map((ap) => {
               const idx = formData.produtos.findIndex(
-                (p) => p.estoqueId === ap.produto?.id || p.nome === ap.produto?.nome,
+                (p) => resolveProdutoId(p) === ap.produto?.id || p.nome === ap.produto?.nome,
               );
               const usado = idx >= 0 ? produtosUsados[idx] !== false : true;
               const qtdUsada = idx >= 0
@@ -1328,7 +1384,9 @@ export default function PedidoDetalhe() {
                                           );
                                         });
                                         const itemSelecionado = estoqueItems.find(
-                                          (item) => item.id === produto.estoqueId,
+                                          (item) =>
+                                            item.id === produto.estoqueId ||
+                                            item.produto?.id === produto.produtoId,
                                         );
                                         const podeManterSelecionado =
                                           itemSelecionado &&
@@ -1356,6 +1414,7 @@ export default function PedidoDetalhe() {
                                                 updated[index] = {
                                                   ...updated[index],
                                                   estoqueId: item.id,
+                                                  produtoId: item.produto?.id ?? null,
                                                   nome,
                                                   preco: item.produto?.preco ?? item.produto?.precoVenda ?? item.preco ?? updated[index].preco ?? 0,
                                                 };
