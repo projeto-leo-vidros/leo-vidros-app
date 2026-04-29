@@ -143,7 +143,7 @@ export default function FuncionarioForm({
                   label="Função"
                   required
                   name="funcao"
-                  placeholder="Ex: Cozinheiro"
+                  placeholder="Ex: Técnico de Instalação"
                   value={novoFuncionario.funcao}
                   onChange={handleChange}
                 />
