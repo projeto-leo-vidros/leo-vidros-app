@@ -54,7 +54,7 @@ class OrcamentosService extends BaseService {
 
   getUrlDownloadPdf(id) {
     const baseURL = this.api.defaults.baseURL;
-    return `${baseURL}/orcamentos/${id}/pdf`;
+    return `${baseURL}/orcamentos/id/${id}/pdf`;
   }
 
   async baixarPdf(id, numeroOrcamento) {
@@ -80,7 +80,7 @@ class OrcamentosService extends BaseService {
         }
       }
 
-      const response = await this.api.get(`/orcamentos/${id}/pdf`, {
+      const response = await this.api.get(`/orcamentos/id/${id}/pdf`, {
         responseType: "blob",
       });
       return {
@@ -107,7 +107,7 @@ class OrcamentosService extends BaseService {
     while (tentativa < maxTentativas) {
       try {
         const response = await this.api.get(
-          `/orcamentos/${numeroOrcamento}/status`
+          `/orcamentos/numero/${numeroOrcamento}/status`
         );
         
         if (response.data && response.data.pronto) {
