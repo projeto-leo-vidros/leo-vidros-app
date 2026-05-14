@@ -40,7 +40,7 @@ class PedidosService extends BaseService {
     });
   }
 
-  calcularEtapaServicoPorAgendamentos(servico, etapaBase = "PENDENTE") {
+  calcularEtapaServicoPorAgendamentos(servico, etapaBase = "AGUARDANDO AGENDA DE ORÇAMENTO") {
     if (!servico) return etapaBase;
 
     const agendamentosAtivos = (servico.agendamentos || []).filter((ag) => {
@@ -75,7 +75,7 @@ class PedidosService extends BaseService {
         return "CONCLU\u00cdDO";
       }
       if (statusServico === "EM ANDAMENTO" || statusServico === "EM EXECUCAO") {
-        return "SERVI\u00c7O EM EXECU\u00c7\u00c3O";
+        return "AGENDAMENTO EM EXECU\u00c7\u00c3O";
       }
       return "SERVI\u00c7O AGENDADO";
     }
@@ -87,7 +87,7 @@ class PedidosService extends BaseService {
       if (statusOrcamento === "CONCLUIDO") {
         return "OR\u00c7AMENTO APROVADO";
       }
-      return "AGUARDANDO OR\u00c7AMENTO";
+      return "OR\u00c7AMENTO AGENDADO";
     }
 
     const orcamentoConcluido = (servico.agendamentos || []).find((ag) => {
@@ -290,10 +290,10 @@ class PedidosService extends BaseService {
     let progressoTotal = 7;
     let temAgendamentoAtivo = false;
 
-    let etapaCalculada = "PENDENTE";
+    let etapaCalculada = "AGUARDANDO AGENDA DE ORÇAMENTO";
 
     if (isServico && dadosBackend.servico) {
-      const etapaNome = dadosBackend.servico.etapa?.nome || "PENDENTE";
+      const etapaNome = dadosBackend.servico.etapa?.nome || "AGUARDANDO AGENDA DE ORÇAMENTO";
 
       etapaCalculada = etapaNome;
 
@@ -308,39 +308,14 @@ class PedidosService extends BaseService {
       );
       temAgendamentoAtivo = agendamentosAtivos.length > 0;
 
-      if (agendamentosAtivos.length > 0) {
-        const agendamentoOrcamento = agendamentosAtivos.find(
-          (ag) => ag.tipoAgendamento === "ORCAMENTO",
-        );
-        const agendamentoServico = agendamentosAtivos.find(
-          (ag) => ag.tipoAgendamento === "SERVICO",
-        );
-
-        if (agendamentoServico) {
-          const statusServico = agendamentoServico.statusAgendamento?.nome;
-          if (statusServico === "CONCLUÍDO") etapaCalculada = "CONCLUÍDO";
-          else if (statusServico === "EM ANDAMENTO")
-            etapaCalculada = "SERVIÇO EM EXECUÇÃO";
-          else etapaCalculada = "SERVIÇO AGENDADO"; 
-        }
-
-        else if (agendamentoOrcamento) {
-          const statusOrcamento = this.normalizarEtapaOuStatus(agendamentoOrcamento.statusAgendamento?.nome);
-          if (statusOrcamento === "CONCLUIDO") {
-            etapaCalculada = "OR\u00c7AMENTO APROVADO";
-          } else {
-            etapaCalculada = "AGUARDANDO OR\u00c7AMENTO";
-          }
-        }
+      // servico.etapa é a fonte autoritativa — mantida pelo backend
+      const statusPedidoNome = dadosBackend.status?.nome;
+      const statusNormPedido = this.normalizarEtapaOuStatus(statusPedidoNome || "");
+      if (statusNormPedido === "INATIVO") {
+        etapaCalculada = "CONCLUÍDO";
       } else {
         etapaCalculada = etapaNome;
       }
-
-      etapaCalculada = this.calcularEtapaServicoPorAgendamentos(
-        dadosBackend.servico,
-        etapaNome,
-      );
-
       servicoInfo = {
         id: dadosBackend.servico.id,
         codigo: dadosBackend.servico.codigo,
@@ -356,13 +331,16 @@ class PedidosService extends BaseService {
       itensCount = 1;
 
       const etapaNorm = this.normalizarEtapaOuStatus(etapaCalculada);
+      progressoTotal = 8;
       switch (etapaNorm) {
+        case "AGUARDANDO AGENDA DE ORCAMENTO":
+        case "AGUARDANDO ORCAMENTO":
         case "PENDENTE":
-          etapaAtual = "Pendente";
+          etapaAtual = "Aguardando Agenda de Or\u00e7amento";
           progressoValor = 1;
           break;
-        case "AGUARDANDO ORCAMENTO":
-          etapaAtual = "Aguardando Or\u00e7amento";
+        case "ORCAMENTO AGENDADO":
+          etapaAtual = "Or\u00e7amento Agendado";
           progressoValor = 2;
           break;
         case "ANALISE DO ORCAMENTO":
@@ -373,24 +351,30 @@ class PedidosService extends BaseService {
           etapaAtual = "Or\u00e7amento Aprovado";
           progressoValor = 4;
           break;
-        case "SERVICO AGENDADO":
-          etapaAtual = "Servi\u00e7o Agendado";
+        case "AGUARDANDO AGENDA DE SERVICO/INSTALACAO":
+        case "AGUARDANDO AGENDA DE SERVICO":
+          etapaAtual = "Aguardando Agenda de Servi\u00e7o";
           progressoValor = 5;
           break;
-        case "SERVICO EM EXECUCAO":
-          etapaAtual = "Servi\u00e7o em Execu\u00e7\u00e3o";
+        case "SERVICO AGENDADO":
+          etapaAtual = "Servi\u00e7o Agendado";
           progressoValor = 6;
+          break;
+        case "AGENDAMENTO EM EXECUCAO":
+        case "SERVICO EM EXECUCAO":
+          etapaAtual = "Agendamento em Execu\u00e7\u00e3o";
+          progressoValor = 7;
           break;
         case "CONCLUIDO":
           etapaAtual = "Conclu\u00eddo";
-          progressoValor = 7;
+          progressoValor = 8;
           break;
         case "CANCELADO":
           etapaAtual = "Cancelado";
           progressoValor = 0;
           break;
         default:
-          etapaAtual = String(etapaCalculada || "Pendente")
+          etapaAtual = String(etapaCalculada || "Aguardando Agenda de Or\u00e7amento")
             .replace(/_/g, " ")
             .toLowerCase()
             .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -398,37 +382,15 @@ class PedidosService extends BaseService {
       }
     }
 
-    const statusNome = dadosBackend.status?.nome || "Ativo";
-    let statusMapeado = statusNome;
-
-    switch (statusNome.toUpperCase()) {
-      case "ATIVO":
-        statusMapeado = "Ativo";
-        break;
-      case "FINALIZADO":
-      case "INATIVO":
-        statusMapeado = "Inativo";
-        break;
-      case "PENDENTE":
-        statusMapeado = "Ativo";
-        break;
-      case "CANCELADO":
-        statusMapeado = "Cancelado";
-        break;
-      default:
-        statusMapeado = statusNome;
-    }
-
-    if (isServico && temAgendamentoAtivo) {
+    const statusNome = dadosBackend.status?.nome || "ATIVO";
+    const statusNomeNorm = this.normalizarEtapaOuStatus(statusNome);
+    let statusMapeado;
+    if (statusNomeNorm === "INATIVO" || statusNomeNorm === "CONCLUIDO" || dadosBackend.ativo === false) {
+      statusMapeado = "Inativo";
+    } else if (statusNomeNorm === "CANCELADO") {
+      statusMapeado = "Cancelado";
+    } else {
       statusMapeado = "Ativo";
-    }
-
-    if (etapaAtual === "Concluído") {
-      statusMapeado = "Inativo";
-    }
-
-    if (dadosBackend.ativo === false) {
-      statusMapeado = "Inativo";
     }
 
     let dataCompra = dadosBackend.dataCompra;

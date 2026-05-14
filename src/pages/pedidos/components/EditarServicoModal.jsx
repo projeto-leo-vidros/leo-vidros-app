@@ -22,21 +22,14 @@ import UniversalInput from "../../../components/ui/Input/UniversalInput";
 
 // Mantenha os valores EXATAMENTE iguais ao que está no banco de dados (nome da etapa)
 const ETAPAS_SERVICO = [
-  { valor: "PENDENTE", label: "Pendente", progresso: 1 },
-  {
-    valor: "AGUARDANDO ORÇAMENTO",
-    label: "Aguardando Orçamento",
-    progresso: 2,
-  },
-  {
-    valor: "ANÁLISE DO ORÇAMENTO",
-    label: "Análise do Orçamento",
-    progresso: 3,
-  },
+  { valor: "AGUARDANDO AGENDA DE ORÇAMENTO", label: "Aguardando Agenda de Orçamento", progresso: 1 },
+  { valor: "ORÇAMENTO AGENDADO", label: "Orçamento Agendado", progresso: 2 },
+  { valor: "ANÁLISE DO ORÇAMENTO", label: "Análise do Orçamento", progresso: 3 },
   { valor: "ORÇAMENTO APROVADO", label: "Orçamento Aprovado", progresso: 4 },
-  { valor: "SERVIÇO AGENDADO", label: "Serviço Agendado", progresso: 5 },
-  { valor: "SERVIÇO EM EXECUÇÃO", label: "Serviço em Execução", progresso: 6 },
-  { valor: "CONCLUÍDO", label: "Concluído", progresso: 7 },
+  { valor: "AGUARDANDO AGENDA DE SERVIÇO/INSTALAÇÃO", label: "Aguardando Agenda de Serviço", progresso: 5 },
+  { valor: "SERVIÇO AGENDADO", label: "Serviço Agendado", progresso: 6 },
+  { valor: "AGENDAMENTO EM EXECUÇÃO", label: "Agendamento em Execução", progresso: 7 },
+  { valor: "CONCLUÍDO", label: "Concluído", progresso: 8 },
 ];
 
 const etapaConcluida = (etapa = "") => {
@@ -114,7 +107,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
   // --- FUNÇÃO PARA CARREGAR: Tenta casar o que vem do back com o front ---
   const encontrarEtapaCorrespondente = (etapaDoBackend) => {
-    if (!etapaDoBackend) return "PENDENTE";
+    if (!etapaDoBackend) return "AGUARDANDO AGENDA DE ORÇAMENTO";
 
     // Normaliza o que veio do backend para tentar achar na lista (defensivo)
     const backendLimpo = limparTextoParaComparacao(etapaDoBackend);
@@ -127,12 +120,12 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     // Se achou, retorna o valor exato da constante (com acentos), senão retorna o próprio valor do back ou PENDENTE
     return etapaEncontrada
       ? etapaEncontrada.valor
-      : etapaDoBackend || "PENDENTE";
+      : etapaDoBackend || "AGUARDANDO AGENDA DE ORÇAMENTO";
   };
 
   useEffect(() => {
     if (isOpen && servico) {
-      const rawEtapa = servico.etapaOriginal || servico.etapa || "PENDENTE";
+      const rawEtapa = servico.etapaOriginal || servico.etapa || "AGUARDANDO AGENDA DE ORÇAMENTO";
 
       // Usa a função para achar o valor correto para o dropdown
       const etapaParaExibicao = encontrarEtapaCorrespondente(rawEtapa);
@@ -151,7 +144,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         progressoValor: etapaInfo
           ? etapaInfo.progresso
           : servico.progresso?.[0] || 1,
-        progressoTotal: 7,
+        progressoTotal: 8,
         valorTotal: servico.valorTotal || 0,
         formaPagamento: servico.formaPagamento || "",
         servicoNome: servico.servico?.nome || servico.servicoNome || "",
@@ -190,7 +183,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
   const handleSave = async () => {
     const voltouParaPendente =
-      etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
+      etapaAnterior !== "AGUARDANDO AGENDA DE ORÇAMENTO" && formData.etapa === "AGUARDANDO AGENDA DE ORÇAMENTO";
     if (voltouParaPendente && agendamentosCancelaveis.length > 0) {
       setMostrarModalExcluirAgendamentos(true);
       return;
@@ -204,7 +197,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
     try {
       const voltouParaPendente =
-        etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
+        etapaAnterior !== "AGUARDANDO AGENDA DE ORÇAMENTO" && formData.etapa === "AGUARDANDO AGENDA DE ORÇAMENTO";
 
       if (voltouParaPendente && agendamentosCancelaveis.length > 0) {
         const promisesCancelamento = agendamentosCancelaveis.map(
@@ -306,7 +299,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
             status: servicoDeveFicarAtivo ? "Ativo" : "Inativo",
             etapa: formData.etapa,
             etapaOriginal: etapaParaBackend,
-            progresso: [parseInt(formData.progressoValor), 7],
+            progresso: [parseInt(formData.progressoValor), formData.progressoTotal],
             valorTotal: parseFloat(formData.valorTotal),
             formaPagamento: formData.formaPagamento,
             servicoNome: formData.servicoNome,
@@ -389,7 +382,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
       const etapaRawDoBackend =
         servicoAtualizado.etapaOriginal ||
         servicoAtualizado.etapa ||
-        "PENDENTE";
+        "AGUARDANDO AGENDA DE ORÇAMENTO";
       const etapaCalculada = encontrarEtapaCorrespondente(etapaRawDoBackend);
 
       const houveAlteracaoDeEtapa = etapaCalculada !== etapaAnterior;
@@ -470,7 +463,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           resultFinal.data,
         );
         const etapaFinalRaw =
-          servicoFinal.etapaOriginal || servicoFinal.etapa || "PENDENTE";
+          servicoFinal.etapaOriginal || servicoFinal.etapa || "AGUARDANDO AGENDA DE ORÇAMENTO";
         const etapaFinal = encontrarEtapaCorrespondente(etapaFinalRaw);
 
         const etapaInfo = ETAPAS_SERVICO.find((e) => e.valor === etapaFinal);
@@ -484,7 +477,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
           progressoValor: etapaInfo
             ? etapaInfo.progresso
             : servicoFinal.progresso?.[0] || 1,
-          progressoTotal: 7,
+          progressoTotal: 8,
         });
         setEtapaAnterior(etapaFinal);
 
@@ -506,12 +499,13 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
   };
 
   const mostrarBotaoAgendarOrcamento = () => {
-    return limparTextoParaComparacao(formData.etapa) === "PENDENTE" && !modoEdicao;
+    return limparTextoParaComparacao(formData.etapa) === "AGUARDANDO_AGENDA_DE_ORCAMENTO" && !modoEdicao;
   };
 
   const mostrarBotaoAgendarServico = () => {
+    const etapaNorm = limparTextoParaComparacao(formData.etapa);
     return (
-      limparTextoParaComparacao(formData.etapa) === "ORCAMENTO_APROVADO" &&
+      (etapaNorm === "ORCAMENTO_APROVADO" || etapaNorm === "AGUARDANDO_AGENDA_DE_SERVICO/INSTALACAO") &&
       !modoEdicao
     );
   };
@@ -723,19 +717,19 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                               Progresso do Serviço
                             </span>
                             <span className="text-sm font-bold text-blue-600">
-                              {Math.round((formData.progressoValor / 7) * 100)}%
+                              {Math.round((formData.progressoValor / formData.progressoTotal) * 100)}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-3">
                             <div
                               className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
                               style={{
-                                width: `${Math.min(100, (formData.progressoValor / 7) * 100)}%`,
+                                width: `${Math.min(100, (formData.progressoValor / formData.progressoTotal) * 100)}%`,
                               }}
                             />
                           </div>
                           <p className="text-xs text-gray-600 mt-1">
-                            Etapa {formData.progressoValor} de 7
+                            Etapa {formData.progressoValor} de {formData.progressoTotal}
                           </p>
                         </div>
                       </>
@@ -1090,7 +1084,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                       setModoEdicao(false);
                       // Normaliza na mão para cancelar (reseta estado)
                       const rawEtapa =
-                        servico.etapaOriginal || servico.etapa || "PENDENTE";
+                        servico.etapaOriginal || servico.etapa || "AGUARDANDO AGENDA DE ORÇAMENTO";
                       const etapaNormalizada =
                         encontrarEtapaCorrespondente(rawEtapa);
 
@@ -1101,7 +1095,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                         status: etapaConcluida(etapaNormalizada) ? "Inativo" : servico.status || "Ativo",
                         etapa: etapaNormalizada,
                         progressoValor: servico.progresso?.[0] || 1,
-                        progressoTotal: 7,
+                        progressoTotal: 8,
                       });
                     }}
                   >
@@ -1165,7 +1159,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
               <div className="text-slate-600 space-y-2">
                 <p className="font-medium">
                   Ao voltar para a etapa{" "}
-                  <span className="font-bold text-amber-600">PENDENTE</span>,
+                  <span className="font-bold text-amber-600">AGUARDANDO AGENDA DE ORÇAMENTO</span>,
                   os agendamentos ainda abertos deste serviço serão{" "}
                   <span className="font-bold text-amber-600">CANCELADOS</span>,
                   mas continuarão visíveis no histórico e na aba de detalhes.

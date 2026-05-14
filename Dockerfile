@@ -1,23 +1,4 @@
-# Build stage
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-
-ARG VITE_BACKEND_URL
-ARG VITE_MICROSERVICE_ETL_URL
-ARG VITE_MICROSERVICE_ORCAMENTO_URL
-ARG VITE_MAPS_KEY
-ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
-ENV VITE_MICROSERVICE_ETL_URL=${VITE_MICROSERVICE_ETL_URL}
-ENV VITE_MICROSERVICE_ORCAMENTO_URL=${VITE_MICROSERVICE_ORCAMENTO_URL}
-ENV VITE_MAPS_KEY=${VITE_MAPS_KEY}
-
-RUN npm run build
-
-# Runtime stage
 FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY dist/ /usr/share/nginx/html/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

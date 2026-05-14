@@ -283,7 +283,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           }
 
           const etapaNome =
-            order.servico.etapa?.nome || order.etapa?.nome || "PENDENTE";
+            order.servico.etapa?.nome || order.etapa?.nome || "AGUARDANDO AGENDA DE ORÇAMENTO";
 
           const agendamentos = order.servico.agendamentos || [];
           const hasActiveAppointment = agendamentos.some(
@@ -301,9 +301,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
           if (tipoValue === "ORCAMENTO") {
             const etapasAceitasOrcamento = [
-              "PENDENTE",
-              "AGUARDANDO ORÇAMENTO",
-              "AGUARDANDO ORCAMENTO",
+              "AGUARDANDO AGENDA DE ORÇAMENTO",
+              "AGUARDANDO AGENDA DE ORCAMENTO",
             ];
 
             etapaValida = etapasAceitasOrcamento.some(
@@ -319,10 +318,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             const etapasAceitasServico = [
               "ORÇAMENTO APROVADO",
               "ORCAMENTO APROVADO",
-              "ANÁLISE DO ORÇAMENTO",
-              "ANALISE DO ORCAMENTO",
-              "SERVIÇO AGENDADO",
-              "SERVICO AGENDADO",
+              "AGUARDANDO AGENDA DE SERVIÇO/INSTALAÇÃO",
+              "AGUARDANDO AGENDA DE SERVICO/INSTALACAO",
             ];
 
             etapaValida = etapasAceitasServico.some(
@@ -789,47 +786,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         result = await Api.put(`/agendamentos/${formData.id}`, payload);
       } else {
         result = await Api.post("/agendamentos", payload);
-      }
-
-      if (pedidoCompleto?.id && pedidoCompleto?.servico?.id) {
-        try {
-          let novaEtapa = "";
-          if (tipoValor === "ORCAMENTO") {
-            novaEtapa = "AGUARDANDO ORÇAMENTO";
-          } else if (tipoValor === "SERVICO") {
-            novaEtapa = "SERVIÇO AGENDADO";
-          }
-
-          if (novaEtapa) {
-            const servicoAtualizado = {
-              ...pedidoCompleto.servico,
-              etapa: {
-                tipo: "SERVICO",
-                nome: novaEtapa,
-              },
-            };
-
-            await Api.put(`/pedidos/${pedidoCompleto.id}`, {
-              pedido: {
-                valorTotal: pedidoCompleto.valorTotal || 0,
-                ativo: true,
-                observacao: pedidoCompleto.observacao || "",
-                formaPagamento: pedidoCompleto.formaPagamento || "Pix",
-                cliente: pedidoCompleto.cliente
-                  ? { id: pedidoCompleto.cliente.id }
-                  : null,
-                status: pedidoCompleto.status || {
-                  tipo: "PEDIDO",
-                  nome: "Ativo",
-                },
-              },
-              servico: servicoAtualizado,
-              produtos: null,
-            });
-          }
-        } catch (error) {
-          console.error("⚠️ Erro ao atualizar etapa do pedido:", error);
-        }
       }
 
       setIsSuccess(true);

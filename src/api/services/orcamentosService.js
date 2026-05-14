@@ -80,7 +80,7 @@ class OrcamentosService extends BaseService {
         }
       }
 
-      const response = await this.api.get(`/orcamentos/${id}/pdf`, {
+      const response = await this.api.get(`/orcamentos/id/${id}/pdf`, {
         responseType: "blob",
       });
       return {
@@ -144,18 +144,13 @@ class OrcamentosService extends BaseService {
   monitorarProgresso(orcamentoId, onProgress) {
     const baseURL = this.api.defaults.baseURL;
     const url = `${baseURL}/orcamentos/stream/${orcamentoId}`;
-    
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    
+
     const abortController = new AbortController();
-    
+
     const streamPromise = fetch(url, {
       method: "GET",
-      headers: {
-        "Accept": "text/event-stream",
-        ...(token && { "Authorization": `Bearer ${token}` }),
-      },
-      credentials: "include", 
+      headers: { "Accept": "text/event-stream" },
+      credentials: "include",
       signal: abortController.signal,
     })
       .then(async (response) => {

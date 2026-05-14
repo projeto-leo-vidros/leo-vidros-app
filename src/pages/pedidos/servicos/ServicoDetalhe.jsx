@@ -20,6 +20,7 @@ import estoqueService from "../../../api/services/estoqueService";
 import PedidosService from "../../../api/services/pedidosService";
 import orcamentosService from "../../../api/services/orcamentosService";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
+import { getPedidoStatusConfig } from "../../../utils/agendamentoStatus";
 import Swal from "sweetalert2";
 
 const METODOS_COM_PARCELA = ["Cartão de crédito"];
@@ -57,12 +58,13 @@ const isAgendamentoBloqueante = (status = "") => {
 const etapaConcluida = (etapa = "") => normalizeStatus(etapa) === "CONCLUIDO";
 
 const STEPS = [
-  { label: "PENDENTE" },
-  { label: "AGUARDANDO ORÇAMENTO" },
+  { label: "AGUARDANDO AGENDA DE ORÇAMENTO" },
+  { label: "ORÇAMENTO AGENDADO" },
   { label: "ANÁLISE DO ORÇAMENTO" },
   { label: "ORÇAMENTO APROVADO" },
+  { label: "AGUARDANDO AGENDA DE SERVIÇO" },
   { label: "SERVIÇO AGENDADO" },
-  { label: "SERVIÇO EM EXECUÇÃO" },
+  { label: "AGENDAMENTO EM EXECUÇÃO" },
   { label: "CONCLUÍDO" },
 ];
 
@@ -77,13 +79,18 @@ const _normBase = (s = "") =>
     .toUpperCase();
 
 const ETAPA_NORM_MAP = {
-  "PENDENTE":              "PENDENTE",
-  "AGUARDANDO ORCAMENTO":  "AGUARDANDO ORÇAMENTO",
-  "ANALISE DO ORCAMENTO":  "ANÁLISE DO ORÇAMENTO",
-  "ORCAMENTO APROVADO":    "ORÇAMENTO APROVADO",
-  "SERVICO AGENDADO":      "SERVIÇO AGENDADO",
-  "SERVICO EM EXECUCAO":   "SERVIÇO EM EXECUÇÃO",
-  "CONCLUIDO":             "CONCLUÍDO",
+  "AGUARDANDO AGENDA DE ORCAMENTO":            "AGUARDANDO AGENDA DE ORÇAMENTO",
+  "AGUARDANDO ORCAMENTO":                      "AGUARDANDO AGENDA DE ORÇAMENTO",
+  "PENDENTE":                                  "AGUARDANDO AGENDA DE ORÇAMENTO",
+  "ORCAMENTO AGENDADO":                        "ORÇAMENTO AGENDADO",
+  "ANALISE DO ORCAMENTO":                      "ANÁLISE DO ORÇAMENTO",
+  "ORCAMENTO APROVADO":                        "ORÇAMENTO APROVADO",
+  "AGUARDANDO AGENDA DE SERVICO INSTALACAO":   "AGUARDANDO AGENDA DE SERVIÇO",
+  "AGUARDANDO AGENDA DE SERVICO":              "AGUARDANDO AGENDA DE SERVIÇO",
+  "SERVICO AGENDADO":                          "SERVIÇO AGENDADO",
+  "AGENDAMENTO EM EXECUCAO":                   "AGENDAMENTO EM EXECUÇÃO",
+  "SERVICO EM EXECUCAO":                       "AGENDAMENTO EM EXECUÇÃO",
+  "CONCLUIDO":                                 "CONCLUÍDO",
 };
 
 const normalizarEtapaParaOption = (etapa = "") => {
@@ -1494,7 +1501,7 @@ export default function PedidoDetalhe() {
                     <h3 className="text-sm font-bold text-white tracking-wide uppercase">Agendamento</h3>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-white/70 hidden sm:block">
-                        {formatDate(pedido.dataCompra)} · {pedido.status}
+                        {formatDate(pedido.dataCompra)} · {getPedidoStatusConfig(pedido.status).label}
                       </span>
                       <button
                         onClick={() => toggleSection("agendamento")}
