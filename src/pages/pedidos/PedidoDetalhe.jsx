@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { getPedidoStatusConfig } from "../../utils/agendamentoStatus";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -178,7 +179,7 @@ export default function PedidoDetalhe() {
           clienteNome: formData.clienteNome,
           status: {
             tipo: pedido.statusOriginal?.tipo || "PEDIDO",
-            nome: pedido.statusOriginal?.nome || "ATIVO",
+            nome: pedido.statusOriginal?.nome || "AGUARDANDO AGENDA DE ORÇAMENTO",
           },
         },
         servico: null,
@@ -308,16 +309,7 @@ export default function PedidoDetalhe() {
     );
   }
 
-  const statusColors = {
-    Ativo: "from-blue-500 to-blue-600 border-blue-700",
-    Finalizado: "from-slate-500 to-slate-600 border-slate-700",
-    Inativo: "from-slate-500 to-slate-600 border-slate-700",
-    "Em Andamento": "from-yellow-500 to-yellow-600 border-yellow-700",
-    Cancelado: "from-red-500 to-red-600 border-red-700",
-  };
-  const statusGradient =
-    statusColors[pedido.status] ||
-    "from-[#007EA7] to-[#006891] border-[#005a7a]";
+  const statusGradient = getPedidoStatusConfig(pedido.status).gradient;
 
   const valorTotal = calcularValorTotal();
 
@@ -414,7 +406,7 @@ export default function PedidoDetalhe() {
                   >
                     <p className="text-sm sm:text-lg text-white font-bold mb-1 sm:mb-2">Status</p>
                     <p className="text-xl font-bold text-white">
-                      {pedido.status}
+                      {getPedidoStatusConfig(pedido.status).label}
                     </p>
                     <p className="text-md text-white opacity-90 mt-2">
                       Status atual
@@ -514,7 +506,7 @@ export default function PedidoDetalhe() {
                       </label>
                       <EditableField
                         field="status"
-                        value={pedido.status}
+                        value={getPedidoStatusConfig(pedido.status).label}
                         readOnly
                       />
                     </div>

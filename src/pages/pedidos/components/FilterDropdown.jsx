@@ -31,12 +31,13 @@ const FilterDropdown = ({
     etapa: {
       title: "Etapa do Serviço",
       options: [
-        "Pendente",
-        "Aguardando Orçamento",
+        "Aguardando Agenda de Orçamento",
+        "Orçamento Agendado",
         "Análise do Orçamento",
         "Orçamento Aprovado",
+        "Aguardando Agenda de Serviço",
         "Serviço Agendado",
-        "Serviço em Execução",
+        "Agendamento em Execução",
         "Concluído",
       ],
     },

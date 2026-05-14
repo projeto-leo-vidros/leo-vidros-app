@@ -104,3 +104,97 @@ export const TIPO_COLORS = {
   SERVICO: "bg-purple-100 text-purple-800",
   ORCAMENTO: "bg-orange-100 text-orange-800",
 };
+
+const normalizePedidoStatus = (s) =>
+  (s || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\//g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+
+export const pedidoStatusConfig = {
+  "AGUARDANDO AGENDA DE ORCAMENTO": {
+    label: "Aguardando Orçamento",
+    color: "bg-amber-100 text-amber-800",
+    gradient: "from-amber-500 to-amber-600 border-amber-700",
+  },
+  "ORCAMENTO AGENDADO": {
+    label: "Orçamento Agendado",
+    color: "bg-sky-100 text-sky-800",
+    gradient: "from-sky-500 to-sky-600 border-sky-700",
+  },
+  "ANALISE DO ORCAMENTO": {
+    label: "Análise do Orçamento",
+    color: "bg-indigo-100 text-indigo-800",
+    gradient: "from-indigo-500 to-indigo-600 border-indigo-700",
+  },
+  "ORCAMENTO APROVADO": {
+    label: "Orçamento Aprovado",
+    color: "bg-green-100 text-green-800",
+    gradient: "from-green-500 to-green-600 border-green-700",
+  },
+  "AGUARDANDO AGENDA DE SERVICO INSTALACAO": {
+    label: "Aguardando Serviço",
+    color: "bg-orange-100 text-orange-800",
+    gradient: "from-orange-500 to-orange-600 border-orange-700",
+  },
+  "SERVICO AGENDADO": {
+    label: "Serviço Agendado",
+    color: "bg-cyan-100 text-cyan-800",
+    gradient: "from-cyan-500 to-cyan-600 border-cyan-700",
+  },
+  "AGENDAMENTO EM EXECUCAO": {
+    label: "Em Execução",
+    color: "bg-purple-100 text-purple-800",
+    gradient: "from-purple-500 to-purple-600 border-purple-700",
+  },
+  "CONCLUIDO": {
+    label: "Concluído",
+    color: "bg-slate-100 text-slate-600",
+    gradient: "from-slate-500 to-slate-600 border-slate-700",
+  },
+  // Legacy / produto pedido statuses
+  "ATIVO": {
+    label: "Ativo",
+    color: "bg-blue-100 text-blue-800",
+    gradient: "from-blue-500 to-blue-600 border-blue-700",
+  },
+  "PENDENTE": {
+    label: "Pendente",
+    color: "bg-yellow-100 text-yellow-800",
+    gradient: "from-yellow-500 to-yellow-600 border-yellow-700",
+  },
+  "INATIVO": {
+    label: "Inativo",
+    color: "bg-slate-100 text-slate-600",
+    gradient: "from-slate-500 to-slate-600 border-slate-700",
+  },
+  "FINALIZADO": {
+    label: "Finalizado",
+    color: "bg-slate-100 text-slate-600",
+    gradient: "from-slate-500 to-slate-600 border-slate-700",
+  },
+  "CANCELADO": {
+    label: "Cancelado",
+    color: "bg-red-100 text-red-800",
+    gradient: "from-red-500 to-red-600 border-red-700",
+  },
+  "EM ANDAMENTO": {
+    label: "Em Andamento",
+    color: "bg-yellow-100 text-yellow-800",
+    gradient: "from-yellow-500 to-yellow-600 border-yellow-700",
+  },
+};
+
+export const getPedidoStatusConfig = (status) => {
+  const norm = normalizePedidoStatus(status);
+  return (
+    pedidoStatusConfig[norm] || {
+      label: status || "Indefinido",
+      color: "bg-gray-100 text-gray-700",
+      gradient: "from-[#007EA7] to-[#006891] border-[#005a7a]",
+    }
+  );
+};

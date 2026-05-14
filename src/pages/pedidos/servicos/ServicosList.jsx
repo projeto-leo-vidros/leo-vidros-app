@@ -11,23 +11,17 @@ import PedidosService from "../../../api/services/pedidosService";
 import { formatDate } from "../../../utils/formatters";
 import Button from "../../../components/ui/Button/Button.component";
 import Swal from "sweetalert2";
+import { getPedidoStatusConfig } from "../../../utils/agendamentoStatus";
 
 function StatusPill({ status }) {
-  const styles = {
-    Ativo:
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
-    Inativo:
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#e2e8f0] text-[#475569]",
-    Finalizado:
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#e2e8f0] text-[#475569]",
-    "Em Andamento":
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]",
-    Cancelado:
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fecaca] text-[#991b1b]",
-    Aguardando:
-      "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]",
-  };
-  return <span className={styles[status] || styles.Ativo}>{status}</span>;
+  const config = getPedidoStatusConfig(status);
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide ${config.color}`}
+    >
+      {config.label}
+    </span>
+  );
 }
 
 StatusPill.propTypes = {
